@@ -1,3 +1,5 @@
 * text eol=crlf
+*.png binary
+*.gif binary
 *.gif filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
