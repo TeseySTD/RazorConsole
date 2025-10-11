@@ -10,8 +10,6 @@
 
 **Build rich, interactive console applications using familiar Razor syntax and the power of Spectre.Console**
 
-*Bring the component-based development experience you love from web development to the terminal*
-
 </div>
 
 ## 🎯 What is RazorConsole?
