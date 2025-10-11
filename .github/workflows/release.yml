@@ -13,6 +13,8 @@ jobs:
       package-path: ${{ steps.pack.outputs.package-path }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Compute version suffix
         run: echo "VersionSuffix=${GITHUB_SHA::6}" >> "$GITHUB_ENV"
