@@ -1,20 +1,45 @@
 <div align="center">
 
-# RazorConsole
+# 🚀 RazorConsole
 
-[![NuGet](https://img.shields.io/nuget/v/RazorConsole.Core.svg)](https://www.nuget.org/packages/RazorConsole.Core)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![NuGet Version](https://img.shields.io/nuget/v/RazorConsole.Core.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/RazorConsole.Core)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RazorConsole.Core.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/RazorConsole.Core)
+[![GitHub Release](https://img.shields.io/github/v/release/LittleLittleCloud/RazorConsole?style=flat-square&logo=github)](https://github.com/LittleLittleCloud/RazorConsole/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4?style=flat-square)](https://dotnet.microsoft.com/)
+
+**Build rich, interactive console applications using familiar Razor syntax and the power of Spectre.Console**
+
+*Bring the component-based development experience you love from web development to the terminal*
+
 </div>
 
-> Build interactive console applications with .NET Razor and Spectre.Console
+## 🎯 What is RazorConsole?
 
-## Install
+RazorConsole bridges the gap between modern web UI development and console applications. It lets you create sophisticated terminal interfaces using Razor components, complete with interactive elements, rich styling, and familiar development patterns. Whether you're building CLI tools, admin dashboards, or developer utilities, RazorConsole makes console app development as intuitive as building a web application.
+
+## 📦 Install
 
 ```bash
 dotnet add package RazorConsole.Core
 ```
 
-## Usage
+## 🚀 Usage
+
+### Project Setup
+
+RazorConsole requires the Microsoft.NET.Sdk.Razor SDK to compile Razor components. Update your project file (`.csproj`) to use the Razor SDK:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+    <!-- other settings -->
+</Project>
+```
+
+### Basic Example
+
+Here's a simple counter component to get you started:
+
 ```csharp
 // Counter.razor
 @using Microsoft.AspNetCore.Components
@@ -44,6 +69,33 @@ await AppHost.RunAsync<Counter>();
 ```
 
 ![Image](https://github.com/user-attachments/assets/24d8cc11-6428-4886-93c1-873e45b47c74)
+
+
+## ✨ Key Features
+
+### 🧩 **Component-Based Architecture**
+Build your console UI using familiar Razor components with full support for data binding, event handling, and component lifecycle methods.
+
+### 🎮 **Interactive Components**
+Create engaging user experiences with interactive elements like buttons, text inputs, selectors, and keyboard navigation - all with focus management handled automatically.
+
+### 🎯 **Built-in Component Library**
+Get started quickly with 15+ pre-built components covering layout, input, display, and navigation needs:
+- **Layout**: `Grid`, `Columns`, `Rows`, `Align`, `Padder`
+- **Input**: `TextInput`, `TextButton`, `Select`
+- **Display**: `Markup`, `Panel`, `Border`, `Figlet`, `SyntaxHighlighter`
+- **Utilities**: `Spinner`, `Newline`
+
+For a full list of components and usage details, see the [Built-in Components](#built-in-components) section below.
+
+### ⚡ **Hot Reload Support**
+Experience rapid development with built-in hot reload support. See your UI changes instantly without restarting your application.
+
+### 🎪 **Interactive Component Gallery**
+Explore all components hands-on with the included interactive gallery tool. Install globally and run `razorconsole-gallery` to see live examples of every component in action.
+
+For more details, see the [Component Gallery](#component-gallery) section below.
+
 
 ## Built-in components
 
