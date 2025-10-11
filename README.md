@@ -135,6 +135,25 @@ After installation, run `razorconsole-gallery` to open the showcase and browse c
 
 RazorConsole supports hotreload via metadata update handler so you can apply UI changes on the fly.
 
+## Development
+
+### Git LFS
+
+This repository uses [Git LFS](https://git-lfs.github.io/) for tracking large media files. If you're contributing or cloning the repository, make sure you have Git LFS installed:
+
+```bash
+# Install Git LFS (if not already installed)
+git lfs install
+
+# Clone the repository (LFS files will be downloaded automatically)
+git clone https://github.com/LittleLittleCloud/RazorConsole.git
+```
+
+The following file types are automatically tracked by Git LFS:
+- Images: `*.gif`, `*.png`, `*.jpg`, `*.jpeg`
+- Videos: `*.mp4`, `*.mov`, `*.avi`
+- Archives: `*.zip`, `*.tar.gz`
+- Documents: `*.pdf`
 
 ## Community & support
 
