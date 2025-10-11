@@ -2,8 +2,10 @@
 
 # 🚀 RazorConsole
 
-[![NuGet Version](https://img.shields.io/nuget/v/RazorConsole.Core.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/RazorConsole.Core)
+[![NuGet Version](https://img.shields.io/nuget/vpre/RazorConsole.Core.svg?style=flat-square&logo=nuget&include_prereleases=true)](https://www.nuget.org/packages/RazorConsole.Core)
+[![Component Gallery](https://img.shields.io/nuget/vpre/RazorConsole.Gallery.svg?style=flat-square&logo=nuget&label=gallery&color=purple&include_prereleases=true)](https://www.nuget.org/packages/RazorConsole.Gallery)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/RazorConsole.Core.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/RazorConsole.Core)
+
 [![GitHub Release](https://img.shields.io/github/v/release/LittleLittleCloud/RazorConsole?style=flat-square&logo=github)](https://github.com/LittleLittleCloud/RazorConsole/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4?style=flat-square)](https://dotnet.microsoft.com/)
@@ -124,7 +126,7 @@ See [`design-doc/builtin-components.md`](design-doc/builtin-components.md) for t
 Explore the built-in components interactively with the RazorConsole Component Gallery. Install the tool globally and launch it from any terminal:
 
 ```bash
-dotnet tool install --global RazorConsole.Gallery --version 0.0.2-alpha.181b79
+dotnet tool install --global RazorConsole.Gallery --version 0.0.3-alpha.4657e6
 ```
 
 After installation, run `razorconsole-gallery` to open the showcase and browse component examples rendered in the console. The gallery includes quick links back to this README for more details.
