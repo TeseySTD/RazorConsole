@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using RazorConsole.Core.Renderables;
 using RazorConsole.Core.Rendering.ComponentMarkup;
 using RazorConsole.Core.Rendering.Syntax;
@@ -131,7 +132,7 @@ public class VdomSpectreTranslatorTests
     }
 
     [Fact]
-    public void Translate_RowsNode_ReturnsRowsRenderable()
+    public void Translate_RowsNode_ReturnsColumnsRenderable()
     {
         var child = Element("span", span =>
         {
@@ -151,7 +152,7 @@ public class VdomSpectreTranslatorTests
         var success = translator.TryTranslate(node, out var renderable, out var animations);
 
         Assert.True(success);
-        Assert.IsType<Rows>(renderable);
+        Assert.IsType<Columns>(renderable);
         Assert.Empty(animations);
     }
 
@@ -209,7 +210,7 @@ public class VdomSpectreTranslatorTests
     }
 
     [Fact]
-    public void Translate_GenericDivNode_ReturnsRowsRenderable()
+    public void Translate_GenericDivNode_ReturnsColumnsRenderable()
     {
         var node = Element("div", div =>
         {
@@ -222,7 +223,7 @@ public class VdomSpectreTranslatorTests
         var success = translator.TryTranslate(node, out var renderable, out var animations);
 
         Assert.True(success);
-        Assert.IsType<Rows>(renderable);
+        Assert.IsType<Columns>(renderable);
         Assert.Empty(animations);
     }
 
@@ -319,6 +320,172 @@ public class VdomSpectreTranslatorTests
         Assert.Empty(animations);
     }
 
+    [Fact]
+    public void Translate_TableNode_ReturnsTableRenderable()
+    {
+        var headerRow = Element("tr", tr =>
+        {
+            tr.AddChild(HeaderCell("Stage", "left"));
+            tr.AddChild(HeaderCell("Duration", "center"));
+            tr.AddChild(HeaderCell("Result", "right"));
+        });
+
+        var thead = Element("thead", head =>
+        {
+            head.AddChild(headerRow);
+        });
+
+        var bodyRow = Element("tr", tr =>
+        {
+            tr.SetAttribute("data-style", "fg=grey");
+            tr.AddChild(DataCell("Compile"));
+            tr.AddChild(DataCell("00:03:12"));
+            tr.AddChild(DataCell("✔"));
+        });
+
+        var tbody = Element("tbody", body =>
+        {
+            body.AddChild(bodyRow);
+        });
+
+        var tableNode = Element("table", table =>
+        {
+            table.SetAttribute("class", "table");
+            table.SetAttribute("data-expand", "true");
+            table.SetAttribute("data-title", "Build status");
+            table.AddChild(thead);
+            table.AddChild(tbody);
+        });
+
+        var translator = new VdomSpectreTranslator();
+
+        var success = translator.TryTranslate(tableNode, out var renderable, out var animations);
+
+        Assert.True(success);
+        var table = Assert.IsType<Table>(renderable);
+        Assert.True(table.Expand);
+        Assert.True(table.ShowHeaders);
+        Assert.Equal(3, table.Columns.Count);
+        Assert.Equal(Justify.Right, table.Columns[2].Alignment);
+        Assert.Empty(animations);
+
+        static VNode HeaderCell(string content, string align) => Element("th", th =>
+        {
+            th.SetAttribute("data-align", align);
+            th.AddChild(Text(content));
+        });
+
+        static VNode DataCell(string content) => Element("td", td =>
+        {
+            td.AddChild(Text(content));
+        });
+    }
+
+    [Fact]
+    public void Translate_StrongElement_ReturnsBoldMarkup()
+    {
+        var node = Element("strong", strong =>
+        {
+            strong.AddChild(Text("Important"));
+        });
+
+        var translator = new VdomSpectreTranslator();
+
+        var success = translator.TryTranslate(node, out var renderable, out var animations);
+
+        Assert.True(success);
+        var markup = Assert.IsType<Markup>(renderable);
+        Assert.Equal("[bold]Important[/]", BuildInlineMarkupLiteral(node));
+        Assert.Empty(animations);
+    }
+
+    [Fact]
+    public void Translate_NestedInlineElements_ComposesMarkup()
+    {
+        var node = Element("strong", strong =>
+        {
+            strong.AddChild(Text("Hello "));
+            strong.AddChild(Element("em", em =>
+            {
+                em.AddChild(Text("world"));
+            }));
+        });
+
+        var translator = new VdomSpectreTranslator();
+
+        var success = translator.TryTranslate(node, out var renderable, out var animations);
+
+        Assert.True(success);
+        var markup = Assert.IsType<Markup>(renderable);
+        Assert.Equal("[bold]Hello [italic]world[/][/]", BuildInlineMarkupLiteral(node));
+        Assert.Empty(animations);
+    }
+
+    [Fact]
+    public void Translate_CodeElement_DisablesNestedFormatting()
+    {
+        var node = Element("code", code =>
+        {
+            code.AddChild(Text("var value = 42;"));
+        });
+
+        var translator = new VdomSpectreTranslator();
+
+        var success = translator.TryTranslate(node, out var renderable, out var animations);
+
+        Assert.True(success);
+        var markup = Assert.IsType<Markup>(renderable);
+        Assert.Equal("[grey53 on #1f1f1f]var value = 42;[/]", BuildInlineMarkupLiteral(node));
+        Assert.Empty(animations);
+    }
+
+    [Fact]
+    public void ConvertChildren_TextNodes_NormalizeWhitespace()
+    {
+        var translator = new VdomSpectreTranslator();
+        var context = new VdomSpectreTranslator.TranslationContext(translator);
+        var children = new List<VNode>
+        {
+            VNode.CreateText("  Hello   world"),
+            VNode.CreateText("\n\tand\t friends  "),
+        };
+
+        var renderables = InvokeTryConvertChildren(children, context);
+        Assert.Equal(2, renderables.Count);
+    }
+
+    [Fact]
+    public void ConvertChildren_WhitespaceBetweenTextNodes_ProducesSingleSpacer()
+    {
+        var translator = new VdomSpectreTranslator();
+        var context = new VdomSpectreTranslator.TranslationContext(translator);
+        var children = new List<VNode>
+        {
+            VNode.CreateText("Hello"),
+            VNode.CreateText("   \r\n\t "),
+            VNode.CreateText("world"),
+        };
+
+        var renderables = InvokeTryConvertChildren(children, context);
+        Assert.Equal(2, renderables.Count);
+    }
+
+    [Fact]
+    public void ConvertChildren_TrailingWhitespace_IsDiscarded()
+    {
+        var translator = new VdomSpectreTranslator();
+        var context = new VdomSpectreTranslator.TranslationContext(translator);
+        var children = new List<VNode>
+        {
+            VNode.CreateText("Hello "),
+        };
+
+        var renderables = InvokeTryConvertChildren(children, context);
+
+        var markup = Assert.Single(renderables);
+        AssertMarkupText(markup);
+    }
+
     private static VNode Element(string tagName, Action<VNode>? configure = null)
     {
         var node = VNode.CreateElement(tagName);
@@ -327,4 +494,38 @@ public class VdomSpectreTranslatorTests
     }
 
     private static VNode Text(string? value) => VNode.CreateText(value);
+
+    private static string BuildInlineMarkupLiteral(VNode node)
+    {
+        var translatorType = typeof(VdomSpectreTranslator).GetNestedType("HtmlInlineTextElementTranslator", BindingFlags.NonPublic);
+        Assert.NotNull(translatorType);
+
+        var method = translatorType!.GetMethod("TryBuildMarkup", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        var arguments = new object?[] { node, null };
+        var success = (bool)method!.Invoke(null, arguments)!;
+        Assert.True(success);
+
+        return Assert.IsType<string>(arguments[1]);
+    }
+
+    private static List<IRenderable> InvokeTryConvertChildren(IReadOnlyList<VNode> children, VdomSpectreTranslator.TranslationContext context)
+    {
+        var method = typeof(VdomSpectreTranslator).GetMethod("TryConvertChildrenToRenderables", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        var arguments = new object?[] { children, context, null };
+        var success = (bool)method!.Invoke(null, arguments)!;
+        Assert.True(success);
+
+        var renderables = Assert.IsType<List<IRenderable>>(arguments[2]);
+        return renderables;
+    }
+
+    private static void AssertMarkupText(IRenderable renderable)
+    {
+        // TODO think about better way to extract text from markup
+        var markup = Assert.IsType<Markup>(renderable);
+    }
 }
