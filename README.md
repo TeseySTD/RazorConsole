@@ -16,7 +16,7 @@
 
 ## 🎯 What is RazorConsole?
 
-RazorConsole bridges the gap between modern web UI development and console applications. It lets you create sophisticated terminal interfaces using Razor components, complete with interactive elements, rich styling, and familiar development patterns. Whether you're building CLI tools, admin dashboards, or developer utilities, RazorConsole makes console app development as intuitive as building a web application.
+RazorConsole bridges the gap between modern web UI development and console applications. It lets you create sophisticated terminal interfaces using Razor components, complete with interactive elements, rich styling, and familiar development patterns.
 
 ## 📦 Install
 
