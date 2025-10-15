@@ -1,12 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.HtmlRendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -16,10 +8,9 @@ using RazorConsole.Core.Focus;
 using RazorConsole.Core.Input;
 using RazorConsole.Core.Rendering;
 using RazorConsole.Core.Rendering.Syntax;
+using RazorConsole.Core.Utilities;
 using RazorConsole.Core.Vdom;
 using Spectre.Console;
-using Spectre.Console.Rendering;
-using static System.Collections.Specialized.BitVector32;
 
 namespace RazorConsole.Core;
 
@@ -114,6 +105,7 @@ public sealed class ConsoleAppBuilder
 
     private static void RegisterDefaults(IServiceCollection services)
     {
+        services.TryAddSingleton<IComponentActivator, ComponentActivator>();
         services.TryAddSingleton<ConsoleNavigationManager>();
         services.TryAddSingleton<NavigationManager>(sp => sp.GetRequiredService<ConsoleNavigationManager>());
         services.TryAddSingleton<ILoggerFactory>(_ => NullLoggerFactory.Instance);
