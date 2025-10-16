@@ -62,7 +62,7 @@ jobs:
           lfs: true
 
       - name: Compute version suffix
-        run: echo "VersionSuffix=nightly-$(date +'%Y%m%d')-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+        run: echo "VersionSuffix=$(date +'%Y%m%d')-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
