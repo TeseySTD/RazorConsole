@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -120,6 +121,18 @@ public sealed class ConsoleAppBuilder
         services.TryAddSingleton<ISyntaxThemeRegistry, SyntaxThemeRegistry>();
         services.TryAddSingleton<SpectreMarkupFormatter>();
         services.TryAddSingleton<SyntaxHighlightingService>();
+
+        // Register default VDOM translators
+        services.AddDefaultVdomTranslators();
+
+        // Register VdomSpectreTranslator to use translators from DI
+        services.TryAddSingleton<Rendering.Vdom.VdomSpectreTranslator>(sp =>
+        {
+            var translators = sp.GetServices<Rendering.Vdom.IVdomElementTranslator>()
+                .OrderBy(t => t.Priority)
+                .ToList();
+            return new Rendering.Vdom.VdomSpectreTranslator(translators);
+        });
     }
 }
 
