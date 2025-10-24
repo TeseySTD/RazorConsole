@@ -21,7 +21,7 @@ public sealed class HtmlInlineTextElementTranslator : IVdomElementTranslator
             ["mark"] = new MarkupEnvelope("[black on yellow]", "[/]"),
             ["del"] = new MarkupEnvelope("[strikethrough]", "[/]"),
             ["ins"] = new MarkupEnvelope("[underline]", "[/]"),
-            ["code"] = new MarkupEnvelope("[grey53 on #1f1f1f]", "[/]", AllowNestedFormatting: false),
+            ["code"] = new MarkupEnvelope("[indianred1 on #1f1f1f]", "[/]", AllowNestedFormatting: false),
             ["abbr"] = new MarkupEnvelope("[underline]", "[/]"),
             ["cite"] = new MarkupEnvelope("[italic]", "[/]"),
             ["small"] = new MarkupEnvelope("[dim]", "[/]"),
@@ -161,69 +161,6 @@ public sealed class HtmlInlineTextElementTranslator : IVdomElementTranslator
         }
 
         return true;
-    }
-
-    private static void AppendNormalizedText(StringBuilder builder, string text)
-    {
-        if (text.Length == 0)
-        {
-            return;
-        }
-
-        var normalized = new StringBuilder(text.Length);
-        var pendingWhitespace = false;
-
-        foreach (var ch in text)
-        {
-            if (char.IsWhiteSpace(ch))
-            {
-                pendingWhitespace = true;
-                continue;
-            }
-
-            if (pendingWhitespace)
-            {
-                AppendSpaceIfNeeded(builder, normalized);
-                pendingWhitespace = false;
-            }
-
-            normalized.Append(ch);
-        }
-
-        if (pendingWhitespace)
-        {
-            AppendSpaceIfNeeded(builder, normalized);
-        }
-
-        if (normalized.Length == 0)
-        {
-            return;
-        }
-
-        builder.Append(Markup.Escape(normalized.ToString()));
-    }
-
-    private static void AppendSpaceIfNeeded(StringBuilder builder, StringBuilder normalized)
-    {
-        if (normalized.Length > 0)
-        {
-            if (normalized[^1] != ' ')
-            {
-                normalized.Append(' ');
-            }
-
-            return;
-        }
-
-        if (builder.Length == 0)
-        {
-            return;
-        }
-
-        if (!char.IsWhiteSpace(builder[^1]))
-        {
-            normalized.Append(' ');
-        }
     }
 
     private readonly record struct MarkupEnvelope(string Prefix, string Suffix, bool AllowNestedFormatting = true);

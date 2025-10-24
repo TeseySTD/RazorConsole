@@ -1,0 +1,28 @@
+@namespace RazorConsole.Components
+
+@using System
+@using Microsoft.AspNetCore.Components
+@using RazorConsole.Core.Rendering.Markdown
+
+@((MarkupString)_html)
+
+@code {
+    private string _html = string.Empty;
+
+    [Parameter]
+    [EditorRequired]
+    public string Content { get; set; } = string.Empty;
+
+    [Inject]
+    internal MarkdownRenderingService MarkdownService { get; set; } = default!;
+
+    protected override void OnParametersSet()
+    {
+        if (MarkdownService is null)
+        {
+            throw new InvalidOperationException("MarkdownRenderingService has not been registered.");
+        }
+
+        _html = MarkdownService.ConvertToHtml(Content ?? string.Empty);
+    }
+}

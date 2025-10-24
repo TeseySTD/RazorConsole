@@ -9,6 +9,7 @@ using RazorConsole.Core.Controllers;
 using RazorConsole.Core.Focus;
 using RazorConsole.Core.Input;
 using RazorConsole.Core.Rendering;
+using RazorConsole.Core.Rendering.Markdown;
 using RazorConsole.Core.Rendering.Syntax;
 using RazorConsole.Core.Utilities;
 using RazorConsole.Core.Vdom;
@@ -75,7 +76,11 @@ public static class HostBuilderExtension
         services.TryAddSingleton<ISyntaxThemeRegistry, SyntaxThemeRegistry>();
         services.TryAddSingleton<SpectreMarkupFormatter>();
         services.TryAddSingleton<SyntaxHighlightingService>();
+        services.TryAddSingleton<MarkdownRenderingService>();
         services.AddDefaultVdomTranslators();
+        // Register HtmlCodeBlockElementTranslator with dependency injection
+        services.AddSingleton<Rendering.Vdom.IVdomElementTranslator>(sp =>
+            new Rendering.Vdom.HtmlCodeBlockElementTranslator(sp.GetRequiredService<SyntaxHighlightingService>()));
         services.TryAddSingleton(sp =>
         {
             var translators = sp.GetServices<Rendering.Vdom.IVdomElementTranslator>()

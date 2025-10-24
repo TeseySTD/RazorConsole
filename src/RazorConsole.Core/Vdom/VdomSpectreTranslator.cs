@@ -126,13 +126,15 @@ public sealed class VdomSpectreTranslator
         {
             new TextElementTranslator(),
             new HtmlInlineTextElementTranslator(),
-            new ParagraphElementTranslator(),
             new SpacerElementTranslator(),
             new NewlineElementTranslator(),
             new SpinnerElementTranslator(),
             new ButtonElementTranslator(),
             new HtmlButtonElementTranslator(),
             new SyntaxHighlighterElementTranslator(),
+            new HtmlHeadingElementTranslator(),
+            new HtmlBlockquoteElementTranslator(),
+            new HtmlHrElementTranslator(),
             new PanelElementTranslator(),
             new RowsElementTranslator(),
             new ColumnsElementTranslator(),
@@ -143,6 +145,7 @@ public sealed class VdomSpectreTranslator
             new TableElementTranslator(),
             new HtmlListElementTranslator(),
             new HtmlDivElementTranslator(),
+            new HtmlParagraphElementTranslator(),
             new FailToRenderElementTranslator(),
         }
         .OrderBy(t => t.Priority)
@@ -345,7 +348,11 @@ public sealed class VdomSpectreTranslator
             return children[0];
         }
 
-        return new Rows(children);
+        return new Columns(children)
+        {
+            Expand = false,
+            Padding = new Padding(0, 0, 0, 0),
+        };
     }
 
     /// <summary>
