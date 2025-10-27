@@ -6,7 +6,6 @@ import builtInComponentsDoc from "@/docs/built-in-components.md?raw";
 import hotReloadDoc from "@/docs/hot-reload.md?raw";
 import customTranslatorsDoc from "@/docs/custom-translators.md?raw";
 import keyboardEventsDoc from "@/docs/keyboard-events.md?raw";
-import focusManagementDoc from "@/docs/focus-management.md?raw";
 import componentGalleryDoc from "@/docs/component-gallery.md?raw";
 import { MarkdownRenderer } from "@/components/Markdown";
 
@@ -29,11 +28,6 @@ export default function Docs() {
                 id: "keyboard-events",
                 title: "Keyboard Events",
                 content: keyboardEventsDoc,
-            },
-            {
-                id: "focus-management",
-                title: "Focus Management",
-                content: focusManagementDoc,
             },
             {
                 id: "component-gallery",
