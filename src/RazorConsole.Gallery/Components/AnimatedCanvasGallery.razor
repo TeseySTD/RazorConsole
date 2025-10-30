@@ -1,0 +1,238 @@
+﻿@using Spectre.Console
+
+<Rows>
+    <Markup
+        Content="Animated Canvas renders an simple animation of pixels with different colors using set frame function."/>
+    <Markup Content="It is strongly recommended to use AnimatedCanvas for animations instead of default Canvas, because AnimatedCanvas
+                    is memory-optimized and also thread-safe."
+            Decoration="Decoration.Underline"/>
+    <Markup Content="Source Code: AnimatedCanvas.razor" Foreground="Color.DeepSkyBlue1"
+            Decoration="Decoration.Underline" link="@DocumentationUrl"/>
+
+    <Columns>
+        <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
+            <SyntaxHighlighter Language="razor"
+                               Code="@_sampleCode"
+                               ShowLineNumbers="true"/>
+        </Panel>
+
+        <Panel Title="Preview" Border="BoxBorder.Rounded" Expand="true">
+            <Rows>
+                <Markup Content="Animated Color Wave (15x15)" Decoration="Decoration.Bold"/>
+                <AnimatedCanvas
+                    Interval="10"
+                    CanvasWidth="15"
+                    CanvasHeight="15"
+                    PixelWidth="1"
+                    Scale="true"
+                    SetFrameFunction="UpdateAnimatedGradient"/>
+                <Markup Content="Animated Color Snake Game (15x15)" Decoration="Decoration.Bold"/>
+                <AnimatedCanvas
+                    Interval="300"
+                    CanvasWidth="15"
+                    CanvasHeight="15"
+                    Scale="true"
+                    SetFrameFunction="UpdateAnimatedSnake"/>
+            </Rows>
+        </Panel>
+    </Columns>
+</Rows>
+
+@code {
+
+    private DateTime _gradientAnimationStart = DateTime.UtcNow;
+    private int _lastSnakeFrame = -1;
+
+    private List<(int x, int y)> _snakeBody = new() { (7, 7), (7, 6), (7, 5) };
+    private (int x, int y) _snakeFood = (10, 10);
+    private (int dx, int dy) _snakeDirection = (0, 1);
+    private Random _snakeRandom = new();
+
+    private string _sampleCode = @"
+<AnimatedCanvas SetFrameFunction=""UpdateAnimatedGradient""
+        Interval=""50""
+        CanvasWidth=""15""
+        CanvasHeight=""15""
+        PixelWidth=""1""
+        Scale=""true""/>
+<AnimatedCanvas SetFrameFunction=""UpdateAnimatedSnake""
+        Interval=""300""
+        CanvasWidth=""15""
+        CanvasHeight=""15""
+        Scale=""true""/>
+".Trim();
+
+    private const string DocumentationUrl =
+        "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/AnimatedCanvas.razor";
+
+
+    private Color HsvToRgb(double hue, double saturation, double value)
+    {
+        double c = value * saturation;
+        double x = c * (1 - Math.Abs((hue / 60) % 2 - 1));
+        double m = value - c;
+
+        double r;
+        double g;
+        double b;
+
+        if (hue < 60)
+        {
+            r = c;
+            g = x;
+            b = 0;
+        }
+        else if (hue < 120)
+        {
+            r = x;
+            g = c;
+            b = 0;
+        }
+        else if (hue < 180)
+        {
+            r = 0;
+            g = c;
+            b = x;
+        }
+        else if (hue < 240)
+        {
+            r = 0;
+            g = x;
+            b = c;
+        }
+        else if (hue < 300)
+        {
+            r = x;
+            g = 0;
+            b = c;
+        }
+        else
+        {
+            r = c;
+            g = 0;
+            b = x;
+        }
+
+        byte red = (byte)Math.Round((r + m) * 255);
+        byte green = (byte)Math.Round((g + m) * 255);
+        byte blue = (byte)Math.Round((b + m) * 255);
+
+        return new Color(red, green, blue);
+    }
+
+    private void UpdateAnimatedGradient(int frameIndex, (int x, int y, Color color)[] array)
+    {
+        var elapsed = frameIndex * TimeSpan.FromMilliseconds(10).TotalSeconds;
+
+        int w = 15;
+        int h = 15;
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                double timeOffset = elapsed + (x * 0.1) + (y * 0.1);
+                double hue = (timeOffset * 60) % 360;
+                var color = HsvToRgb(hue, 0.8, 0.9);
+                array[y * w + x] = (x, y, color);
+            }
+        }
+    }
+
+    private void UpdateAnimatedSnake(int frameIndex, (int x, int y, Color color)[] array)
+    {
+        const int w = 15;
+        const int h = 15;
+
+        for (int i = 0; i < w * h; i++)
+        {
+            array[i] = (i % w, i / w, Color.Grey11);
+        }
+
+        if (frameIndex == 0 || _snakeBody.Count == 0)
+        {
+            _snakeBody = new() { (7, 7), (7, 6), (7, 5) };
+            _snakeDirection = (0, 1);
+            _snakeFood = (10, 10);
+            _lastSnakeFrame = 0;
+        }
+
+        if (frameIndex > _lastSnakeFrame)
+        {
+            _lastSnakeFrame = frameIndex;
+
+            var head = _snakeBody[0];
+            var newHead = (x: head.x + _snakeDirection.dx, y: head.y + _snakeDirection.dy);
+
+            // Wraparound
+            if (newHead.x < 0) newHead.x = w - 1;
+            if (newHead.x >= w) newHead.x = 0;
+            if (newHead.y < 0) newHead.y = h - 1;
+            if (newHead.y >= h) newHead.y = 0;
+
+            bool ateFood = newHead == _snakeFood;
+            _snakeBody.Insert(0, newHead);
+
+            if (ateFood)
+            {
+                do
+                {
+                    _snakeFood = (_snakeRandom.Next(w), _snakeRandom.Next(h));
+                } while (_snakeBody.Contains(_snakeFood));
+            }
+            else
+            {
+                _snakeBody.RemoveAt(_snakeBody.Count - 1);
+            }
+
+            // Collision detection
+            if (_snakeBody.Skip(1).Contains(newHead))
+            {
+                _snakeBody = new() { (7, 7), (7, 6), (7, 5) };
+                _snakeDirection = (0, 1);
+                _snakeFood = (10, 10);
+            }
+
+            // Simple AI
+            if (head.x < _snakeFood.x && _snakeDirection.dx == 0)
+                _snakeDirection = (1, 0);
+            else if (head.x > _snakeFood.x && _snakeDirection.dx == 0)
+                _snakeDirection = (-1, 0);
+            else if (head.y < _snakeFood.y && _snakeDirection.dy == 0)
+                _snakeDirection = (0, 1);
+            else if (head.y > _snakeFood.y && _snakeDirection.dy == 0)
+                _snakeDirection = (0, -1);
+        }
+
+        // Малюємо змійку
+        for (int i = 0; i < _snakeBody.Count; i++)
+        {
+            var segment = _snakeBody[i];
+            if (segment.x >= 0 && segment.x < w && segment.y >= 0 && segment.y < h)
+            {
+                Color segmentColor = i == 0 ? Color.Green :
+                    i == _snakeBody.Count - 1 ? Color.DarkGreen :
+                    ((double)i / _snakeBody.Count < 0.5 ? Color.Lime : Color.Green);
+                array[segment.y * w + segment.x] = (segment.x, segment.y, segmentColor);
+            }
+        }
+
+        // Food
+        if (_snakeFood.x >= 0 && _snakeFood.x < w && _snakeFood.y >= 0 && _snakeFood.y < h)
+        {
+            array[_snakeFood.y * w + _snakeFood.x] = (_snakeFood.x, _snakeFood.y, Color.Red);
+        }
+
+        // Border
+        for (int i = 0; i < w; i++)
+        {
+            array[i] = (i, 0, Color.Grey50);
+            array[(h - 1) * w + i] = (i, h - 1, Color.Grey50);
+        }
+
+        for (int i = 0; i < h; i++)
+        {
+            array[i * w] = (0, i, Color.Grey50);
+            array[i * w + (w - 1)] = (w - 1, i, Color.Grey50);
+        }
+    }
+}

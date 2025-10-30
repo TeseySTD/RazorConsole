@@ -3,7 +3,6 @@ using RazorConsole.Core.Vdom;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
-
 namespace RazorConsole.Core.Rendering.Vdom;
 
 public sealed class CanvasElementTranslator : IVdomElementTranslator
@@ -13,7 +12,6 @@ public sealed class CanvasElementTranslator : IVdomElementTranslator
     public bool TryTranslate(VNode node, TranslationContext context, out IRenderable? renderable)
     {
         renderable = null;
-
 
         if (node.Kind != VNodeKind.Element)
         {
@@ -31,6 +29,9 @@ public sealed class CanvasElementTranslator : IVdomElementTranslator
             return false;
         }
 
+        var isAnimated = node.Attributes.TryGetValue("data-canvas-animated", out var animatedAttr)
+                         && animatedAttr != null && animatedAttr.Equals("true", StringComparison.OrdinalIgnoreCase);
+
         var width = GetIntAttribute(node, "data-width");
 
         var height = GetIntAttribute(node, "data-height");
@@ -43,46 +44,59 @@ public sealed class CanvasElementTranslator : IVdomElementTranslator
 
         var pixelsDataIdAttribute = VdomSpectreTranslator.GetAttribute(node, "data-canvas-data-id");
 
-        var canvas = new Canvas(width, height);
-
-
-        if (maxWidth.HasValue)
+        if (isAnimated)
         {
-            canvas.MaxWidth = maxWidth.Value;
-        }
-
-        canvas.PixelWidth = pixelWidth;
-
-
-        canvas.Scale = scale;
-
-
-        if (!string.IsNullOrWhiteSpace(pixelsDataIdAttribute) &&
-            Guid.TryParse(pixelsDataIdAttribute, out var dataId))
-        {
-            var dataInDictionary = CanvasDataRegistry.TryGetData(dataId, out var pixels);
-
-            if (!dataInDictionary)
+            var interval = GetIntAttribute(node, "data-interval");
+            if (!string.IsNullOrWhiteSpace(pixelsDataIdAttribute) &&
+                Guid.TryParse(pixelsDataIdAttribute, out var dataId))
+            {
+                var dataInDictionary = CanvasDataRegistry.TryGetDelegate(dataId, out var setFrameFunction);
+                if (!dataInDictionary || setFrameFunction == null)
+                    return false;
+                var animatedCanvas = new AnimatedCanvasRenderable(
+                    width, height,
+                    pixelWidth, scale,
+                    maxWidth, setFrameFunction,
+                    TimeSpan.FromMilliseconds(interval)
+                );
+                AnimatedRenderableRegistry.Register(animatedCanvas);
+                renderable = animatedCanvas;
+            }
+            else
             {
                 return false;
-            }
-
-            foreach (var p in pixels!)
-
-
-            {
-                canvas.SetPixel(p.Item1, p.Item2, p.Item3);
             }
         }
         else
         {
-            return false;
+            var canvas = new Canvas(width, height);
+
+            if (maxWidth.HasValue)
+                canvas.MaxWidth = maxWidth.Value;
+
+            canvas.PixelWidth = pixelWidth;
+            canvas.Scale = scale;
+
+            if (!string.IsNullOrWhiteSpace(pixelsDataIdAttribute) &&
+                Guid.TryParse(pixelsDataIdAttribute, out var dataId))
+            {
+                var dataInDictionary = CanvasDataRegistry.TryGetData(dataId, out var pixels);
+                if (!dataInDictionary)
+                    return false;
+                foreach (var p in pixels!)
+                {
+                    canvas.SetPixel(p.Item1, p.Item2, p.Item3);
+                }
+            }
+            else
+                return false;
+
+            renderable = canvas;
         }
 
-        renderable = canvas;
+
         return true;
     }
-
 
     private static int GetIntAttribute(VNode node, string name, int? defaultValue = null)
     {
@@ -110,7 +124,6 @@ public sealed class CanvasElementTranslator : IVdomElementTranslator
 
         return defaultValue;
     }
-
 
     private static int? GetNullableIntAttribute(VNode node, string name)
     {

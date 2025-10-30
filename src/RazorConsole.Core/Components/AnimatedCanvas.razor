@@ -1,0 +1,64 @@
+﻿@using RazorConsole.Core.Rendering
+@using Spectre.Console
+@namespace RazorConsole.Components
+
+@implements IDisposable
+
+<div class="spectre-canvas"
+     data-canvas="true"
+     data-canvas-animated="true"
+     data-canvas-data-id="@_dataId"
+     data-width="@CanvasWidth"
+     data-height="@CanvasHeight"
+     data-maxwidth="@MaxWidthAttribute"
+     data-pixelwidth="@PixelWidth"
+     data-scale="@ScaleAttribute"
+     data-interval="@Interval"
+/>
+
+@code {
+    [Parameter]
+    [EditorRequired]
+    public int CanvasWidth { get; set; }
+
+    [Parameter]
+    [EditorRequired]
+    public int CanvasHeight { get; set; }
+
+    [Parameter]
+    public int? MaxWidth { get; set; }
+
+    [Parameter]
+    public int PixelWidth { get; set; } = 2;
+
+    [Parameter]
+    public bool Scale { get; set; }
+
+    [Parameter]
+    [EditorRequired]
+    public int Interval { get; set; }
+
+    [Parameter]
+    [EditorRequired]
+    public Action<int, (int x, int y, Color color)[]> SetFrameFunction { get; set; } = null!;
+
+    private readonly Guid _dataId = Guid.NewGuid();
+    private string? MaxWidthAttribute => MaxWidth?.ToString();
+    private string ScaleAttribute => Scale ? "true" : "false";
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        CanvasDataRegistry.RegisterDelegate(_dataId, SetFrameFunction);
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        CanvasDataRegistry.RegisterDelegate(_dataId, SetFrameFunction);
+    }
+
+    public void Dispose() => CanvasDataRegistry.UnregisterDelegate(_dataId);
+
+}
