@@ -49,7 +49,7 @@
             </Panel>
             <Panel Title="List (ol)" Border="BoxBorder.Rounded" Expand="true">
                 <Scrollable Items="@AlphabetData" PageSize="4">
-                    <ol data-offset="@context.CurrentOffset" @onkeydown="context.KeyDownEventHandler">
+                    <ol start="@(context.CurrentOffset + 1)" @onkeydown="context.KeyDownEventHandler">
                         @foreach (var item in context)
                         {
                             <li>
@@ -108,8 +108,8 @@
 </Scrollable>
 
 <Scrollable Items=""@AlphabetData"" PageSize=""4"">
-    //Use data-offset attribute in ordered list to sync numeration with scrolling.
-    <ol data-offset=""@context.CurrentOffset"" @onkeydown=""context.KeyDownEventHandler"">
+    //Use start attribute in ordered list to sync numeration with scrolling.
+    <ol start=""@(context.CurrentOffset + 1)"" @onkeydown=""context.KeyDownEventHandler"">
         @foreach (var item in context)
         {
             <li><Markup Content=""{item.Letter}"" Foreground=""@item.Color""/></li>
