@@ -55,6 +55,7 @@ public static class HostBuilderExtension
         Action<IHostApplicationBuilder>? configure = null)
         where TComponent : IComponent
     {
+        RuntimeEncoding.EnsureUtf8();
         RegisterDefaults<TComponent>(hostBuilder.Services);
 
         configure?.Invoke(hostBuilder);
