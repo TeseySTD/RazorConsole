@@ -18,14 +18,14 @@
             <Panel Title="Alphabet Table" Border="BoxBorder.Rounded" Expand="true">
                 <Scrollable Items="@AlphabetData" PageSize="3">
                     <Rows>
-                        <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded">
+                        <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded" @onkeydown="context.KeyDownEventHandler">
                             <SpectreTHead>
                                 <SpectreTR>
                                     <SpectreTH Align="Justify.Left">N</SpectreTH>
                                     <SpectreTH Align="Justify.Center">Letter</SpectreTH>
                                 </SpectreTR>
                             </SpectreTHead>
-                            <SpectreTBody @onkeydown="context.KeyDownEventHandler">
+                            <SpectreTBody >
                                 @foreach (var item in context)
                                 {
                                     <SpectreTR>
@@ -88,7 +88,7 @@
     private string _scrollableMarkup = @"
 <Scrollable Items=""@AlphabetData"" PageSize=""3"">
     <Rows>
-        <SpectreTable Title=""Short alphabet"" Border=""TableBorder.Rounded"">
+        <SpectreTable Title=""Short alphabet"" Border=""TableBorder.Rounded"" @onkeydown=""context.KeyDownEventHandler"">
             <SpectreTBody>
                 @foreach (var item in context)
                 {

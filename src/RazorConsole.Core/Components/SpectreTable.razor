@@ -6,10 +6,13 @@
 @using Spectre.Console
 
 <table class="table"
+    @onfocus="OnFocus"
+    @onfocusout="OnFocusOut"
 	data-expand="@ExpandAttribute"
 	data-width="@WidthAttribute"
 	data-title="@TitleAttribute"
-	data-border="@BorderAttribute"
+    data-border="@BorderAttribute"
+    data-border-color="@BorderColorAttribute"
 	data-show-headers="@ShowHeadersAttribute"
 	@attributes="AdditionalAttributes">
     @ChildContent
@@ -31,11 +34,19 @@
 	[Parameter]
 	public TableBorder? Border { get; set; }
 
+    [Parameter]
+    public Color BorderColor { get; set; } = Color.White;
+
+    [Parameter]
+    public Color FocusedBorderColor { get; set; } = Color.Aqua;
+
 	[Parameter]
 	public bool ShowHeaders { get; set; } = true;
 
 	[Parameter(CaptureUnmatchedValues = true)]
 	public IReadOnlyDictionary<string, object?>? AdditionalAttributes { get; set; }
+
+    private bool isFocused = false;
 
 	private string ExpandAttribute => Expand ? "true" : "false";
 
@@ -46,6 +57,8 @@
 	private string? TitleAttribute => string.IsNullOrWhiteSpace(Title) ? null : Title;
 
 	private string? BorderAttribute => ToBorderAttribute(Border);
+
+    private string BorderColorAttribute => isFocused ? FocusedBorderColor.ToHex() : BorderColor.ToHex();
 
 	private static string? ToBorderAttribute(TableBorder? border)
 	{
@@ -118,4 +131,16 @@
 	}
 
 	private string ShowHeadersAttribute => ShowHeaders ? "true" : "false";
+
+    private void OnFocus(FocusEventArgs e)
+    {
+		isFocused = true;
+        StateHasChanged();
+    }
+
+    private void OnFocusOut(FocusEventArgs e)
+    {
+		isFocused = false;
+        StateHasChanged();
+    }
 }
