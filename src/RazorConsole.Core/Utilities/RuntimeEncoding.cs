@@ -4,7 +4,6 @@ namespace RazorConsole.Core.Utilities;
 
 public static class RuntimeEncoding
 {
-    private const int Utf8CodePage = 65001;
 
     public static void EnsureUtf8()
     {
@@ -15,8 +14,8 @@ public static class RuntimeEncoding
         }
 
         // Already using UTF-8 — nothing to do
-        if (Console.OutputEncoding.CodePage == Utf8CodePage &&
-            Console.InputEncoding.CodePage == Utf8CodePage)
+        if (Console.OutputEncoding.Equals(Encoding.UTF8) &&
+            Console.InputEncoding.Equals(Encoding.UTF8))
         {
             return;
         }
@@ -32,7 +31,7 @@ public static class RuntimeEncoding
             Console.InputEncoding = Encoding.UTF8;
 
             // Some environments accept the assignment but silently ignore it
-            success = Console.OutputEncoding.CodePage == Utf8CodePage & Console.InputEncoding.CodePage == Utf8CodePage;
+            success = Console.OutputEncoding.Equals(Encoding.UTF8) & Console.InputEncoding.Equals(Encoding.UTF8);
         }
         catch
         {
