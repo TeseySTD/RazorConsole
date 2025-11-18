@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./assets/razor_console logo_dark_icon (128x128).svg" alt="RazorConsole Logo" width="128" height="128" />
+<img src="./assets/razor_console logo.svg" alt="RazorConsole Logo" width="128" height="128" />
 
 # RazorConsole
 
