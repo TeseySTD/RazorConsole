@@ -6,8 +6,6 @@
 @using Spectre.Console
 
 <table class="table"
-    @onfocus="OnFocus"
-    @onfocusout="OnFocusOut"
 	data-expand="@ExpandAttribute"
 	data-width="@WidthAttribute"
 	data-title="@TitleAttribute"
@@ -46,8 +44,6 @@
 	[Parameter(CaptureUnmatchedValues = true)]
 	public IReadOnlyDictionary<string, object?>? AdditionalAttributes { get; set; }
 
-    private bool isFocused = false;
-
 	private string ExpandAttribute => Expand ? "true" : "false";
 
 	private string? WidthAttribute => Width.HasValue && Width.Value > 0
@@ -58,7 +54,7 @@
 
 	private string? BorderAttribute => ToBorderAttribute(Border);
 
-    private string BorderColorAttribute => isFocused ? FocusedBorderColor.ToHex() : BorderColor.ToHex();
+    private string BorderColorAttribute => BorderColor.ToHex();
 
 	private static string? ToBorderAttribute(TableBorder? border)
 	{
@@ -131,16 +127,4 @@
 	}
 
 	private string ShowHeadersAttribute => ShowHeaders ? "true" : "false";
-
-    private void OnFocus(FocusEventArgs e)
-    {
-		isFocused = true;
-        StateHasChanged();
-    }
-
-    private void OnFocusOut(FocusEventArgs e)
-    {
-		isFocused = false;
-        StateHasChanged();
-    }
 }
