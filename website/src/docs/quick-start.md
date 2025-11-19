@@ -74,6 +74,6 @@ Build and run your console UI:
 dotnet run
 ```
 
-![quick-start-counter image](https://raw.githubusercontent.com/LittleLittleCloud/RazorConsole/refs/heads/main/website/src/assets/docs/quick-start-counter.png)
+![quick-start-counter image](https://github.com/user-attachments/assets/24d8cc11-6428-4886-93c1-873e45b47c74)
 
 You should see an interactive counter in the terminal. Use **Tab** to traverse focusable elements and **Enter** or **Space** to trigger actions.
