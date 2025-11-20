@@ -18,28 +18,32 @@
             <Panel Title="Alphabet Table" Border="BoxBorder.Rounded" Expand="true">
                 <Scrollable Items="@AlphabetData" PageSize="3">
                     <Rows>
-                        <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded" BorderColor="@_tableColor"
-                                      @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable" @onkeydown="context.KeyDownEventHandler">
-                            <SpectreTHead>
-                                <SpectreTR>
-                                    <SpectreTH Align="Justify.Left">N</SpectreTH>
-                                    <SpectreTH Align="Justify.Center">Letter</SpectreTH>
-                                </SpectreTR>
-                            </SpectreTHead>
-                            <SpectreTBody >
-                                @foreach (var item in context)
-                                {
+                        <Columns>
+                            <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded" BorderColor="@_tableColor"
+                                          @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable" @onkeydown="context.KeyDownEventHandler">
+                                <SpectreTHead>
                                     <SpectreTR>
-                                        <SpectreTD>
-                                            <Markup Content="@item.Number.ToString()" Foreground="@item.Color"/>
-                                        </SpectreTD>
-                                        <SpectreTD>
-                                            <Markup Content="@item.Letter" Foreground="@item.Color"/>
-                                        </SpectreTD>
+                                        <SpectreTH Align="Justify.Left">N</SpectreTH>
+                                        <SpectreTH Align="Justify.Center">Letter</SpectreTH>
                                     </SpectreTR>
-                                }
-                            </SpectreTBody>
-                        </SpectreTable>
+                                </SpectreTHead>
+                                <SpectreTBody >
+                                    @foreach (var item in context)
+                                    {
+                                        <SpectreTR>
+                                            <SpectreTD>
+                                                <Markup Content="@item.Number.ToString()" Foreground="@item.Color"/>
+                                            </SpectreTD>
+                                            <SpectreTD>
+                                                <Markup Content="@item.Letter" Foreground="@item.Color"/>
+                                            </SpectreTD>
+                                        </SpectreTR>
+                                    }
+                                </SpectreTBody>
+                            </SpectreTable>
+                            <ScrollBar Offset="context.CurrentOffset" ItemsCount="@AlphabetData.Count" PageSize="3" ViewportHeight="8"/>
+                        </Columns>
+
                         <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
                     </Rows>
                 </Scrollable>
