@@ -85,6 +85,67 @@ export const components: ComponentInfo[] = [
 </Border>`
   },
 {
+    name: "BarChart",
+    description: "Renders a horizontal bar chart with optional label, colors and value display.",
+    category: "Display",
+    parameters: [
+        {
+            name: "BarChartItems",
+            type: "List<IBarChartItem>",
+            description: "The data items to display. Each item must have Label and Value, Color is optional. Required."
+        },
+        {
+            name: "Width",
+            type: "int?",
+            default: "null",
+            description: "Chart width in characters. If null = full available console width."
+        },
+        {
+            name: "Label",
+            type: "string?",
+            default: "null",
+            description: "Optional title displayed above the chart."
+        },
+        {
+        name: "LabelForeground",
+        type: "Color",
+        default: "Style.Plain.Foreground",
+        description: "Text color of the chart label."
+        },
+        {
+        name: "LabelBackground",
+        type: "Color",
+        default: "Style.Plain.Background",
+        description: "Background color of the chart label."
+        },
+        {
+        name: "LabelDecoration",
+        type: "Decoration",
+        default: "Decoration.None",
+        description: "Text decoration for the label (Bold, Italic, Underline, etc.)."
+        },
+        {
+        name: "LabelAlignment",
+        type: "Justify?",
+        default: "null",
+        description: "Alignment of the label: Left, Center or Right."
+        },
+        {
+        name: "MaxValue",
+        type: "double?",
+        default: "null",
+        description: "Fixed maximum value for scaling (useful for 0–100% progress-style charts)."
+        },
+        {
+        name: "ShowValues",
+        type: "bool",
+        default: "false",
+        description: "If true, displays the numeric value next to each bar."
+        }
+    ],
+    example: "<barchart items=\"@SalesData\"\n    label=\"[bold yellow]Revenue 2025[/]\"\n    width=\"80\"\n    show-values\n    label-alignment=\"center\" />\n\n@code {\n    private List<IBarChartItem> SalesData => new()\n    {\n        new BarChartItem(\"Jan\", 65.2, Color.Aqua),\n        new BarChartItem(\"Feb\", 78.9, Color.Green),\n        new BarChartItem(\"Mar\", 91.5, Color.Yellow)\n    };\n}"
+},
+{
     name: "Scrollable",
     description: "Renders a limited portion of a large collection (`PageSize`) with keyboard navigation.",
     category: "Layout",

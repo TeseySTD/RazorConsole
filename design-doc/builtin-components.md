@@ -27,6 +27,22 @@ Creates a bordered panel around its children.
 | `BoxBorder` | `BoxBorder` | `Rounded` | Border style (`Rounded`, `Square`, `Double`, etc.). |
 | `Padding` | `Padding` | `new(0,0,0,0)` | Inner padding inside the border. |
 
+## BarChart
+Renders a beautiful horizontal bar chart using Spectre.Console.
+
+| Parameter           | Type                      | Default                  | Description                                                                                                                 |
+|---------------------|---------------------------|--------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `BarChartItems`     | `List<IBarChartItem>`      | —                        | Collection of data items. Each item must have `Label` and `Value`. Optional `Color` (as `Spectre.Console.Color`). Required. |
+| `Width`             | int?                      | `null`                   | Chart width in characters. If omitted — uses full available console width.                                                  |
+| `Label`             | string?                   | `null`                   | Title displayed above the chart.                                            |
+| `LabelForeground`   | Color                     | `Style.Plain.Foreground` | Text color of the label (default: white/terminal default).                                                                  |
+| `LabelBackground`   | Color                     | `Style.Plain.Background` | Background color of the label (default: transparent).                                                                       |
+| `LabelDecoration`   | Decoration                | `Decoration.None`        | Label style: `Bold`, `Italic`, `Underline`, etc.                                                               |
+| `LabelAlignment`    | Justify?                  | `null`                   | Label alignment: `Left`, `Center`, or `Right`.                                                                              |
+| `MaxValue`          | double?                   | `null`                   | Fixed maximum value for scaling (e.g. set to `100` for percentage-style charts).                                            |
+| `ShowValues`        | bool                      | `false`                  | If `true` — shows numeric values next to each bar (e.g. `42.3`).                                                            |
+
+
 ## Columns
 Flow child renderables in Spectre.Console columns.
 
