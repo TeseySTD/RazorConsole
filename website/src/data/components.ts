@@ -107,43 +107,135 @@ export const components: ComponentInfo[] = [
             description: "Optional title displayed above the chart."
         },
         {
-        name: "LabelForeground",
-        type: "Color",
-        default: "Style.Plain.Foreground",
-        description: "Text color of the chart label."
+            name: "LabelForeground",
+            type: "Color",
+            default: "Style.Plain.Foreground",
+            description: "Text color of the chart label."
         },
         {
-        name: "LabelBackground",
-        type: "Color",
-        default: "Style.Plain.Background",
-        description: "Background color of the chart label."
+            name: "LabelBackground",
+            type: "Color",
+            default: "Style.Plain.Background",
+            description: "Background color of the chart label."
         },
         {
-        name: "LabelDecoration",
-        type: "Decoration",
-        default: "Decoration.None",
-        description: "Text decoration for the label (Bold, Italic, Underline, etc.)."
+            name: "LabelDecoration",
+            type: "Decoration",
+            default: "Decoration.None",
+            description: "Text decoration for the label (Bold, Italic, Underline, etc.)."
         },
         {
-        name: "LabelAlignment",
-        type: "Justify?",
-        default: "null",
-        description: "Alignment of the label: Left, Center or Right."
+            name: "LabelAlignment",
+            type: "Justify?",
+            default: "null",
+            description: "Alignment of the label: Left, Center or Right."
         },
         {
-        name: "MaxValue",
-        type: "double?",
-        default: "null",
-        description: "Fixed maximum value for scaling (useful for 0–100% progress-style charts)."
+            name: "MaxValue",
+            type: "double?",
+            default: "null",
+            description: "Fixed maximum value for scaling (useful for 0–100% progress-style charts)."
         },
         {
-        name: "ShowValues",
-        type: "bool",
-        default: "false",
-        description: "If true, displays the numeric value next to each bar."
+            name: "ShowValues",
+            type: "bool",
+            default: "false",
+            description: "If true, displays the numeric value next to each bar."
+        },
+        {
+            name: "Culture",
+            type: "CultureInfo",
+            default: "CultureInfo.CurrentCulture",
+            description: "Culture used to format numbers."
+        },
+    ],
+    example: "" +
+        "<Barchart BarChartItems=\"@SalesData\"\n" +
+        "          Label=\"Revenue 2025\"\n" +
+        "          Width=\"80\"\n" +
+        "          ShowValues=\"true\"\n" +
+        "          LabelAlignment=\"Justify.Center\" />\n" +
+        "\n\n@code {\n " +
+        "   private List<IBarChartItem> SalesData => new()\n    " +
+        "{\n        new BarChartItem(\"Jan\", 65.2, Color.Aqua),\n        new BarChartItem(\"Feb\", 78.9, Color.Green),\n        new BarChartItem(\"Mar\", 91.5, Color.Yellow)\n    };" +
+        "\n}"
+},
+{
+    name: "BreakdownChart",
+    description: "Renders a colorful breakdown (pie-style) chart showing proportions with optional legend and values.",
+    category: "Display",
+    parameters: [
+        {
+            name: "BreakdownChartItems",
+            type: "List<IBreakdownChartItem>",
+            description: "The data items to display. Each item must have Label, Value and Color. Required."
+        },
+        {
+            name: "Compact",
+            type: "bool",
+            default: "false",
+            description: "If true, renders the chart and tags in compact mode with reduced spacing."
+        },
+        {
+            name: "Culture",
+            type: "CultureInfo",
+            default: "CultureInfo.CurrentCulture",
+            description: "Culture used to format numbers and percentages."
+        },
+        {
+            name: "Expand",
+            type: "bool",
+            default: "false",
+            description: "If true, the chart expands to fill all available horizontal space."
+        },
+        {
+            name: "Width",
+            type: "int?",
+            default: "null",
+            description: "Fixed width in characters. If null, width is calculated automatically."
+        },
+        {
+            name: "ShowTags",
+            type: "bool",
+            default: "false",
+            description: "If true, displays a colored legend (tags) below the chart."
+        },
+        {
+            name: "ShowTagValues",
+            type: "bool",
+            default: "false",
+            description: "If true, shows absolute values next to each tag (e.g. 3,200)."
+        },
+        {
+            name: "ShowTagValuesPercentage",
+            type: "bool",
+            default: "false",
+            description: "If true, shows percentage values next to each tag (e.g. 32.0%)."
+        },
+        {
+            name: "ValueColor",
+            type: "Color?",
+            default: "null",
+            description: "Color used for numeric values in tags. If null, uses default console foreground."
         }
     ],
-    example: "<barchart items=\"@SalesData\"\n    label=\"[bold yellow]Revenue 2025[/]\"\n    width=\"80\"\n    show-values\n    label-alignment=\"center\" />\n\n@code {\n    private List<IBarChartItem> SalesData => new()\n    {\n        new BarChartItem(\"Jan\", 65.2, Color.Aqua),\n        new BarChartItem(\"Feb\", 78.9, Color.Green),\n        new BarChartItem(\"Mar\", 91.5, Color.Yellow)\n    };\n}"
+    example: "" +
+        "<BreakdownChart BreakdownChartItems=\"@Expenses\"\n" +
+        "                Compact=\"true\"\n" +
+        "                ShowTags=\"true\"\n" +
+        "                ShowTagValues=\"true\"\n" +
+        "                ShowTagValuesPercentage=\"true\"\n" +
+        "                Culture=\"@CultureInfo.GetCultureInfo(\"en-US\")\" />\n\n" +
+        "\n@code {\n" +
+        "    private List<IBreakdownChartItem> Expenses => new()\n" +
+        "    {\n" +
+        "        new BreakdownChartItem(\"Food\",       3200, Color.Orange1),\n" +
+        "        new BreakdownChartItem(\"Transport\",  1800, Color.Blue),\n" +
+        "        new BreakdownChartItem(\"Utilities\",  2500, Color.Red),\n" +
+        "        new BreakdownChartItem(\"Fun\",        1400, Color.Green),\n" +
+        "        new BreakdownChartItem(\"Other\",      1100, Color.Grey)\n" +
+        "    };\n" +
+        "}"
 },
 {
     name: "Scrollable",

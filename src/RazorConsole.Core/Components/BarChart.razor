@@ -1,5 +1,6 @@
 @namespace RazorConsole.Components
 
+@using System.Globalization
 @using Spectre.Console
 
 <barchart
@@ -10,6 +11,7 @@
     data-label-alignment="@LabelAlignmentAttribute"
     data-max-value="@MaxValueAttribute"
     data-show-values="@ShowValuesAttribute"
+    data-culture="@CultureAttribute"
 />
 
 @code{
@@ -20,7 +22,6 @@
     /// <example>
     /// <code>
     /// new BarChartItem("Jan", 12, Color.Red)
-    /// new { Label = "Feb", Value = 18.5, Color = "#00ff00" }
     /// </code>
     /// </example>
     [Parameter]
@@ -36,7 +37,6 @@
 
     /// <summary>
     /// Gets or sets the label (title) displayed above the bar chart.
-    /// Supports Spectre.Console markup, e.g. <c>"[bold yellow]Sales 2025[/]"</c>.
     /// </summary>
     [Parameter]
     public string? Label { get; set; }
@@ -90,6 +90,12 @@
     [Parameter]
     public bool ShowValues { get; set; }
 
+    /// <summary>
+    /// Gets or sets the CultureInfo to use when rendering values.
+    /// </summary>
+    [Parameter]
+    public CultureInfo Culture { get; set; } = CultureInfo.CurrentCulture;
+
 
     private string ItemsJson => System.Text.Json.JsonSerializer.Serialize(
         BarChartItems.Select(item => new
@@ -110,4 +116,6 @@
     private string MaxValueAttribute => MaxValue?.ToString() ?? string.Empty;
 
     private string ShowValuesAttribute => ShowValues ? "true" : "false";
+
+    private string CultureAttribute => Culture.Name;
 }
