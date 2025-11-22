@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using RazorConsole.Core.Rendering.Vdom;
 using Spectre.Console;
@@ -79,6 +80,25 @@ public class BarChartTranslator : IVdomElementTranslator
         {
             barChart.ShowValues = showValues;
         }
+
+        var cultureInfoAttribute = VdomSpectreTranslator.GetAttribute(node, "data-culture");
+        CultureInfo cultureInfo;
+        if (cultureInfoAttribute != null)
+        {
+            try
+            {
+                cultureInfo = CultureInfo.GetCultureInfo(cultureInfoAttribute);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+        barChart.Culture = cultureInfo;
 
         renderable = barChart;
 
