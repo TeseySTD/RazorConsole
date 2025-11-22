@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text.Json;
 using RazorConsole.Core.Rendering.Vdom;
 using Spectre.Console;
