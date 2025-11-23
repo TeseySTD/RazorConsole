@@ -8,7 +8,10 @@ export interface ComponentInfo {
     default?: string
     description: string
   }>
-  example: string
+  // paths to example files
+  // the files are located in razor-console/src/RazorConsole.Website/Components/
+  // e.g., ["Align_1.razor"]
+  examples: string[]
 }
 
 export const components: ComponentInfo[] = [
@@ -47,9 +50,7 @@ export const components: ComponentInfo[] = [
         description: "Fixed height in rows when greater than zero."
       }
     ],
-    example: `<Align Horizontal="Center" Vertical="Middle" Width="40" Height="10">
-    <Markup Content="Centered content" />
-</Align>`
+    examples: ["Align_1.razor"]
   },
   {
     name: "Border",
@@ -80,9 +81,7 @@ export const components: ComponentInfo[] = [
         description: "Inner padding inside the border."
       }
     ],
-    example: `<Border BoxBorder="BoxBorder.Rounded" BorderColor="Color.Blue">
-    <Markup Content="Content inside border" />
-</Border>`
+    examples: ["Border_1.razor"]
   },
 {
     name: "BarChart",
@@ -149,16 +148,7 @@ export const components: ComponentInfo[] = [
             description: "Culture used to format numbers."
         },
     ],
-    example: "" +
-        "<Barchart BarChartItems=\"@SalesData\"\n" +
-        "          Label=\"Revenue 2025\"\n" +
-        "          Width=\"80\"\n" +
-        "          ShowValues=\"true\"\n" +
-        "          LabelAlignment=\"Justify.Center\" />\n" +
-        "\n\n@code {\n " +
-        "   private List<IBarChartItem> SalesData => new()\n    " +
-        "{\n        new BarChartItem(\"Jan\", 65.2, Color.Aqua),\n        new BarChartItem(\"Feb\", 78.9, Color.Green),\n        new BarChartItem(\"Mar\", 91.5, Color.Yellow)\n    };" +
-        "\n}"
+    examples: ["BarChart_1.razor"]
 },
 {
     name: "BreakdownChart",
@@ -219,23 +209,7 @@ export const components: ComponentInfo[] = [
             description: "Color used for numeric values in tags. If null, uses default console foreground."
         }
     ],
-    example: "" +
-        "<BreakdownChart BreakdownChartItems=\"@Expenses\"\n" +
-        "                Compact=\"true\"\n" +
-        "                ShowTags=\"true\"\n" +
-        "                ShowTagValues=\"true\"\n" +
-        "                ShowTagValuesPercentage=\"true\"\n" +
-        "                Culture=\"@CultureInfo.GetCultureInfo(\"en-US\")\" />\n\n" +
-        "\n@code {\n" +
-        "    private List<IBreakdownChartItem> Expenses => new()\n" +
-        "    {\n" +
-        "        new BreakdownChartItem(\"Food\",       3200, Color.Orange1),\n" +
-        "        new BreakdownChartItem(\"Transport\",  1800, Color.Blue),\n" +
-        "        new BreakdownChartItem(\"Utilities\",  2500, Color.Red),\n" +
-        "        new BreakdownChartItem(\"Fun\",        1400, Color.Green),\n" +
-        "        new BreakdownChartItem(\"Other\",      1100, Color.Grey)\n" +
-        "    };\n" +
-        "}"
+    examples: ["BreakdownChart_1.razor"]
 },
 {
     name: "Scrollable",
@@ -272,7 +246,7 @@ export const components: ComponentInfo[] = [
             "description": "Invoked when offset changes (e.g. via keyboard)."
         }
     ],
-    "example": "<Scrollable Items=\"@AlphabetData\" PageSize=\"3\">\n    <table @onkeydown=\"context.KeyDownEventHandler\">\n        <tbody>\n            @foreach (var item in context)\n            {\n                <tr>\n                    <td>@item.Number</td>\n                    <td style=\"color:@item.Color.ToMarkup()\">@item.Letter</td>\n                </tr>\n            }\n        </tbody>\n    </table>\n    <Markup Content=\"Page @(context.CurrentPage) of @context.PagesCount\" />\n</Scrollable>"
+    examples: ["Scrollable_1.razor"]
 },
   {
     name: "Columns",
@@ -291,11 +265,7 @@ export const components: ComponentInfo[] = [
         description: "When true, forces columns to fill the available width."
       }
     ],
-    example: `<Columns>
-    <Markup Content="Column 1" />
-    <Markup Content="Column 2" />
-    <Markup Content="Column 3" />
-</Columns>`
+    examples: ["Columns_1.razor"]
   },
   {
     name: "Rows",
@@ -314,11 +284,7 @@ export const components: ComponentInfo[] = [
         description: "When true, rows fill the available height."
       }
     ],
-    example: `<Rows>
-    <Markup Content="Row 1" />
-    <Markup Content="Row 2" />
-    <Markup Content="Row 3" />
-</Rows>`
+    examples: ["Rows_1.razor"]
   },
   {
     name: "Grid",
@@ -349,11 +315,7 @@ export const components: ComponentInfo[] = [
         description: "Fixed width when greater than zero."
       }
     ],
-    example: `<Grid Columns="3">
-    <Markup Content="Cell 1" />
-    <Markup Content="Cell 2" />
-    <Markup Content="Cell 3" />
-</Grid>`
+    examples: ["Grid_1.razor"]
   },
   {
     name: "Padder",
@@ -372,9 +334,7 @@ export const components: ComponentInfo[] = [
         description: "Padding thickness (left, top, right, bottom)."
       }
     ],
-    example: `<Padder Padding="new Padding(2, 1, 2, 1)">
-    <Markup Content="Padded content" />
-</Padder>`
+    examples: ["Padder_1.razor"]
   },
   {
     name: "TextButton",
@@ -405,10 +365,7 @@ export const components: ComponentInfo[] = [
         description: "Event handler for click events."
       }
     ],
-    example: `<TextButton Content="Click me"
-            OnClick="HandleClick"
-            BackgroundColor="Color.Grey"
-            FocusedColor="Color.Blue" />`
+    examples: ["TextButton_1.razor"]
   },
   {
     name: "TextInput",
@@ -438,9 +395,7 @@ export const components: ComponentInfo[] = [
         description: "Mask input characters for passwords."
       }
     ],
-    example: `<TextInput Value="@inputValue"
-           ValueChanged="@((v) => inputValue = v)"
-           Placeholder="Enter your name" />`
+    examples: ["TextInput_1.razor"]
   },
   {
     name: "Select",
@@ -471,10 +426,7 @@ export const components: ComponentInfo[] = [
         description: "Placeholder when no selection is set."
       }
     ],
-    example: `<Select Options="@options"
-        Value="@selectedValue"
-        ValueChanged="@((v) => selectedValue = v)"
-        Placeholder="Choose an option" />`
+    examples: ["Select_1.razor"]
   },
   {
     name: "Markup",
@@ -505,15 +457,13 @@ export const components: ComponentInfo[] = [
         description: "Styling flags (Bold, Italic, etc.)."
       }
     ],
-    example: `<Markup Content="Hello World"
-        Foreground="Color.Green"
-        Decoration="Decoration.Bold" />`
+    examples: ["Markup_1.razor"]
   },
   {
     name: "Markdown",
     description: "Render markdown string.",
     category: "Display",
-    example: `<Markdown Content="@markdownText" />`
+    examples: ["Markdown_1.razor"]
   },
   {
     name: "Panel",
@@ -544,9 +494,7 @@ export const components: ComponentInfo[] = [
         description: "Stretch panel to available width."
       }
     ],
-    example: `<Panel Title="Information" BorderColor="Color.Blue" Expand="true">
-    <Markup Content="Panel content here" />
-</Panel>`
+    examples: ["Panel_1.razor"]
   },
   {
     name: "Figlet",
@@ -566,7 +514,7 @@ export const components: ComponentInfo[] = [
         description: "Foreground color for the glyphs."
       }
     ],
-    example: `<Figlet Content="RazorConsole" Color="Color.Blue" />`
+    examples: ["Figlet_1.razor"]
   },
   {
     name: "SyntaxHighlighter",
@@ -592,28 +540,13 @@ export const components: ComponentInfo[] = [
         description: "Display line numbers when true."
       }
     ],
-    example: `<SyntaxHighlighter Language="csharp"
-                   Code="@codeSnippet"
-                   ShowLineNumbers="true" />`
+    examples: ["SyntaxHighlighter_1.razor"]
   },
   {
     name: "Table",
     description: "Turns semantic HTML table markup into a Spectre.Console Table renderable.",
     category: "Display",
-    example: `<table class="table" data-expand="true" data-border="Rounded">
-    <thead>
-        <tr>
-            <th data-align="left">Name</th>
-            <th data-align="center">Value</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td><Markup Content="Item 1" /></td>
-            <td><Markup Content="100" /></td>
-        </tr>
-    </tbody>
-</table>`
+    examples: ["Table_1.razor"]
   },
   {
     name: "Spinner",
@@ -633,13 +566,13 @@ export const components: ComponentInfo[] = [
         description: "Optional message displayed alongside the spinner."
       }
     ],
-    example: `<Spinner Message="Loading..." />`
+    examples: ["Spinner_1.razor"]
   },
   {
     name: "Newline",
     description: "Emits a single line break. No parameters.",
     category: "Utilities",
-    example: `<Newline />`
+    examples: ["Newline_1.razor"]
   },
   {
     name: "SpectreCanvas",
@@ -680,6 +613,6 @@ export const components: ComponentInfo[] = [
         description: "The value indicating whether or not to scale the canvas when rendering."
       }
     ],
-    example: `<SpectreCanvas Pixels="new[] { (0, 0, Color.Red), (1, 0, Color.Green) }" CanvasWidth="10" CanvasHeight="10" />`
+    examples: ["SpectreCanvas_1.razor"]
   }
 ]
