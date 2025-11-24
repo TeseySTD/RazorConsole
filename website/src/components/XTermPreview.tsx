@@ -8,7 +8,7 @@ import {
 import 'xterm/css/xterm.css';
 import { Terminal } from "xterm";
 import { useTheme } from "@/components/ThemeProvider";
-
+import { FitAddon } from '@xterm/addon-fit';
 interface XTermPreviewProps {
     elementId: string;
     className?: string;
@@ -67,6 +67,7 @@ export default function XTermPreview({
 }: XTermPreviewProps) {
     const terminalRef = useRef<HTMLDivElement>(null);
     const xtermRef = useRef<Terminal | null>(null);
+    const fitAddonRef = useRef<FitAddon | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { theme } = useTheme();
@@ -94,6 +95,7 @@ export default function XTermPreview({
         let cancelled = false;
         let disposed = false;
         let disposeTimer: ReturnType<typeof setTimeout> | null = null;
+        let resizeObserver: ResizeObserver | null = null;
 
         if (terminalRef.current === null) {
             console.log("Terminal host element is not available");
@@ -111,17 +113,29 @@ export default function XTermPreview({
             allowProposedApi: true
         });
 
+        const fitAddon = new FitAddon();
+        term.loadAddon(fitAddon);
+
         xtermRef.current = term;
+        fitAddonRef.current = fitAddon;
 
         const disposeSafely = () => {
             if (disposed) {
                 return;
             }
             disposed = true;
+
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+
             term.dispose();
             xtermRef.current = null;
+            fitAddonRef.current = null;
         };
+
         console.log("Initializing terminal preview for", elementId);
+
         async function startPreview() {
             setError(null);
             setIsLoading(true);
@@ -130,17 +144,38 @@ export default function XTermPreview({
                     console.error("Terminal host element was not found");
                     throw new Error("Terminal host element was not found");
                 }
+
                 term.open(terminalRef.current);
+
+                setTimeout(() => {
+                    fitAddon.fit();
+                }, 0);
+
+                resizeObserver = new ResizeObserver(() => {
+                    if (!disposed) {
+                        try {
+                            fitAddon.fit();
+                        } catch (e) {
+                            console.warn('Failed to fit terminal:', e);
+                        }
+                    }
+                });
+
+                if (terminalRef.current) {
+                    resizeObserver.observe(terminalRef.current);
+                }
+
                 registerTerminalInstance(elementId, term);
-                await registerComponent(elementId)
+                await registerComponent(elementId);
 
                 attachKeyListener(elementId, {
-                  invokeMethodAsync: async (methodName: string, ...args: unknown[]) => {
-                    console.debug(`Key event forwarded from preview via ${methodName}`, args)
-                    await handleKeyboardEvent(...(args as [string, string, string, boolean, boolean, boolean]))
-                    return null
-                  }
-                })
+                    invokeMethodAsync: async (methodName: string, ...args: unknown[]) => {
+                        console.debug(`Key event forwarded from preview via ${methodName}`, args);
+                        await handleKeyboardEvent(...(args as [string, string, string, boolean, boolean, boolean]));
+                        return null;
+                    }
+                });
+
                 if (!cancelled) {
                     setIsLoading(false);
                 }
@@ -167,6 +202,7 @@ export default function XTermPreview({
             disposeTimer = window.setTimeout(disposeSafely, 0);
         };
     }, [elementId, isDark]);
+
 
     if (error) {
         return (
@@ -200,9 +236,9 @@ export default function XTermPreview({
                 ref={terminalRef}
                 id={elementId}
                 className="w-full h-full"
-                style={{ 
+                style={{
                     backgroundColor: isDark ? TERMINAL_THEME.dark.background : TERMINAL_THEME.light.background,
-                    padding: '12px'
+                    padding: '12px',
                 }}
             />
         </div>
