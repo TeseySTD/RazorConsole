@@ -136,6 +136,7 @@ public sealed class VdomSpectreTranslator
             new CanvasElementTranslator(),
             new BarChartTranslator(),
             new BreakdownChartTranslator(),
+            new StepChartTranslator(),
             new HtmlButtonElementTranslator(),
             new SyntaxHighlighterElementTranslator(),
             new HtmlHeadingElementTranslator(),

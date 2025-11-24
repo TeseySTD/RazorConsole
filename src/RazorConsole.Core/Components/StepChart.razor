@@ -1,0 +1,27 @@
+﻿@namespace RazorConsole.Components
+
+<stepchart data-width="@Width"
+           data-height="@Height"
+           data-show-axes="@ShowAxes.ToString().ToLower()"
+           data-title="@Title">
+    @foreach (var series in Series)
+    {
+        <chartseries data-color="@series.Color" data-points="@SerializePoints(series.Points)"/>
+    }
+</stepchart>
+
+@code {
+    [Parameter] public int Width { get; set; } = 60;
+    [Parameter] public int Height { get; set; } = 20;
+    [Parameter] public bool ShowAxes { get; set; } = true;
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public List<ChartSeries> Series { get; set; } = new();
+
+    private string SerializePoints(IEnumerable<Point> points)
+        => string.Join(";", points.Select(p => $"{p.X},{p.Y}"));
+
+    public record Point(double X, double Y);
+
+    public record ChartSeries(string Color, List<Point> Points);
+
+}
