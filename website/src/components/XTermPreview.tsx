@@ -35,7 +35,7 @@ const TERMINAL_THEME = {
         brightBlue: '#3b8eea',
         brightMagenta: '#d670d6',
         brightCyan: '#29b8db',
-        brightWhite: '#e5e5e5',
+        brightWhite: '#a8a8a8',
     },
     dark: {
         background: '#1e1e1e',
@@ -57,7 +57,7 @@ const TERMINAL_THEME = {
         brightBlue: '#3b8eea',
         brightMagenta: '#d670d6',
         brightCyan: '#29b8db',
-        brightWhite: '#e5e5e5',
+        brightWhite: '#a8a8a8',
     }
 };
 
@@ -80,14 +80,8 @@ export default function XTermPreview({
                 setIsDark(theme === 'dark');
             }
         };
-        
+
         checkTheme();
-        
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const handler = () => checkTheme();
-        
-        mediaQuery.addEventListener('change', handler);
-        return () => mediaQuery.removeEventListener('change', handler);
     }, [theme]);
 
     useEffect(() => {
@@ -116,7 +110,7 @@ export default function XTermPreview({
             theme: isDark ? TERMINAL_THEME.dark : TERMINAL_THEME.light,
             allowProposedApi: true
         });
-        
+
         xtermRef.current = term;
 
         const disposeSafely = () => {
@@ -172,7 +166,7 @@ export default function XTermPreview({
             }
             disposeTimer = window.setTimeout(disposeSafely, 0);
         };
-    }, [elementId]);
+    }, [elementId, isDark]);
 
     if (error) {
         return (
