@@ -155,6 +155,7 @@ export default function XTermPreview({
                     if (!disposed) {
                         try {
                             fitAddon.fit();
+                            console.debug("Terminal resized")
                         } catch (e) {
                             console.warn('Failed to fit terminal:', e);
                         }
@@ -213,7 +214,10 @@ export default function XTermPreview({
     }
 
     return (
-        <div className={`relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 ${className}`}>
+        <div className={`relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 ${className}`}
+            style={{
+                backgroundColor: isDark ? TERMINAL_THEME.dark.background : TERMINAL_THEME.light.background,
+            }}>
             {/* Window Title Bar */}
             <div className="bg-slate-100 dark:bg-[#2d2d2d] px-4 py-2 flex items-center gap-2 border-b border-slate-200 dark:border-[#1e1e1e]">
                 <div className="flex gap-1.5">
@@ -235,10 +239,12 @@ export default function XTermPreview({
             <div
                 ref={terminalRef}
                 id={elementId}
-                className="w-full h-full"
                 style={{
                     backgroundColor: isDark ? TERMINAL_THEME.dark.background : TERMINAL_THEME.light.background,
-                    padding: '12px',
+                    height:'calc(100% - 48px)',
+                    width: 'calc(100% - 24px)',
+                    margin: 'auto',
+                    padding: '12px 0',
                 }}
             />
         </div>
