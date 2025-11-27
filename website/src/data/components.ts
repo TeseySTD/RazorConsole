@@ -298,7 +298,6 @@ export const components: ComponentInfo[] = [
         {
             "name": "Series",
             "type": "List<ChartSeries>",
-            "default": "new()",
             "description": "Collection of data series to plot. Each series can have its own color and points."
         }
     ],
