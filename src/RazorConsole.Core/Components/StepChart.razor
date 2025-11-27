@@ -6,7 +6,8 @@
            data-show-axes="@ShowAxes.ToString().ToLower()"
            data-axes-color="@AxesColorAttribute"
            data-labels-color="@LabelsColorAttribute"
-           data-title="@Title">
+           data-title="@TitleAttribute"
+           data-title-color="@TitleColorAttribute">
     @foreach (var series in Series)
     {
         <chartseries data-color="@series.Color.ToHex()" data-points="@SerializePoints(series.Points)"/>
@@ -44,6 +45,10 @@
     private string AxesColorAttribute => AxesColor.ToHex();
 
     private string LabelsColorAttribute => LabelsColor.ToHex();
+
+    private string TitleAttribute => Title ?? string.Empty;
+
+    private string TitleColorAttribute => TitleColor.ToHex();
 
 
     public record ChartSeries(Color Color, List<(double X, double Y)> Points);

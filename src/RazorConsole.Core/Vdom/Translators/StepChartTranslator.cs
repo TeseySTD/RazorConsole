@@ -26,6 +26,7 @@ public sealed class StepChartTranslator : IVdomElementTranslator
         var axesColor = VdomSpectreTranslator.GetAttribute(node, "data-axes-color") ?? Color.Gray.ToHex();
         var labelsColor = VdomSpectreTranslator.GetAttribute(node, "data-labels-color") ?? Color.Gray.ToHex();
         var title = VdomSpectreTranslator.GetAttribute(node, "data-title");
+        var titleColor = VdomSpectreTranslator.GetAttribute(node, "data-title-color") ?? Color.Gray.ToHex();
 
         var seriesList = new List<SeriesData>();
         foreach (var child in node.Children)
@@ -46,7 +47,7 @@ public sealed class StepChartTranslator : IVdomElementTranslator
             return false;
         }
 
-        var chartText = RenderStepChart(seriesList, width, height, showAxes, axesColor, labelsColor, title);
+        var chartText = RenderStepChart(seriesList, width, height, showAxes, axesColor, labelsColor, title, titleColor);
         renderable = new Markup(chartText);
         return true;
     }
@@ -77,7 +78,8 @@ public sealed class StepChartTranslator : IVdomElementTranslator
         List<SeriesData> series,
         int width, int height,
         bool showAxes, string axesColor,
-        string labelsColor, string? title)
+        string labelsColor,
+        string? title, string? titleColor)
     {
         var allPoints = series.SelectMany(s => s.Points).ToList();
         if (allPoints.Count == 0)
@@ -177,7 +179,7 @@ public sealed class StepChartTranslator : IVdomElementTranslator
         var sb = new StringBuilder();
         if (!string.IsNullOrEmpty(title))
         {
-            sb.AppendLine(title);
+            sb.AppendLine($"[#{titleColor}]{title}[/]");
         }
 
         // Y-axis arrow at top
