@@ -9,7 +9,7 @@
            data-title="@Title">
     @foreach (var series in Series)
     {
-        <chartseries data-color="@series.Color" data-points="@SerializePoints(series.Points)"/>
+        <chartseries data-color="@series.Color.ToHex()" data-points="@SerializePoints(series.Points)"/>
     }
 </stepchart>
 
@@ -33,9 +33,12 @@
     public string? Title { get; set; }
 
     [Parameter]
+    public Color TitleColor { get; set; } = Color.Gray;
+
+    [Parameter]
     public List<ChartSeries> Series { get; set; } = new();
 
-    private string SerializePoints(IEnumerable<Point> points)
+    private string SerializePoints(IEnumerable<(double X, double Y)> points)
         => string.Join(";", points.Select(p => $"{p.X},{p.Y}"));
 
     private string AxesColorAttribute => AxesColor.ToHex();
@@ -43,8 +46,5 @@
     private string LabelsColorAttribute => LabelsColor.ToHex();
 
 
-    public record Point(double X, double Y);
-
-    public record ChartSeries(string Color, List<Point> Points);
-
+    public record ChartSeries(Color Color, List<(double X, double Y)> Points);
 }
