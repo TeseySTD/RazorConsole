@@ -1,9 +1,14 @@
-﻿namespace RazorConsole.Core.Vdom.Translators;
+// Copyright (c) RazorConsole. All rights reserved.
+
+namespace RazorConsole.Core.Vdom.Translators;
+
+
 using RazorConsole.Core.Rendering.Vdom;
-using RazorConsole.Core.Vdom;
+
+using System.Text;
 using Spectre.Console;
 using Spectre.Console.Rendering;
-using System.Text;
+using Vdom;
 
 public sealed class StepChartTranslator : IVdomElementTranslator
 {
@@ -203,38 +208,34 @@ public sealed class StepChartTranslator : IVdomElementTranslator
         // X-axis
         if (showAxes)
         {
-            // Axis line with arrow (aligned: 2 digits + tick "─┤" = 4 chars, then corner)
             sb.Append("[grey]   └");
-            sb.Append(new string('─', chartWidth));
-            sb.AppendLine("▶[/]");
 
             // X labels with tick marks above
-            // First: tick marks line
-            sb.Append("[grey]    ");
-            for (int col = 0; col < chartWidth; col++)
+            var tickPositions = Enumerable.Range(0, 9)
+                .Select(i => (int)Math.Round(chartWidth * i / 8.0))
+                .ToArray();
+
+            for (int c = 0; c < chartWidth; c++)
             {
-                // Place tick at each label position
-                bool isTick = false;
-                for (int i = 0; i <= 8; i++)
-                {
-                    var pos = (int)(chartWidth * i / 8.0);
-                    if (col == pos) { isTick = true; break; }
-                }
-                sb.Append(isTick ? "┬" : " ");
+                sb.Append(tickPositions.Contains(c) ? "┬" : "─");
             }
-            sb.AppendLine("[/]");
+            sb.AppendLine("▶[/]");
 
             // X labels
             sb.Append("[grey]    ");
-            int lastPos = 0;
+            int prevEnd = 0;
             for (int i = 0; i <= 8; i++)
             {
-                var xVal = minX + (maxX - minX) * i / 8;
-                var pos = (int)(chartWidth * i / 8.0);
-                var label = $"{xVal:0}";
-                var padding = pos - lastPos;
-                sb.Append(label.PadLeft(Math.Max(1, padding)));
-                lastPos = pos + label.Length;
+                var value = minX + (maxX - minX) * i / 8;
+                var label = $"{value:0}";
+
+                int pos = tickPositions[i];
+                int centerPos = pos - label.Length / 2;
+                int spaces = Math.Max(0, centerPos - prevEnd);
+
+                sb.Append(new string(' ', spaces));
+                sb.Append(label);
+                prevEnd = centerPos + label.Length;
             }
             sb.AppendLine("[/]");
         }
