@@ -213,6 +213,30 @@ Context to get access with paginated items, keyboard event and other info.
 | Home | First page |
 | End | Last page |
 
+## StepChart
+
+Renders a step chart directly in the terminal using Unicode box-drawing characters. Perfect for visualizing time-series, discrete state changes, or any data where values stay constant between points.
+
+| Parameter       | Type                          | Default      | Description                                                 |
+|-----------------|-------------------------------|--------------|-------------------------------------------------------------|
+| `Width`         | `int`                         | `60`         | Chart width in terminal columns (excluding axes if shown)   |
+| `Height`        | `int`                         | `20`         | Chart height in terminal rows (excluding title/axes)        |
+| `ShowAxes`      | `bool`                        | `true`       | Shows X/Y axes with tick marks and numeric labels           |
+| `AxesColor`     | `Color`                       | `Color.Grey` | Color of the axis lines and tick marks                      |
+| `LabelsColor`   | `Color`                       | `Color.Grey` | Color of the numeric value labels on the axes               |
+| `Title`         | `string?`                     | `null`       | Optional chart title displayed above the plot area          |
+| `TitleColor`    | `Color`                       | `Color.Grey` | Color of the title text                                     |
+| `Series`        | `List<ChartSeries>`           | —            | Collection of data series to render on the chart. Required. |
+
+### `ChartSeries`
+Record that stores series data:
+
+| Member  | Type                         | Description  |
+|---------|------------------------------|--------------|
+| `Color` | `SpectreConsole.Color`       | Line color.  |
+| `Points` | `List<(double X, double Y)>` | Data points. |
+
+
 ## SyntaxHighlighter
 Renders highlighted code blocks with `SyntaxHighlightingService`.
 

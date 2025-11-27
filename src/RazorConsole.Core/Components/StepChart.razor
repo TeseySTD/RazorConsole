@@ -1,9 +1,20 @@
 @using Spectre.Console
 @namespace RazorConsole.Components
-
+@*
+    /// <summary>
+    /// Renders an ASCII step chart directly in the terminal
+    /// using Unicode box-drawing characters. Ideal for visualizing time-series or discrete data changes.
+    /// </summary>
+    /// <remarks>
+    /// The chart supports multiple series, customizable dimensions, optional axes with labels,
+    /// titles, and full color control via Spectre.Console <see cref="Color"/>.
+    /// Each data point transition is rendered as a horizontal run followed by a vertical step,
+    /// creating the classic "step" appearance.
+    /// </remarks>
+*@
 <stepchart data-width="@Width"
            data-height="@Height"
-           data-show-axes="@ShowAxes.ToString().ToLower()"
+           data-show-axes="@ShowAxesAttribute"
            data-axes-color="@AxesColorAttribute"
            data-labels-color="@LabelsColorAttribute"
            data-title="@TitleAttribute"
@@ -15,32 +26,62 @@
 </stepchart>
 
 @code {
+    /// <summary>
+    /// Width of the chart in terminal columns (excluding title and axes if shown).
+    /// </summary>
     [Parameter]
     public int Width { get; set; } = 60;
 
+    /// <summary>
+    /// Height of the chart in terminal rows (excluding title and axes if shown).
+    /// </summary>
     [Parameter]
     public int Height { get; set; } = 20;
 
+    /// <summary>
+    /// Determines whether coordinate axes and value labels are rendered.
+    /// </summary>
     [Parameter]
     public bool ShowAxes { get; set; } = true;
 
+    /// <summary>
+    /// Color of the axes lines and tick marks.
+    /// </summary>
     [Parameter]
-    public Color AxesColor { get; set; } = Color.Gray;
+    public Color AxesColor { get; set; } = Color.Grey;
 
+    /// <summary>
+    /// Color of the numeric labels on X and Y axes.
+    /// </summary>
     [Parameter]
-    public Color LabelsColor { get; set; } = Color.Gray;
+    public Color LabelsColor { get; set; } = Color.Grey;
 
+    /// <summary>
+    /// Optional chart title displayed above the plot area.
+    /// </summary>
     [Parameter]
     public string? Title { get; set; }
 
+    /// <summary>
+    /// Color of the chart title text.
+    /// </summary>
     [Parameter]
-    public Color TitleColor { get; set; } = Color.Gray;
+    public Color TitleColor { get; set; } = Color.Grey;
 
+    /// <summary>
+    /// Collection of data series to display on the chart.
+    /// </summary>
+    /// <remarks>
+    /// Each series is rendered independently and can have its own color and points.
+    /// </remarks>
     [Parameter]
     public List<ChartSeries> Series { get; set; } = new();
 
+
     private string SerializePoints(IEnumerable<(double X, double Y)> points)
         => string.Join(";", points.Select(p => $"{p.X},{p.Y}"));
+
+    private string ShowAxesAttribute => ShowAxes ? "true" : "false";
 
     private string AxesColorAttribute => AxesColor.ToHex();
 
