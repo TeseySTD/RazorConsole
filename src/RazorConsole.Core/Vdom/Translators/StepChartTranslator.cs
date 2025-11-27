@@ -2,11 +2,12 @@
 
 namespace RazorConsole.Core.Vdom.Translators;
 
-using RazorConsole.Core.Rendering.Vdom;
-using System.Text;
 using Spectre.Console;
 using Spectre.Console.Rendering;
+using System.Text;
 using Vdom;
+using RazorConsole.Core.Rendering.Vdom;
+
 
 public sealed class StepChartTranslator : IVdomElementTranslator
 {
