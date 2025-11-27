@@ -1,12 +1,11 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
-namespace RazorConsole.Core.Vdom.Translators;
-
+using System.Text;
 using Spectre.Console;
 using Spectre.Console.Rendering;
-using System.Text;
-using Vdom;
 using RazorConsole.Core.Rendering.Vdom;
+
+namespace RazorConsole.Core.Vdom.Translators;
 
 
 public sealed class StepChartTranslator : IVdomElementTranslator
