@@ -84,6 +84,9 @@ public partial class Registry
             case "BreakdownChart":
                 _renderers[elementID] = new RazorConsoleRenderer<BreakdownChart_1>(elementID);
                 break;
+            case "StepChart":
+                _renderers[elementID] = new RazorConsoleRenderer<StepChart_1>(elementID);
+                break;
         }
     }
 

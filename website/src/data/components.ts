@@ -248,6 +248,62 @@ export const components: ComponentInfo[] = [
     ],
     examples: ["Scrollable_1.razor"]
 },
+{
+    name: "StepChart",
+    description: "Renders a terminal step chart using Unicode box-drawing characters. Perfect for displaying discrete value changes over time or categories.",
+    category: "Display",
+    parameters: [
+        {
+            "name": "Width",
+            "type": "int",
+            "default": "60",
+            "description": "Width of the chart area in terminal columns (excluding axes when shown)."
+        },
+        {
+            "name": "Height",
+            "type": "int",
+            "default": "20",
+            "description": "Height of the chart area in terminal rows (excluding title and axes)."
+        },
+        {
+            "name": "ShowAxes",
+            "type": "bool",
+            "default": "true",
+            "description": "When true, draws X/Y axes with tick marks and automatic numeric labels."
+        },
+        {
+            "name": "AxesColor",
+            "type": "Color",
+            "default": "Color.Grey",
+            "description": "Color of the axis lines and tick marks."
+        },
+        {
+            "name": "LabelsColor",
+            "type": "Color",
+            "default": "Color.Grey",
+            "description": "Color of the numeric labels displayed on the axes."
+        },
+        {
+            "name": "Title",
+            "type": "string?",
+            "default": "null",
+            "description": "Optional chart title rendered above the plot area."
+        },
+        {
+            "name": "TitleColor",
+            "type": "Color",
+            "default": "Color.Grey",
+            "description": "Color of the title text."
+        },
+        {
+            "name": "Series",
+            "type": "List<ChartSeries>",
+            "default": "new()",
+            "description": "Collection of data series to plot. Each series can have its own color and points."
+        }
+    ],
+    examples: ["StepChart_1.razor"]
+},
   {
     name: "Columns",
     description: "Flow child renderables in Spectre.Console columns.",
