@@ -38,7 +38,7 @@ public sealed class StepChartTranslator : IVdomElementTranslator
             var color = VdomSpectreTranslator.GetAttribute(child, "data-color") ?? "white";
             var pointsStr = VdomSpectreTranslator.GetAttribute(child, "data-points") ?? "";
             var points = ParsePoints(pointsStr);
-            seriesList.Add(new SeriesData(color, points));
+            seriesList.Add(new SeriesData("#" + color, points));
         }
 
         if (seriesList.Count == 0)
