@@ -1,8 +1,11 @@
+@using Spectre.Console
 @namespace RazorConsole.Components
 
 <stepchart data-width="@Width"
            data-height="@Height"
            data-show-axes="@ShowAxes.ToString().ToLower()"
+           data-axes-color="@AxesColorAttribute"
+           data-labels-color="@LabelsColorAttribute"
            data-title="@Title">
     @foreach (var series in Series)
     {
@@ -11,14 +14,34 @@
 </stepchart>
 
 @code {
-    [Parameter] public int Width { get; set; } = 60;
-    [Parameter] public int Height { get; set; } = 20;
-    [Parameter] public bool ShowAxes { get; set; } = true;
-    [Parameter] public string? Title { get; set; }
-    [Parameter] public List<ChartSeries> Series { get; set; } = new();
+    [Parameter]
+    public int Width { get; set; } = 60;
+
+    [Parameter]
+    public int Height { get; set; } = 20;
+
+    [Parameter]
+    public bool ShowAxes { get; set; } = true;
+
+    [Parameter]
+    public Color AxesColor { get; set; } = Color.Gray;
+
+    [Parameter]
+    public Color LabelsColor { get; set; } = Color.Gray;
+
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public List<ChartSeries> Series { get; set; } = new();
 
     private string SerializePoints(IEnumerable<Point> points)
         => string.Join(";", points.Select(p => $"{p.X},{p.Y}"));
+
+    private string AxesColorAttribute => AxesColor.ToHex();
+
+    private string LabelsColorAttribute => LabelsColor.ToHex();
+
 
     public record Point(double X, double Y);
 
