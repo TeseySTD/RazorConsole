@@ -132,6 +132,8 @@ public sealed class VdomSpectreTranslator
             new SpacerElementTranslator(),
             new NewlineElementTranslator(),
             new SpinnerElementTranslator(),
+            new ScrollableTranslator(),
+            new ScrollBarTranslator(),
             new ButtonElementTranslator(),
             new CanvasElementTranslator(),
             new BarChartTranslator(),
