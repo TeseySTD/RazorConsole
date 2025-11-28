@@ -1,4 +1,6 @@
-﻿using Spectre.Console;
+// Copyright (c) RazorConsole. All rights reserved.
+
+using Spectre.Console;
 using Spectre.Console.Rendering;
 
 namespace RazorConsole.Core.Renderables;
@@ -28,18 +30,18 @@ internal sealed class ScrollBarRenderable(
         var trackStyle = new Style(foreground: trackColor);
         var thumbStyle = new Style(foreground: thumbColor);
         // If items fit completely in viewport, show just track
-        if (itemsCount <= height)
-        {
-            for (int i = 0; i < height; i++)
-            {
-                yield return new Segment(trackChar, trackStyle);
-                if (i < height - 1)
-                {
-                    yield return Segment.LineBreak;
-                }
-            }
-            yield break;
-        }
+        // if (itemsCount <= height)
+        // {
+        //     for (int i = 0; i < height; i++)
+        //     {
+        //         yield return new Segment(trackChar, trackStyle);
+        //         if (i < height - 1)
+        //         {
+        //             yield return Segment.LineBreak;
+        //         }
+        //     }
+        //     yield break;
+        // }
 
         // Calculate thumb size and position
         var thumbSize = CalculateThumbSize(height, itemsCount, pageSize, minThumbHeight);
