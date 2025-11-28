@@ -18,7 +18,7 @@
             <Panel Title="Alphabet Table" Border="BoxBorder.Rounded" Expand="true">
                 <Scrollable Items="@AlphabetData" PageSize="3">
                     <Rows>
-                        <Columns>
+                        @* <Columns> *@
                             <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded" BorderColor="@_tableColor"
                                           @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable" @onkeydown="context.KeyDownEventHandler">
                                 <SpectreTHead>
@@ -41,8 +41,8 @@
                                     }
                                 </SpectreTBody>
                             </SpectreTable>
-                            <ScrollBar Offset="context.CurrentOffset" ItemsCount="@AlphabetData.Count" PageSize="3" ViewportHeight="8"/>
-                        </Columns>
+                            @* <ScrollBar Offset="context.CurrentOffset" ItemsCount="@AlphabetData.Count" PageSize="3" ViewportHeight="10"/> *@
+                        @* </Columns> *@
 
                         <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
                     </Rows>
