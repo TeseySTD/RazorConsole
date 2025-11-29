@@ -1,13 +1,14 @@
-@page "/charts"
+@page "/small-charts"
 
 <Rows>
-    <Markup Content="Charts components are used for displaying statistics info in charts view."/>
+    <Markup Content="Small Charts components are used for displaying statistics info in charts view."/>
     <Newline/>
 
     <Panel Title="BarChart" Border="BoxBorder.Rounded">
         <Rows>
-            <Markup Content="BarChart component is used for displaying some statistics info in bar charts to the console."
-                    Foreground="@Color.Grey70"/>
+            <Markup
+                Content="BarChart component is used for displaying some statistics info in bar charts to the console."
+                Foreground="@Color.Grey70"/>
             <Markup Content="Source Code: BarChart.razor" Foreground="@Color.DeepSkyBlue1"
                     Decoration="@Decoration.Underline" link="@BarChartDocumentationUrl"/>
             <Newline/>
@@ -78,6 +79,7 @@
 ";
 
     private const string BreakdownChartDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/BreakdownChart.razor";
+
 
     private readonly Color _lightRed = Color.FromHex("#fc034e");
 
