@@ -2,10 +2,9 @@
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
-using RazorConsole.Components;
 using RazorConsole.Core.Rendering.Markdown;
 
-namespace RazorConsole.Tests;
+namespace RazorConsole.Tests.Rendering.Markdown;
 
 public sealed class MarkdownTests
 {
@@ -17,10 +16,10 @@ public sealed class MarkdownTests
 
         var html = service.ConvertToHtml(markdown);
 
-        Assert.NotNull(html);
-        Assert.Contains("<h1", html);
-        Assert.Contains("Hello World", html);
-        Assert.Contains("</h1>", html);
+        html.ShouldNotBeNull();
+        html.ShouldContain("<h1");
+        html.ShouldContain("Hello World");
+        html.ShouldContain("</h1>");
     }
 
     [Fact]
@@ -31,9 +30,9 @@ public sealed class MarkdownTests
 
         var html = service.ConvertToHtml(markdown);
 
-        Assert.NotNull(html);
-        Assert.Contains("<strong>", html);
-        Assert.Contains("<em>", html);
+        html.ShouldNotBeNull();
+        html.ShouldContain("<strong>");
+        html.ShouldContain("<em>");
     }
 
     [Fact]
@@ -46,9 +45,9 @@ Console.WriteLine(""test"");
 
         var html = service.ConvertToHtml(markdown);
 
-        Assert.NotNull(html);
-        Assert.Contains("<pre>", html);
-        Assert.Contains("<code", html);
+        html.ShouldNotBeNull();
+        html.ShouldContain("<pre>");
+        html.ShouldContain("<code");
     }
 
     [Fact]
@@ -61,9 +60,9 @@ Console.WriteLine(""test"");
 
         var html = service.ConvertToHtml(markdown);
 
-        Assert.NotNull(html);
-        Assert.Contains("<ul>", html);
-        Assert.Contains("<li>", html);
+        html.ShouldNotBeNull();
+        html.ShouldContain("<ul>");
+        html.ShouldContain("<li>");
     }
 
     [Fact]
@@ -76,9 +75,9 @@ Console.WriteLine(""test"");
 
         var html = service.ConvertToHtml(markdown);
 
-        Assert.NotNull(html);
-        Assert.Contains("<ol>", html);
-        Assert.Contains("<li>", html);
+        html.ShouldNotBeNull();
+        html.ShouldContain("<ol>");
+        html.ShouldContain("<li>");
     }
 
     [Fact]
@@ -95,8 +94,9 @@ Console.WriteLine(""test"");
             { "Content", "# Hello World" }
         });
 
-        var snapshot = await renderer.MountComponentAsync<Markdown>(parameters, CancellationToken.None);
+        var snapshot = await renderer.MountComponentAsync<RazorConsole.Components.Markdown>(parameters, CancellationToken.None);
 
-        Assert.NotNull(snapshot.Root);
+        snapshot.Root.ShouldNotBeNull();
     }
 }
+

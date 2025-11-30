@@ -1,10 +1,12 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
+using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using RazorConsole.Core.Extensions;
 using RazorConsole.Core.Focus;
 using RazorConsole.Core.Rendering;
 using RazorConsole.Core.Vdom;
@@ -47,9 +49,8 @@ internal sealed class KeyboardEventManager
     private readonly FocusManager _focusManager;
     private readonly IKeyboardEventDispatcher _dispatcher;
     private readonly ILogger<KeyboardEventManager> _logger;
-    private readonly Dictionary<string, StringBuilder> _buffers = new(StringComparer.Ordinal);
-    private readonly object _bufferSync = new();
-    private string? _activeFocusKey;
+    private readonly ConcurrentDictionary<string, StringBuilder> _buffers = new(StringComparer.Ordinal);
+    private volatile string? _activeFocusKey;
 
     public KeyboardEventManager(
         FocusManager focusManager,
@@ -92,7 +93,7 @@ internal sealed class KeyboardEventManager
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Transient failure while reading keyboard input.");
+                _logger.LogTransientKeyboardInputFailure(ex);
                 try
                 {
                     await Task.Delay(200, token).ConfigureAwait(false);
@@ -154,7 +155,7 @@ internal sealed class KeyboardEventManager
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Unable to update focus target.");
+            _logger.LogUnableToUpdateFocusTarget(ex);
         }
     }
 
@@ -170,7 +171,7 @@ internal sealed class KeyboardEventManager
             return;
         }
 
-        if (TryGetEvent(target, "oninput", out var inputEvent))
+        if (target.Events.TryGetEvent("oninput", out var inputEvent))
         {
             var args = new ChangeEventArgs { Value = updatedValue };
             await DispatchAsync(inputEvent, args, token).ConfigureAwait(false);
@@ -186,7 +187,7 @@ internal sealed class KeyboardEventManager
 
         var value = GetCurrentValue(target);
 
-        if (TryGetEvent(target, "onclick", out var clickEvent))
+        if (target.Events.TryGetEvent("onclick", out var clickEvent))
         {
             var clickArgs = new MouseEventArgs
             {
@@ -198,7 +199,7 @@ internal sealed class KeyboardEventManager
             await DispatchAsync(clickEvent, clickArgs, token).ConfigureAwait(false);
         }
 
-        if (TryGetEvent(target, "onchange", out var changeEvent))
+        if (target.Events.TryGetEvent("onchange", out var changeEvent))
         {
             var changeArgs = new ChangeEventArgs { Value = value };
             await DispatchAsync(changeEvent, changeArgs, token).ConfigureAwait(false);
@@ -217,13 +218,13 @@ internal sealed class KeyboardEventManager
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to dispatch {EventName} handler.", @event.Name);
+            _logger.LogFailedToDispatchHandler(ex, @event.Name);
         }
     }
 
     private async Task<bool> DispatchKeyboardEventAsync(FocusManager.FocusTarget target, string eventName, ConsoleKeyInfo keyInfo, CancellationToken token)
     {
-        if (!TryGetEvent(target, eventName, out var nodeEvent))
+        if (!target.Events.TryGetEvent(eventName, out var nodeEvent))
         {
             return false;
         }
@@ -235,63 +236,41 @@ internal sealed class KeyboardEventManager
 
     private bool TryApplyKeyToBuffer(FocusManager.FocusTarget target, ConsoleKeyInfo keyInfo, out string value)
     {
-        lock (_bufferSync)
-        {
-            var buffer = GetOrCreateBuffer_NoLock(target);
-            var changed = false;
+        var buffer = GetOrCreateBuffer(target);
+        var changed = false;
 
-            if (keyInfo.Key == ConsoleKey.Backspace)
+        // StringBuilder is not thread-safe, but we only access it from the input thread
+        // which is single-threaded in this context. However, we use ConcurrentDictionary
+        // to ensure thread-safe access to the dictionary itself.
+        if (keyInfo.Key == ConsoleKey.Backspace)
+        {
+            if (buffer.Length > 0)
             {
-                if (buffer.Length > 0)
-                {
-                    buffer.Remove(buffer.Length - 1, 1);
-                    changed = true;
-                }
-            }
-            else if (!char.IsControl(keyInfo.KeyChar))
-            {
-                buffer.Append(keyInfo.KeyChar);
+                buffer.Remove(buffer.Length - 1, 1);
                 changed = true;
             }
-
-            value = buffer.ToString();
-            return changed;
         }
+        else if (!char.IsControl(keyInfo.KeyChar))
+        {
+            buffer.Append(keyInfo.KeyChar);
+            changed = true;
+        }
+
+        value = buffer.ToString();
+        return changed;
     }
 
     private string GetCurrentValue(FocusManager.FocusTarget target)
     {
-        lock (_bufferSync)
-        {
-            return GetOrCreateBuffer_NoLock(target).ToString();
-        }
+        var buffer = GetOrCreateBuffer(target);
+        return buffer.ToString();
     }
 
-    private StringBuilder GetOrCreateBuffer_NoLock(FocusManager.FocusTarget target)
+    private StringBuilder GetOrCreateBuffer(FocusManager.FocusTarget target)
     {
-        if (!_buffers.TryGetValue(target.Key, out var buffer))
-        {
-            buffer = new StringBuilder(ResolveInitialValue(target));
-            _buffers[target.Key] = buffer;
-        }
-
-        return buffer;
+        return _buffers.GetOrAdd(target.Key, _ => new StringBuilder(ResolveInitialValue(target)));
     }
 
-    private static bool TryGetEvent(FocusManager.FocusTarget target, string name, out VNodeEvent nodeEvent)
-    {
-        foreach (var candidate in target.Events)
-        {
-            if (string.Equals(candidate.Name, name, StringComparison.OrdinalIgnoreCase))
-            {
-                nodeEvent = candidate;
-                return true;
-            }
-        }
-
-        nodeEvent = default;
-        return false;
-    }
 
     private static string ResolveInitialValue(FocusManager.FocusTarget target)
     {
@@ -370,31 +349,21 @@ internal sealed class KeyboardEventManager
             return;
         }
 
-        lock (_bufferSync)
+        var previousFocusKey = _activeFocusKey;
+        if (previousFocusKey is not null && _buffers.TryRemove(previousFocusKey, out var previousBuffer))
         {
-            if (_activeFocusKey is not null && _buffers.TryGetValue(_activeFocusKey, out var previousBuffer))
-            {
-                previousBuffer.Clear();
-                _buffers.Remove(_activeFocusKey);
-            }
+            previousBuffer.Clear();
         }
 
         if (!_focusManager.TryGetFocusedTarget(out var target) || target is null)
         {
-            lock (_bufferSync)
-            {
-                _activeFocusKey = null;
-            }
-
+            _activeFocusKey = null;
             return;
         }
 
-        lock (_bufferSync)
-        {
-            _activeFocusKey = target.Key;
-            var buffer = GetOrCreateBuffer_NoLock(target);
-            buffer.Clear();
-            buffer.Append(ResolveInitialValue(target));
-        }
+        _activeFocusKey = target.Key;
+        var buffer = GetOrCreateBuffer(target);
+        buffer.Clear();
+        buffer.Append(ResolveInitialValue(target));
     }
 }
