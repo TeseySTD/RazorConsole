@@ -278,6 +278,13 @@ internal sealed class ConsoleRenderer(
     private void ApplySetAttributeEdit(in RenderBatch batch, RenderTreeEdit edit)
     {
         var parent = _cursor.Peek();
+
+        // Unwrap Region
+        if (parent.Children is { Count: 1 } && parent.Children[0].Kind == VNodeKind.Region)
+        {
+            parent = parent.Children[0];
+        }
+
         var frame = batch.ReferenceFrames.Array[edit.ReferenceFrameIndex];
         if (frame.FrameType == RenderTreeFrameType.Attribute && (uint)(edit.SiblingIndex) < (uint)parent.Children.Count)
         {
@@ -289,6 +296,12 @@ internal sealed class ConsoleRenderer(
     private void ApplyRemoveAttributeEdit(in RenderBatch batch, RenderTreeEdit edit)
     {
         var parent = _cursor.Peek();
+
+        // Unwrap Region
+        if (parent.Children is { Count: 1 } && parent.Children[0].Kind == VNodeKind.Region)
+        {
+            parent = parent.Children[0];
+        }
         var frame = batch.ReferenceFrames.Array[edit.ReferenceFrameIndex];
         if (frame.FrameType == RenderTreeFrameType.Attribute && (uint)(edit.SiblingIndex) < (uint)parent.Children.Count)
         {
