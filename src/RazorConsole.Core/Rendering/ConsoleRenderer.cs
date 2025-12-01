@@ -279,44 +279,55 @@ internal sealed class ConsoleRenderer(
     {
         var parent = _cursor.Peek();
 
-        // Unwrap Region
-        if (parent.Children is { Count: 1 } && parent.Children[0].Kind == VNodeKind.Region)
+        if ((uint)edit.SiblingIndex >= (uint)parent.Children.Count)
         {
-            parent = parent.Children[0];
+            return;
+        }
+
+        var target = parent.Children[edit.SiblingIndex];
+
+        while (target.Kind == VNodeKind.Region && target.Children.Count > 0)
+        {
+            target = target.Children[0];
+        }
+
+        if ((uint)edit.ReferenceFrameIndex >= (uint)batch.ReferenceFrames.Count)
+        {
+            return;
         }
 
         var frame = batch.ReferenceFrames.Array[edit.ReferenceFrameIndex];
-        if (frame.FrameType == RenderTreeFrameType.Attribute && (uint)(edit.SiblingIndex) < (uint)parent.Children.Count)
+        if (frame.FrameType == RenderTreeFrameType.Attribute)
         {
-            var child = parent.Children[edit.SiblingIndex];
-            ApplyAttributeFrame(child, frame);
+            ApplyAttributeFrame(target, frame);
         }
     }
 
     private void ApplyRemoveAttributeEdit(in RenderBatch batch, RenderTreeEdit edit)
     {
         var parent = _cursor.Peek();
-
-        // Unwrap Region
-        if (parent.Children is { Count: 1 } && parent.Children[0].Kind == VNodeKind.Region)
+        if ((uint)edit.SiblingIndex >= (uint)parent.Children.Count)
         {
-            parent = parent.Children[0];
+            return;
         }
-        var frame = batch.ReferenceFrames.Array[edit.ReferenceFrameIndex];
-        if (frame.FrameType == RenderTreeFrameType.Attribute && (uint)(edit.SiblingIndex) < (uint)parent.Children.Count)
+
+        var target = parent.Children[edit.SiblingIndex];
+
+        while (target.Kind == VNodeKind.Region && target.Children.Count > 0)
         {
-            var child = parent.Children[edit.SiblingIndex];
-            if (frame.AttributeEventHandlerId != 0)
+            target = target.Children[0];
+        }
+
+        var name = edit.RemovedAttributeName;
+        if (!string.IsNullOrEmpty(name))
+        {
+            target.RemoveAttribute(name);
+
+            target.RemoveEvent(name);
+
+            if (IsKeyAttribute(name))
             {
-                child.RemoveEvent(frame.AttributeName!);
-            }
-            else
-            {
-                child.RemoveAttribute(frame.AttributeName!);
-                if (IsKeyAttribute(frame.AttributeName!))
-                {
-                    parent.SetKey(null);
-                }
+                target.SetKey(null);
             }
         }
     }
@@ -338,19 +349,12 @@ internal sealed class ConsoleRenderer(
     private void ApplyStepInEdit(RenderTreeEdit edit)
     {
         var parent = _cursor.Peek();
-
-        // Process region wrapper
-        if (parent.Children is { Count: 1 } && parent.Children[0].Kind == VNodeKind.Region)
-        {
-            _cursor.Push(parent.Children[0]);
-            parent = _cursor.Peek();
-        }
-
         if ((uint)edit.SiblingIndex < (uint)parent.Children.Count)
         {
             _cursor.Push(parent.Children[edit.SiblingIndex]);
         }
     }
+
 
     private void ApplyStepOutEdit()
     {
