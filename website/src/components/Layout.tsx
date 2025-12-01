@@ -7,7 +7,7 @@ import { useGitHubStars } from "@/hooks/useGitHubStars"
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { stars } = useGitHubStars('LittleLittleCloud', 'RazorConsole')
+  const { stars } = useGitHubStars('RazorConsole', 'RazorConsole')
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -41,6 +41,12 @@ export default function Layout() {
                 >
                   Components
                 </Link>
+                <Link 
+                  to="/collaborators" 
+                  className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-50 transition-colors"
+                >
+                  Collaborators
+                </Link>
               </nav>
             </div>
 
@@ -48,7 +54,7 @@ export default function Layout() {
               <ThemeToggle />
               
               <a 
-                href="https://github.com/LittleLittleCloud/RazorConsole" 
+                href="https://github.com/RazorConsole/RazorConsole" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="hidden md:block"
@@ -104,8 +110,15 @@ export default function Layout() {
               >
                 Components
               </Link>
+              <Link 
+                to="/collaborators" 
+                className="block py-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Collaborators
+              </Link>
               <a 
-                href="https://github.com/LittleLittleCloud/RazorConsole" 
+                href="https://github.com/RazorConsole/RazorConsole" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="block py-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-50"
@@ -136,7 +149,7 @@ export default function Layout() {
               <h3 className="font-semibold mb-4">Resources</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="https://github.com/LittleLittleCloud/RazorConsole" 
+                  <a href="https://github.com/RazorConsole/RazorConsole" 
                      target="_blank" 
                      rel="noopener noreferrer"
                      className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50">
@@ -158,6 +171,11 @@ export default function Layout() {
                      className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50">
                     Discord Community
                   </a>
+                </li>
+                <li>
+                  <Link to="/collaborators" className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50">
+                    Collaborators
+                  </Link>
                 </li>
               </ul>
             </div>
