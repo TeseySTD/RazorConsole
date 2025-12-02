@@ -17,39 +17,60 @@
         <Rows>
             <Panel Title="Alphabet Table" Border="BoxBorder.Rounded" Expand="true">
                 <Scrollable Items="@AlphabetData" PageSize="3">
-                    <Rows>
-                        @* <Columns> *@
-                            <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded" BorderColor="@_tableColor"
-                                          @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable" @onkeydown="context.KeyDownEventHandler">
-                                <SpectreTHead>
-                                    <SpectreTR>
-                                        <SpectreTH Align="Justify.Left">N</SpectreTH>
-                                        <SpectreTH Align="Justify.Center">Letter</SpectreTH>
-                                    </SpectreTR>
-                                </SpectreTHead>
-                                <SpectreTBody >
-                                    @foreach (var item in context)
-                                    {
-                                        <SpectreTR>
-                                            <SpectreTD>
-                                                <Markup Content="@item.Number.ToString()" Foreground="@item.Color"/>
-                                            </SpectreTD>
-                                            <SpectreTD>
-                                                <Markup Content="@item.Letter" Foreground="@item.Color"/>
-                                            </SpectreTD>
-                                        </SpectreTR>
-                                    }
-                                </SpectreTBody>
-                            </SpectreTable>
-                            @* <ScrollBar Offset="context.CurrentOffset" ItemsCount="@AlphabetData.Count" PageSize="3" ViewportHeight="10"/> *@
-                        @* </Columns> *@
-
-                        <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
-                    </Rows>
+                    @* <Rows> *@
+                    @*     <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded" BorderColor="@_tableColor" *@
+                    @*                   @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable" *@
+                    @*                   @onkeydown="context.KeyDownEventHandler"> *@
+                    @*         <SpectreTHead> *@
+                    @*             <SpectreTR> *@
+                    @*                 <SpectreTH Align="Justify.Left">N</SpectreTH> *@
+                    @*                 <SpectreTH Align="Justify.Center">Letter</SpectreTH> *@
+                    @*             </SpectreTR> *@
+                    @*         </SpectreTHead> *@
+                    @*         <SpectreTBody> *@
+                    @*             @foreach (var item in context) *@
+                    @*             { *@
+                    @*                 <SpectreTR> *@
+                    @*                     <SpectreTD> *@
+                    @*                         <Markup Content="@item.Number.ToString()" Foreground="@item.Color"/> *@
+                    @*                     </SpectreTD> *@
+                    @*                     <SpectreTD> *@
+                    @*                         <Markup Content="@item.Letter" Foreground="@item.Color"/> *@
+                    @*                     </SpectreTD> *@
+                    @*                 </SpectreTR> *@
+                    @*             } *@
+                    @*         </SpectreTBody> *@
+                    @*     </SpectreTable> *@
+                    @*     <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/> *@
+                    @* </Rows> *@
+                    <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded" BorderColor="@_tableColor"
+                                                @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable"
+                                                @onkeydown="context.KeyDownEventHandler">
+                        <SpectreTHead>
+                            <SpectreTR>
+                                <SpectreTH Align="Justify.Left">N</SpectreTH>
+                                <SpectreTH Align="Justify.Center">Letter</SpectreTH>
+                            </SpectreTR>
+                        </SpectreTHead>
+                        <SpectreTBody>
+                            @foreach (var item in context)
+                            {
+                                <SpectreTR>
+                                    <SpectreTD>
+                                        <Markup Content="@item.Number.ToString()" Foreground="@item.Color"/>
+                                    </SpectreTD>
+                                    <SpectreTD>
+                                        <Markup Content="@item.Letter" Foreground="@item.Color"/>
+                                    </SpectreTD>
+                                </SpectreTR>
+                            }
+                        </SpectreTBody>
+                    </SpectreTable>
                 </Scrollable>
             </Panel>
 
-            <Panel Title="List (ol)" Border="BoxBorder.Rounded" BorderColor="@(!_isListFocused ? Color.White : Color.Aqua)" Expand="true">
+            <Panel Title="List (ol)" Border="BoxBorder.Rounded"
+                   BorderColor="@(!_isListFocused ? Color.White : Color.Aqua)" Expand="true">
                 <Scrollable Items="@AlphabetData" PageSize="4">
                     <ol start="@(context.CurrentOffset + 1)"
                         @onfocus="OnFocusList" @onfocusout="OnFocusOutList" @onkeydown="context.KeyDownEventHandler">
@@ -147,4 +168,5 @@
         </pl>
     </Scrollable>
 </Panel>";
+
 }
