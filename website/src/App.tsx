@@ -9,12 +9,14 @@ import ComponentDetail from "@/pages/components/Detail"
 import Advanced from "@/pages/Advanced"
 import Collaborators from "@/pages/Collaborators"
 import { useThemeEffect } from "@/components/ThemeProvider"
+import ScrollToTop from "@/components/ScrollToTop"
 
 function App() {
   useThemeEffect()
-  
+
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <ScrollToTop/>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
