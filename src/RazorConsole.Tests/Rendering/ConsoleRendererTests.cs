@@ -166,6 +166,96 @@ public sealed class ConsoleRendererTests
         updatedElement.ShouldNotBeNull().Attributes.ContainsKey("data-val").ShouldBeFalse();
     }
 
+    [Fact]
+    public async Task UpdatesText_InsideNestedRegions_AppliesRecursively()
+    {
+        // Arrange
+        using var renderer = TestHelpers.CreateTestRenderer();
+        var parameters = ParameterView.FromDictionary(new Dictionary<string, object?>
+        {
+            { "Text", "Initial" }
+        });
+
+        // Act 1: Initial Render
+        var snapshot = await renderer.MountComponentAsync<TextRegionComponent>(parameters, CancellationToken.None);
+
+        var initialTexts = FindTextNodes(snapshot.Root).ToList();
+        initialTexts.Count.ShouldBe(2);
+        initialTexts.All(t => t.Text == "Initial").ShouldBeTrue();
+
+        // Prepare for Update
+        var tcs = new TaskCompletionSource<ConsoleRenderer.RenderSnapshot>();
+        using var sub = renderer.Subscribe(new SimpleObserver(s =>
+        {
+            // Wait until tree has two "Updated"
+            var currentTexts = FindTextNodes(s.Root).ToList();
+            if (currentTexts.Any(t => t.Text == "Updated"))
+            {
+                tcs.TrySetResult(s);
+            }
+        }));
+
+        // Act 2: Update Parameter
+        await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            await TextRegionComponent.Instance!.SetParametersAsync(ParameterView.FromDictionary(new Dictionary<string, object?>
+            {
+                { "Text", "Updated" }
+            }));
+        });
+
+        // Assert
+        var updatedSnapshot = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+
+        var finalTexts = FindTextNodes(updatedSnapshot.Root).ToList();
+        finalTexts.Count.ShouldBe(2);
+        finalTexts.All(t => t.Text == "Updated").ShouldBeTrue();
+    }
+
+    // Helpers
+    private IEnumerable<Core.Vdom.VNode> FindTextNodes(Core.Vdom.VNode? node)
+    {
+        if (node == null)
+        {
+            yield break;
+        }
+
+        if (node.Kind == Core.Vdom.VNodeKind.Text)
+        {
+            yield return node;
+        }
+
+        foreach (var child in node.Children)
+        {
+            foreach (var textNode in FindTextNodes(child))
+            {
+                yield return textNode;
+            }
+        }
+    }
+
+    private sealed class TextRegionComponent : ComponentBase
+    {
+        public static TextRegionComponent? Instance;
+        public TextRegionComponent() => Instance = this;
+
+        [Parameter] public string? Text { get; set; }
+
+        protected override void BuildRenderTree(RenderTreeBuilder builder)
+        {
+            builder.OpenElement(0, "div");
+
+            builder.OpenRegion(1);         // External region
+            builder.AddContent(2, Text);   // Text 1
+
+            builder.OpenRegion(3);         // Nested region
+            builder.AddContent(4, Text);   // Text 2 (nested)
+            builder.CloseRegion();
+
+            builder.CloseRegion();
+            builder.CloseElement();
+        }
+    }
 
     private Core.Vdom.VNode? FindDiv(Core.Vdom.VNode? node)
     {
