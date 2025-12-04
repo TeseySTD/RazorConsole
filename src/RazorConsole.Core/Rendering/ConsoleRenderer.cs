@@ -335,16 +335,43 @@ internal sealed class ConsoleRenderer(
     private void ApplyUpdateTextEdit(in RenderBatch batch, RenderTreeEdit edit)
     {
         var parent = _cursor.Peek();
-        if ((uint)edit.SiblingIndex < (uint)parent.Children.Count)
+        if ((uint)edit.SiblingIndex >= (uint)parent.Children.Count)
         {
-            var child = parent.Children[edit.SiblingIndex];
-            var frame = batch.ReferenceFrames.Array[edit.ReferenceFrameIndex];
-            var textContent = frame.FrameType == RenderTreeFrameType.Text
-                ? frame.TextContent
-                : frame.MarkupContent;
-            child.SetText(textContent);
+            return;
+        }
+
+        var rootNode = parent.Children[edit.SiblingIndex];
+
+        var frame = batch.ReferenceFrames.Array[edit.ReferenceFrameIndex];
+        var textContent = frame.FrameType == RenderTreeFrameType.Text
+            ? frame.TextContent
+            : frame.MarkupContent;
+
+        if (rootNode.Kind == VNodeKind.Text)
+        {
+            rootNode.SetText(textContent);
+        }
+        else if (rootNode.Kind == VNodeKind.Region)
+        {
+            UpdateAllTextNodesInSubtree(rootNode, textContent);
         }
     }
+
+    private static void UpdateAllTextNodesInSubtree(VNode node, string? newText)
+    {
+        if (node.Kind == VNodeKind.Text)
+        {
+            node.SetText(newText);
+        }
+        else if (node.Kind == VNodeKind.Region)
+        {
+            foreach (var child in node.Children)
+            {
+                UpdateAllTextNodesInSubtree(child, newText);
+            }
+        }
+    }
+
 
     private void ApplyStepInEdit(RenderTreeEdit edit)
     {
