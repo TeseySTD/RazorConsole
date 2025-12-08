@@ -103,7 +103,6 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
         for (int i = 0; i < totalHeight; i++)
         {
-            // SegmentLine реалізує IEnumerable<Segment>, тому перетворюємо в List для доступу за індексом
             var lineSegments = tempLines[i].ToList();
 
             if (i < dataStart || i >= dataEnd)
@@ -129,20 +128,17 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
                 scrollBarSeg = scrollBarLines[scrollBarIndex][0];
             }
 
-            // --- ЛОГІКА ВСТАВКИ ---
-            // Нам потрібно мінімум 2 сегменти: [Контент][Рамка]
+            // Paste logic
             if (lineSegments.Count >= 2)
             {
                 var borderSeg = lineSegments.Last();
-                var contentSeg = lineSegments[lineSegments.Count - 2];
+                var contentSeg = lineSegments[^2];
 
-                // 1. Виводимо все ДО передостаннього
                 for (int j = 0; j < lineSegments.Count - 2; j++)
                 {
                     yield return lineSegments[j];
                 }
 
-                // 2. Обробляємо передостанній (зрізаємо 1 char)
                 string text = contentSeg.Text;
                 if (text.Length > 0)
                 {
@@ -150,17 +146,14 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
                     {
                         yield return new Segment(text.Substring(0, text.Length - 1), contentSeg.Style);
                     }
-                    // Якщо довжина 1, ми просто не виводимо цей сегмент (він замінюється скролбаром)
                 }
 
-                // 3. Вставляємо скролбар
                 if (scrollBarSeg != null)
                 {
                     yield return scrollBarSeg;
                 }
                 else
                 {
-                    // Fallback: повертаємо "з'їдений" символ, якщо скролбару тут нема
                     if (text.Length > 0)
                     {
                         yield return new Segment(text.Substring(text.Length - 1), contentSeg.Style);
@@ -171,12 +164,10 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
                     }
                 }
 
-                // 4. Виводимо рамку
                 yield return borderSeg;
             }
             else
             {
-                // Edge case: просто виводимо рядок як є
                 foreach (var seg in lineSegments)
                 {
                     yield return seg;
@@ -189,7 +180,6 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
             }
         }
     }
-
     private (int start, int end) FindTableContentRange(List<SegmentLine> lines, Table table)
     {
         if (lines.Count == 0)
@@ -197,80 +187,88 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
             return (0, 0);
         }
 
+        string? searchMarker = null;
+        bool isTitleSearch = false;
+        int lineOffset = 1;
+
+        if (table.Border != TableBorder.None)
+        {
+            if (table.ShowHeaders)
+            {
+                searchMarker = table.Border.GetPart(TableBorderPart.HeaderBottomLeft) +
+                               table.Border.GetPart(TableBorderPart.HeaderBottom);
+            }
+            else
+            {
+                searchMarker = table.Border.GetPart(TableBorderPart.HeaderTopLeft);
+                lineOffset = 2;
+            }
+        }
+        else if (table.Title != null)
+        {
+            searchMarker = table.Title.Text;
+            isTitleSearch = true;
+            lineOffset = 2;
+        }
+
         int top = 0;
-        int bottom = lines.Count;
 
-        string? markerChar = null;
-        bool skipMarkerLine = false;
-
-        if (table.ShowHeaders)
-        {
-            markerChar = table.Border.GetPart(TableBorderPart.HeaderBottomLeft);
-
-            if (string.IsNullOrEmpty(markerChar))
-            {
-                markerChar = table.Border.GetPart(TableBorderPart.HeaderBottom);
-            }
-
-            skipMarkerLine = true;
-        }
-        else if (table.Border != TableBorder.None)
-        {
-            markerChar = table.Border.GetPart(TableBorderPart.HeaderTopLeft);
-
-            if (string.IsNullOrEmpty(markerChar))
-            {
-                markerChar = table.Border.GetPart(TableBorderPart.HeaderTopLeft);
-            }
-
-            skipMarkerLine = true;
-        }
-
-        if (!string.IsNullOrEmpty(markerChar))
+        if (!string.IsNullOrEmpty(searchMarker))
         {
             for (int i = 0; i < lines.Count - 1; i++)
             {
-                var lineText = string.Concat(lines[i].Select(s => s.Text));
+                var lineText = GetLineText(lines[i]);
 
                 if (string.IsNullOrEmpty(lineText))
                 {
                     continue;
                 }
 
-                if (lineText.StartsWith(markerChar))
+                if (isTitleSearch)
                 {
-                    top = skipMarkerLine ? i + 1 : i;
-
-
-                    if (table.ShowHeaders && (table.Border == TableBorder.Ascii || table.Border == TableBorder.Ascii2 || table.Border == TableBorder.Markdown))
+                    int endOfTitleIndex = FindLastLineOfPhrase(lines, i, searchMarker);
+                    if (endOfTitleIndex != i)
                     {
-                        bool isLikelyTopBorder = (i == 0) || (i == 1 && !string.IsNullOrWhiteSpace(string.Concat(lines[0].Select(s => s.Text))));
-
-                        if (isLikelyTopBorder)
-                        {
-                            continue;
-                        }
+                        top = endOfTitleIndex + lineOffset;
+                        break;
                     }
-
+                }
+                else if (lineText.StartsWith(searchMarker))
+                {
+                    top = i + lineOffset;
                     break;
                 }
             }
         }
 
+        int bottom = (table.Border != TableBorder.None) ? lines.Count - 1 : lines.Count;
 
-        if (table.Border != TableBorder.None)
-        {
-            bottom = lines.Count - 1;
-        }
-
-        if (top >= bottom)
-        {
-            return (0, lines.Count);
-        }
-
-        return (top, bottom);
+        return (top >= bottom) ? (0, lines.Count) : (top, bottom);
     }
 
+    private static string GetLineText(SegmentLine line) => string.Concat(line.Select(s => s.Text));
+
+    private int FindLastLineOfPhrase(List<SegmentLine> textLines, int startIndex, string phrase)
+    {
+        string cleanPhrase = Markup.Remove(phrase);
+        string targetSignature = cleanPhrase.Replace(" ", "").Replace("\t", "");
+
+        var accumulatedText = new System.Text.StringBuilder();
+
+        for (int i = startIndex; i < textLines.Count; i++)
+        {
+            string lineText = GetLineText(textLines[i]);
+
+            accumulatedText.Append(lineText.Replace(" ", "").Replace("\t", ""));
+
+            if (accumulatedText.ToString().Contains(targetSignature))
+            {
+                return i;
+            }
+        }
+
+        return startIndex;
+    }
 
     private IEnumerable<Segment> RenderSideScrollBar(RenderOptions options, int maxWidth)
     {
@@ -293,7 +291,6 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
             }
         }
 
-        // Fix: Правильний порядок аргументів конструктора
         var scrollBar = new ScrollBarRenderable(
             _totalItems,
             _offset,
