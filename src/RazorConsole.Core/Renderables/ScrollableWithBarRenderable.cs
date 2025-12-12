@@ -45,20 +45,40 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
     public Measurement Measure(RenderOptions options, int maxWidth)
     {
-        var contentMeasure = _compositeContent.Measure(options, maxWidth - 1);
+        var contentMeasure = _compositeContent.Measure(options, maxWidth);
         return new Measurement(contentMeasure.Min + 1, contentMeasure.Max + 1);
     }
 
     public IEnumerable<Segment> Render(RenderOptions options, int maxWidth)
     {
-        var firstItem = _items.FirstOrDefault();
-        bool isSingleTable = _items.Count == 1 && firstItem is Table;
+        var directTable = _items.OfType<Table>().Count() == 1 ? _items.OfType<Table>().FirstOrDefault() : null;
 
-        if (isSingleTable)
+        if (directTable != null)
         {
-            foreach (var segment in RenderTableWithScrollBar((Table)firstItem!, options, maxWidth))
+            bool isFirst = true;
+
+            foreach (var item in _items)
             {
-                yield return segment;
+                if (!isFirst)
+                {
+                    yield return Segment.LineBreak;
+                }
+                isFirst = false;
+
+                if (ReferenceEquals(item, directTable))
+                {
+                    foreach (var segment in RenderTableWithScrollBar(directTable, options, maxWidth))
+                    {
+                        yield return segment;
+                    }
+                }
+                else
+                {
+                    foreach (var segment in item.Render(options, maxWidth))
+                    {
+                        yield return segment;
+                    }
+                }
             }
         }
         else
@@ -272,7 +292,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
     private IEnumerable<Segment> RenderSideScrollBar(RenderOptions options, int maxWidth)
     {
-        var contentSegments = _compositeContent.Render(options, maxWidth - 1).ToList();
+        var contentSegments = _compositeContent.Render(options, maxWidth).ToList();
         var lines = Segment.SplitLines(contentSegments);
         int renderedHeight = lines.Count;
 
