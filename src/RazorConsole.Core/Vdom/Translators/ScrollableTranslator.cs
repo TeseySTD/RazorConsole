@@ -18,11 +18,7 @@ public class ScrollableTranslator : IVdomElementTranslator
             return false;
         }
 
-        if (!VdomSpectreTranslator.TryParsePositiveInt(VdomSpectreTranslator.GetAttribute(node, "data-items-count"),
-                out var itemsCount))
-        {
-            return false;
-        }
+        var itemsCount = VdomSpectreTranslator.TryGetIntAttribute(node, "data-items-count", 0);
 
         if (!int.TryParse(VdomSpectreTranslator.GetAttribute(node, "data-offset"), out var offset))
         {

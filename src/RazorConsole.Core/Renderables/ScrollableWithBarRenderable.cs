@@ -110,8 +110,8 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         var dataStart = hasTitle || hasBorder ? 1 : 0;
         var dataEnd = hasBorder ? tempLines.Count - 1 : tempLines.Count;
 
-        // Check if there is any items
-        if (dataStart >= dataEnd)
+        // Check if there are any items
+        if (dataStart >= dataEnd || _totalItems == 0)
         {
             foreach (var segment in RenderRawLines(tempLines))
             {
@@ -171,8 +171,8 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         }
 
         var (dataStart, dataEnd) = FindTableContentRange(tempLines, originalTable);
-        // Check if there is any items
-        if (dataStart >= dataEnd)
+        // Check if there are any items
+        if (dataStart >= dataEnd || _totalItems == 0)
         {
             foreach (var segment in RenderRawLines(tempLines))
             {
@@ -313,7 +313,6 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
         string? searchMarker = null;
         var isTitleSearch = false;
-        var searchMarkerFound = false;
         var lineOffset = 1;
 
         if (table.Border != TableBorder.None)
@@ -353,22 +352,14 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
                     if (endOfTitleIndex != i)
                     {
                         top = endOfTitleIndex + lineOffset;
-                        searchMarkerFound = true;
                         break;
                     }
                 }
                 else if (lineText.StartsWith(searchMarker))
                 {
                     top = i + lineOffset;
-                    searchMarkerFound = true;
                     break;
                 }
-            }
-
-            // Edge case: table is empty - headers symbol cannot be shown so top is 0 but bottom is different despite content rage is 0
-            if (table.Border != TableBorder.None && !searchMarkerFound && table.ShowHeaders)
-            {
-                return (0, 0);
             }
         }
 

@@ -2,16 +2,13 @@
 
 @typeparam TItem
 
-@if (VisibleItems.Any())
-{
-    <scrollable
-            data-items-count="@Items.Count"
-            data-offset="@ScrollOffset"
-            data-page-size="@PageSize"
-        >
-        @ChildContent(new ScrollContext<TItem>(VisibleItems, HandleKeyDown, ScrollOffset, PagesCount))
-    </scrollable>
-}
+<scrollable
+        data-items-count="@Items.Count"
+        data-offset="@ScrollOffset"
+        data-page-size="@PageSize"
+    >
+    @ChildContent(new ScrollContext<TItem>(VisibleItems, HandleKeyDown, ScrollOffset, PagesCount))
+</scrollable>
 
 
 @code {
