@@ -51,23 +51,37 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
     public IEnumerable<Segment> Render(RenderOptions options, int maxWidth)
     {
-        var directTable = _items.OfType<Table>().Count() == 1 ? _items.OfType<Table>().FirstOrDefault() : null;
+        var tables = _items.OfType<Table>().ToList();
+        var panels = _items.OfType<Panel>().ToList();
 
-        if (directTable != null)
+        int candidateCount = tables.Count + panels.Count;
+
+        if (candidateCount == 1)
         {
+            var targetTable = tables.FirstOrDefault();
+            var targetPanel = panels.FirstOrDefault();
+
             bool isFirst = true;
 
             foreach (var item in _items)
             {
+                // Make rows layout
                 if (!isFirst)
                 {
                     yield return Segment.LineBreak;
                 }
                 isFirst = false;
 
-                if (ReferenceEquals(item, directTable))
+                if (targetTable != null && ReferenceEquals(item, targetTable))
                 {
-                    foreach (var segment in RenderTableWithScrollBar(directTable, options, maxWidth))
+                    foreach (var segment in RenderTableWithScrollBar(targetTable, options, maxWidth))
+                    {
+                        yield return segment;
+                    }
+                }
+                else if (targetPanel != null && ReferenceEquals(item, targetPanel))
+                {
+                    foreach (var segment in RenderPanelWithScrollBar(targetPanel, options, maxWidth))
                     {
                         yield return segment;
                     }
@@ -89,6 +103,138 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
             }
         }
     }
+
+    private IEnumerable<Segment> RenderPanelWithScrollBar(Panel originalPanel, RenderOptions options, int maxWidth)
+    {
+        var renderablePanel = (IRenderable)originalPanel;
+        var tempSegments = renderablePanel.Render(options, maxWidth).ToList();
+        var tempLines = Segment.SplitLines(tempSegments);
+        int totalHeight = tempLines.Count;
+
+        if (totalHeight == 0)
+        {
+            yield break;
+        }
+
+        bool hasBorder = originalPanel.Border != BoxBorder.None;
+        bool hasTitle = originalPanel.Header is not null;
+
+        int dataStart = hasTitle || hasBorder ? 1 : 0;
+        int dataEnd = hasBorder ? totalHeight - 1 : totalHeight;
+
+        if (dataStart >= dataEnd)
+        {
+            foreach (var segment in tempSegments)
+            {
+                yield return segment;
+            }
+
+            yield break;
+        }
+
+        int scrollBarHeight = Math.Max(1, dataEnd - dataStart);
+
+        var scrollBar = new ScrollBarRenderable(
+            _totalItems, _offset, _pageSize, scrollBarHeight,
+            _trackChar, _thumbChar, _trackColor, _thumbColor, minThumbHeight: 1
+        );
+
+        var scrollBarSegments = scrollBar.Render(options, 1).ToList();
+        var scrollBarLines = Segment.SplitLines(scrollBarSegments);
+
+
+        for (int i = 0; i < totalHeight; i++)
+        {
+            var lineSegments = tempLines[i].ToList();
+
+            int borderIndex = lineSegments.Count - 1;
+            if (borderIndex >= 0)
+            {
+                lineSegments.Insert(borderIndex, new Segment(originalPanel.Border.GetPart(BoxBorderPart.Bottom)));
+            }
+
+            if (i < dataStart || i >= dataEnd)
+            {
+                foreach (var seg in lineSegments)
+                {
+                    yield return seg;
+                }
+
+                if (i < totalHeight - 1)
+                {
+                    yield return Segment.LineBreak;
+                }
+
+                continue;
+            }
+
+            int scrollBarIndex = i - dataStart;
+            Segment? scrollBarSeg = null;
+            if (scrollBarIndex >= 0 && scrollBarIndex < scrollBarLines.Count && scrollBarLines[scrollBarIndex].Count > 0)
+            {
+                scrollBarSeg = scrollBarLines[scrollBarIndex][0];
+            }
+
+            if (lineSegments.Count > 2)
+            {
+                int targetIndex = hasBorder ? lineSegments.Count - 2 : lineSegments.Count - 1;
+                if (targetIndex < 0)
+                {
+                    targetIndex = 0;
+                }
+
+                if (targetIndex >= lineSegments.Count)
+                {
+                    targetIndex = lineSegments.Count - 1;
+                }
+
+                for (int j = 0; j < targetIndex; j++)
+                {
+                    yield return lineSegments[j];
+                }
+
+                var targetSeg = lineSegments[targetIndex];
+                if (targetSeg.Text.Length > 1)
+                {
+                    yield return new Segment(targetSeg.Text.Substring(0, targetSeg.Text.Length - 1), targetSeg.Style);
+                }
+
+                if (scrollBarSeg != null)
+                {
+                    yield return scrollBarSeg;
+                }
+                else
+                {
+                    if (targetSeg.Text.Length > 0)
+                    {
+                        yield return new Segment(targetSeg.Text.Substring(targetSeg.Text.Length - 1), targetSeg.Style);
+                    }
+                    else
+                    {
+                        yield return new Segment(" ");
+                    }
+                }
+
+                if (hasBorder)
+                {
+                    yield return lineSegments.Last();
+                }
+            }
+            else
+            {
+                if (scrollBarSeg != null)
+                {
+                    yield return scrollBarSeg;
+                }
+            }
+
+            if (i < totalHeight - 1)
+            {
+                yield return Segment.LineBreak;
+            }
+        }
+    }
+
 
     private IEnumerable<Segment> RenderTableWithScrollBar(Table originalTable, RenderOptions options, int maxWidth)
     {
