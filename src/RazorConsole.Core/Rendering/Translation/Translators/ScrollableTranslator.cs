@@ -1,25 +1,27 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
+using RazorConsole.Core.Abstractions.Rendering;
 using RazorConsole.Core.Rendering.Renderables;
+using RazorConsole.Core.Rendering.Translation.Contexts;
 using RazorConsole.Core.Rendering.Vdom;
+using RazorConsole.Core.Vdom;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
-namespace RazorConsole.Core.Vdom.Translators;
+namespace RazorConsole.Core.Rendering.Translation.Translators;
 
-public class ScrollableTranslator : IVdomElementTranslator
+public class ScrollableTranslator : ITranslationMiddleware
 {
-    public int Priority => 30;
-
-    public bool TryTranslate(VNode node, TranslationContext context, out IRenderable? renderable)
+    public IRenderable Translate(TranslationContext context, TranslationDelegate next, VNode node)
     {
-        renderable = null;
         if (!string.Equals(node.TagName, "scrollable", StringComparison.OrdinalIgnoreCase))
         {
-            return false;
+            return next(node);
         }
 
-        var scrollbars = node.Children.Where(n => VdomSpectreTranslator.TryGetBoolAttribute(n, "data-scrollbar", out var value) && value).ToList();
+        var scrollbars = node.Children
+            .Where(n => VdomSpectreTranslator.TryGetBoolAttribute(n, "data-scrollbar", out var value) && value)
+            .ToList();
         // Accept only one scrollbar
         if (scrollbars.Count == 1)
         {
@@ -29,58 +31,58 @@ public class ScrollableTranslator : IVdomElementTranslator
 
             if (!int.TryParse(VdomSpectreTranslator.GetAttribute(node, "data-offset"), out var offset))
             {
-                return false;
+                return next(node);
             }
 
             if (!VdomSpectreTranslator.TryParsePositiveInt(VdomSpectreTranslator.GetAttribute(node, "data-page-size"),
                     out var pageSize))
             {
-                return false;
+                return next(node);
             }
 
             if (!VdomSpectreTranslator.TryGetBoolAttribute(node, "data-enable-embedded", out var enableEmbedded))
             {
-                return false;
+                return next(node);
             }
 
             // Extract styling parameters
             if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-track-char"), out var trackChar))
             {
-                return false;
+                return next(node);
             }
 
             if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-thumb-char"), out var thumbChar))
             {
-                return false;
+                return next(node);
             }
 
             if (!scrollbarNode.Attributes.TryGetValue("data-track-color", out var trackColorStr) ||
                 string.IsNullOrEmpty(trackColorStr) ||
                 !Color.TryFromHex(trackColorStr, out var trackColor))
             {
-                return false;
+                return next(node);
             }
 
             if (!scrollbarNode.Attributes.TryGetValue("data-thumb-color", out var thumbColorStr) ||
                 string.IsNullOrEmpty(thumbColorStr) ||
                 !Color.TryFromHex(thumbColorStr, out var thumbColor))
             {
-                return false;
+                return next(node);
             }
 
             if (!VdomSpectreTranslator.TryParsePositiveInt(
                     VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-min-thumb-height"), out var minThumbHeight))
             {
-                return false;
+                return next(node);
             }
 
-            if (!VdomSpectreTranslator.TryConvertChildrenToRenderables(node.Children, context,
+            if (!TranslationHelpers.TryConvertChildrenToRenderables(node.Children, context,
                     out var contentRenderable))
             {
-                return false;
+                return next(node);
             }
 
-            renderable = new ScrollableWithBarRenderable(
+            return new ScrollableWithBarRenderable(
                 contentRenderable, itemsCount, offset, pageSize, enableEmbedded,
                 trackColor: trackColor,
                 thumbColor: thumbColor,
@@ -89,22 +91,20 @@ public class ScrollableTranslator : IVdomElementTranslator
                 minThumbHeight: minThumbHeight
             );
         }
+
         // If there is not any scrollbar - render just rows layout
-        else if (!scrollbars.Any())
+        if (!scrollbars.Any())
         {
-            if (!VdomSpectreTranslator.TryConvertChildrenToRenderables(node.Children, context,
+            if (!TranslationHelpers.TryConvertChildrenToRenderables(node.Children, context,
                     out var contentRenderable))
             {
-                return false;
+                return next(node);
             }
 
-            renderable = new Rows(contentRenderable);
-        }
-        else // If there are many scrollbars - then component cannot be translated
-        {
-            return false;
+            return new Rows(contentRenderable);
         }
 
-        return true;
+        // If there are many scrollbars - then component cannot be translated
+        return next(node);
     }
 }
