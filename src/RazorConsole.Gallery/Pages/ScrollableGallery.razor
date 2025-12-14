@@ -1,11 +1,14 @@
 @page "/scrollable"
 
 <Rows>
-    <Markup Content="Scrollable component that adds ability to scroll through items and render limited count."
+    <Markup Content="Scrollable component that adds ability to scroll through items and render limited count. Has scrollbar support using special component. Also, scrollbar has ability to be embedded in table and panel/border components."
             Foreground="@Color.Grey70"/>
     <Markup Content="Source Code: Scrollable.razor"
             Foreground="@Color.DeepSkyBlue1" Decoration="@Decoration.Underline"
-            link="@DocumentationUrl"/>
+            link="@ScrollableDocumentationUrl"/>
+    <Markup Content="Source Code: Scrollbar.razor"
+            Foreground="@Color.DeepSkyBlue1" Decoration="@Decoration.Underline"
+            link="@ScrollbarDocumentationUrl"/>
     <Newline/>
 
     <Rows>
@@ -15,37 +18,9 @@
                                ShowLineNumbers="true"/>
         </Panel>
         <Rows>
-            <Panel Title="Alphabet Table" Border="BoxBorder.Rounded" Expand="true">
+            <Panel Title="Embedded scrollbar" Border="BoxBorder.Rounded" Expand>
                 <Scrollable Items="@AlphabetData" PageSize="3">
-                    @* <Rows> *@
-                    @*     <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded" BorderColor="@_tableColor" *@
-                    @*                   @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable" *@
-                    @*                   @onkeydown="context.KeyDownEventHandler"> *@
-                    @*         <SpectreTHead> *@
-                    @*             <SpectreTR> *@
-                    @*                 <SpectreTH Align="Justify.Left">N</SpectreTH> *@
-                    @*                 <SpectreTH Align="Justify.Center">Letter</SpectreTH> *@
-                    @*             </SpectreTR> *@
-                    @*         </SpectreTHead> *@
-                    @*         <SpectreTBody> *@
-                    @*             @foreach (var item in context) *@
-                    @*             { *@
-                    @*                 <SpectreTR> *@
-                    @*                     <SpectreTD> *@
-                    @*                         <Markup Content="@item.Number.ToString()" Foreground="@item.Color"/> *@
-                    @*                     </SpectreTD> *@
-                    @*                     <SpectreTD> *@
-                    @*                         <Markup Content="@item.Letter" Foreground="@item.Color"/> *@
-                    @*                     </SpectreTD> *@
-                    @*                 </SpectreTR> *@
-                    @*             } *@
-                    @*         </SpectreTBody> *@
-                    @*     </SpectreTable> *@
-                    @*     <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/> *@
-                    @* </Rows> *@
-                    <SpectreTable Title="Short alphabet" Border="TableBorder.Rounded" BorderColor="@_tableColor"
-                                                @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable"
-                                                @onkeydown="context.KeyDownEventHandler">
+                    <SpectreTable Title="Table" Border="TableBorder.Rounded" Expand>
                         <SpectreTHead>
                             <SpectreTR>
                                 <SpectreTH Align="Justify.Left">N</SpectreTH>
@@ -66,22 +41,35 @@
                             }
                         </SpectreTBody>
                     </SpectreTable>
+
+                    <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
+                    <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
+                </Scrollable>
+
+                <Scrollable Items="@AlphabetData" PageSize="6">
+                    <Panel Border="BoxBorder.Rounded" Title="Panel with list (ol)" Expand>
+                        <ol start="@(context.CurrentOffset + 1)">
+                            @foreach (var item in context)
+                            {
+                                <li>
+                                    <Markup Content=@($"{item.Letter}") Foreground="@item.Color"/>
+                                </li>
+                            }
+                        </ol>
+                    </Panel>
+
+                    <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
+                    <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
                 </Scrollable>
             </Panel>
 
-            <Panel Title="List (ol)" Border="BoxBorder.Rounded"
-                   BorderColor="@(!_isListFocused ? Color.White : Color.Aqua)" Expand="true">
+            <Panel Title="Not embedded scrollbar - just list of markups" Border="BoxBorder.Rounded" Expand>
                 <Scrollable Items="@AlphabetData" PageSize="4">
-                    <ol start="@(context.CurrentOffset + 1)"
-                        @onfocus="OnFocusList" @onfocusout="OnFocusOutList" @onkeydown="context.KeyDownEventHandler">
-
-                        @foreach (var item in context)
-                        {
-                            <li>
-                                <Markup Content=@($"{item.Letter}") Foreground="@item.Color"/>
-                            </li>
-                        }
-                    </ol>
+                    @foreach (var item in context)
+                    {
+                        <Markup Content=@($"{item.Letter}") Foreground="@item.Color"/>
+                    }
+                    <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
                 </Scrollable>
             </Panel>
         </Rows>
@@ -89,10 +77,9 @@
 </Rows>
 
 @code {
-    private const string DocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/Scrollable.razor";
+    private const string ScrollableDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/Scrollable.razor";
+    private const string ScrollbarDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/Scrollbar.razor";
     private IReadOnlyList<(int Number, string Letter, Color Color)> AlphabetData => GetAlphabetData();
-    private Color _tableColor = Color.White;
-    private bool _isListFocused;
 
     private IReadOnlyList<(int Number, string Letter, Color Color)> GetAlphabetData()
     {
@@ -115,57 +102,59 @@
             (15, "O", Color.SkyBlue1)
         ];
     }
-
-    private void OnFocusTable(FocusEventArgs e)
-    {
-        _tableColor = Color.Aqua;
-    }
-
-    private void OnFocusOutTable(FocusEventArgs e)
-    {
-        _tableColor = Color.White;
-    }
-
-    private void OnFocusList(FocusEventArgs e)
-    {
-        _isListFocused = true;
-    }
-
-    private void OnFocusOutList(FocusEventArgs e)
-    {
-        _isListFocused = false;
-    }
-
-
-    private string _scrollableMarkup = @"
-<Scrollable Items=""@AlphabetData"" PageSize=""3"">
-    <Rows>
-        <SpectreTable Title=""Short alphabet"" Border=""TableBorder.Rounded"" BorderColor=""@_tableColor""
-             @onfocus=""OnFocusTable"" @onfocusout=""OnFocusOutTable"" @onkeydown=""context.KeyDownEventHandler"">
+    private readonly string _scrollableMarkup = @"
+<Panel Title=""Embedded scrollbar"" Border=""BoxBorder.Rounded"" Expand>
+    <Scrollable Items=""@AlphabetData"" PageSize=""3"">
+        <SpectreTable Title=""Table"" Border=""TableBorder.Rounded"" Expand>
+            <SpectreTHead>
+                <SpectreTR>
+                    <SpectreTH Align=""Justify.Left"">N</SpectreTH>
+                    <SpectreTH Align=""Justify.Center"">Letter</SpectreTH>
+                </SpectreTR>
+            </SpectreTHead>
             <SpectreTBody>
                 @foreach (var item in context)
                 {
                     <SpectreTR>
-                        <SpectreTD><Markup Content=""@item.Number"" Foreground=""@item.Color""/></SpectreTD>
-                        <SpectreTD><Markup Content=""@item.Letter"" Foreground=""@item.Color""/></SpectreTD>
+                        <SpectreTD>
+                            <Markup Content=""@item.Number.ToString()"" Foreground=""@item.Color""/>
+                        </SpectreTD>
+                        <SpectreTD>
+                            <Markup Content=""@item.Letter"" Foreground=""@item.Color""/>
+                        </SpectreTD>
                     </SpectreTR>
                 }
             </SpectreTBody>
         </SpectreTable>
-        <Markup Content=""Page: {context.CurrentOffset + 1}/{context.PagesCount}""/>
-    </Rows>
-</Scrollable>
 
-<Panel Title=""List (ol)"" Border=""BoxBorder.Rounded"" BorderColor=""@(!_isListFocused ? Color.White : Color.Aqua)"" Expand=""true"">
+        <Markup Content=@($""Page: {context.CurrentOffset + 1} / {context.PagesCount}"")/>
+        <Scrollbar KeyDownEventHandler=""context.KeyDownEventHandler""/>
+    </Scrollable>
+
+    <Scrollable Items=""@AlphabetData"" PageSize=""6"">
+        <Panel Border=""BoxBorder.Rounded"" Title=""Panel with list (ol)"" Expand>
+            <ol start=""@(context.CurrentOffset + 1)"">
+                @foreach (var item in context)
+                {
+                    <li>
+                        <Markup Content=@($""{item.Letter}"") Foreground=""@item.Color""/>
+                    </li>
+                }
+            </ol>
+        </Panel>
+
+        <Markup Content=@($""Page: {context.CurrentOffset + 1} / {context.PagesCount}"")/>
+        <Scrollbar KeyDownEventHandler=""context.KeyDownEventHandler""/>
+    </Scrollable>
+</Panel>
+
+<Panel Title=""Not embedded scrollbar - just list of markups"" Border=""BoxBorder.Rounded"" Expand>
     <Scrollable Items=""@AlphabetData"" PageSize=""4"">
-        //Use start attribute in ordered list to sync numeration with scrolling.
-        <ol start=""@(context.CurrentOffset + 1)""
-            @onfocus=""OnFocusList"" @onfocusout=""OnFocusOutList"" @onkeydown=""context.KeyDownEventHandler"">
             @foreach (var item in context)
             {
-                <li><Markup Content=""{item.Letter}"" Foreground=""@item.Color""/></li>
+                <Markup Content=@($""{item.Letter}"") Foreground=""@item.Color""/>
             }
-        </pl>
+        <Scrollbar KeyDownEventHandler=""context.KeyDownEventHandler""/>
     </Scrollable>
 </Panel>";
 
