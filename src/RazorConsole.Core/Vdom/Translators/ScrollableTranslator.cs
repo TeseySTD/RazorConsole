@@ -32,11 +32,11 @@ public class ScrollableTranslator : IVdomElementTranslator
             return false;
         }
 
-        var scrollbars = node.Children.Where(n => n.TagName == "scrollbar").ToList();
+        var scrollbars = node.Children.Where(n => VdomSpectreTranslator.TryGetBoolAttribute(n, "data-scrollbar", out var value) && value).ToList();
         // Accept only one scrollbar
         if (scrollbars.Count == 1)
         {
-            var scrollbarNode = node.Children.FirstOrDefault(n => n.TagName == "scrollbar")!;
+            var scrollbarNode = scrollbars.Single();
 
             // Extract styling parameters
             if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-track-char"), out var trackChar))
@@ -70,7 +70,7 @@ public class ScrollableTranslator : IVdomElementTranslator
             }
 
             // Scrollbar cannot be translated explicitly
-            node.RemoveChildAt(node.Children.ToList().IndexOf(scrollbarNode));
+            // node.RemoveChildAt(node.Children.ToList().IndexOf(scrollbarNode));
             if (!VdomSpectreTranslator.TryConvertChildrenToRenderables(node.Children, context,
                     out var contentRenderable))
             {
