@@ -14,12 +14,12 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
     private readonly int _totalItems;
     private readonly int _offset;
     private readonly int _pageSize;
-    private readonly bool _enableEmbeddedScrollbar;
     private readonly Color _trackColor;
     private readonly Color _thumbColor;
     private readonly char _trackChar;
     private readonly char _thumbChar;
     private readonly int _minThumbHeight;
+    private readonly bool _isEmbeddedScrollbarMode;
 
     public ScrollableWithBarRenderable(
         IEnumerable<IRenderable> items,
@@ -38,27 +38,40 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         _totalItems = totalItems;
         _offset = offset;
         _pageSize = pageSize;
-        _enableEmbeddedScrollbar = enableEmbeddedScrollbar;
         _trackColor = trackColor ?? Color.Grey;
         _thumbColor = thumbColor ?? Color.White;
         _trackChar = trackChar ?? '│';
         _thumbChar = thumbChar ?? '█';
         _minThumbHeight = minThumbHeight;
+
+        var tables = _items.OfType<Table>();
+        var panels = _items.OfType<Panel>();
+        _isEmbeddedScrollbarMode = tables.Count() + panels.Count() == 1 && enableEmbeddedScrollbar;
     }
 
     public Measurement Measure(RenderOptions options, int maxWidth)
     {
-        var contentMeasure = _compositeContent.Measure(options, maxWidth);
-        return new Measurement(contentMeasure.Min + 1, contentMeasure.Max + 1);
+        if (_isEmbeddedScrollbarMode)
+        {
+            var contentMeasure = _compositeContent.Measure(options, maxWidth - 1); // For scrollbar
+
+            return new Measurement(contentMeasure.Min + 1, contentMeasure.Max + 1);
+        }
+        else
+        {
+            var contentMeasure = _compositeContent.Measure(options, maxWidth - 2); // For scrollbar and space before
+
+            return new Measurement(contentMeasure.Min + 2, contentMeasure.Max + 2);
+        }
     }
+
 
     public IEnumerable<Segment> Render(RenderOptions options, int maxWidth)
     {
-        var tables = _items.OfType<Table>().ToList();
-        var panels = _items.OfType<Panel>().ToList();
-
-        if (tables.Count + panels.Count == 1 && _enableEmbeddedScrollbar)
+        if (_isEmbeddedScrollbarMode)
         {
+            var tables = _items.OfType<Table>().ToList();
+            var panels = _items.OfType<Panel>().ToList();
             var targetTable = tables.FirstOrDefault();
             var targetPanel = panels.FirstOrDefault();
             var isFirst = true;
@@ -105,7 +118,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
     private IEnumerable<Segment> RenderPanelWithScrollBar(Panel originalPanel, RenderOptions options, int maxWidth)
     {
-        var tempLines = GetRenderedLines(originalPanel, options, maxWidth);
+        var tempLines = GetRenderedLines(originalPanel, options, maxWidth - 1);
         if (tempLines.Count == 0)
         {
             yield break;
@@ -170,7 +183,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
     private IEnumerable<Segment> RenderTableWithScrollBar(Table originalTable, RenderOptions options, int maxWidth)
     {
-        var tempLines = GetRenderedLines(originalTable, options, maxWidth);
+        var tempLines = GetRenderedLines(originalTable, options, maxWidth - 1);
         if (tempLines.Count == 0)
         {
             yield break;
@@ -224,7 +237,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
     private IEnumerable<Segment> RenderSideScrollBar(RenderOptions options, int maxWidth)
     {
-        var tempLines = GetRenderedLines(_compositeContent, options, maxWidth);
+        var tempLines = GetRenderedLines(_compositeContent, options, maxWidth - 2); // 2 because reserving place for bar and space before
         if (tempLines.Count == 0)
         {
             yield break;
