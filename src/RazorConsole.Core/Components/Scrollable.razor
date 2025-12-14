@@ -1,11 +1,13 @@
 ﻿@namespace RazorConsole.Components
 
+@using Spectre.Console
 @typeparam TItem
 
 <scrollable
         data-items-count="@Items.Count"
         data-offset="@ScrollOffset"
         data-page-size="@PageSize"
+        data-enable-embedded="@EnableEmbeddedScrollbar.ToString()"
     >
     @ChildContent(new ScrollContext<TItem>(VisibleItems, HandleKeyDown, ScrollOffset, PagesCount))
 </scrollable>
@@ -66,6 +68,17 @@
     /// </summary>
     [Parameter]
     public EventCallback<int> ScrollOffsetChanged { get; set; }
+
+    /// <summary>
+    /// Determines whether the scrollbar should be visually embedded within the border of a <see cref="Table"/> or <see cref="Panel"/>/<see cref="Border"/>.
+    /// </summary>
+    /// <remarks>
+    /// This feature is only active when there is exactly one direct child of type <see cref="Table"/> or <see cref="Panel"/>/<see cref="Border"/>.
+    /// If multiple block-level elements are detected, the scrollbar will revert to the default side-rendering behavior.
+    /// </remarks>
+    /// <value>true</value>
+    [Parameter]
+    public bool EnableEmbeddedScrollbar { get; set; } = true;
 
     private IReadOnlyList<TItem> VisibleItems
         => Items.Skip(ScrollOffset).Take(PageSize).ToList();

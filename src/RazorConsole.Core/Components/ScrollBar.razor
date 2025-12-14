@@ -66,13 +66,13 @@
     public required Func<KeyboardEventArgs,Task> KeyDownEventHandler { get; set; }
 
     /// <summary>
-    /// Focus in callback, that can be used for any UI changes.
+    /// Callback, that called after focus in event, can be used for any UI changes outside scrollbar.
     /// </summary>
     [Parameter]
     public Action<FocusEventArgs>? OnFocusInCallback { get; set; }
 
     /// <summary>
-    /// Focus out callback, that can be used for any UI changes.
+    /// Callback, that called after focus out event, can be used for any UI changes outside scrollbar.
     /// </summary>
     [Parameter]
     public Action<FocusEventArgs>? OnFocusOutCallback { get; set; }

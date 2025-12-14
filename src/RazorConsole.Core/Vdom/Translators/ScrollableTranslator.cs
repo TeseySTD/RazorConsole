@@ -19,24 +19,29 @@ public class ScrollableTranslator : IVdomElementTranslator
             return false;
         }
 
-        var itemsCount = VdomSpectreTranslator.TryGetIntAttribute(node, "data-items-count", 0);
-
-        if (!int.TryParse(VdomSpectreTranslator.GetAttribute(node, "data-offset"), out var offset))
-        {
-            return false;
-        }
-
-        if (!VdomSpectreTranslator.TryParsePositiveInt(VdomSpectreTranslator.GetAttribute(node, "data-page-size"),
-                out var pageSize))
-        {
-            return false;
-        }
-
         var scrollbars = node.Children.Where(n => VdomSpectreTranslator.TryGetBoolAttribute(n, "data-scrollbar", out var value) && value).ToList();
         // Accept only one scrollbar
         if (scrollbars.Count == 1)
         {
             var scrollbarNode = scrollbars.Single();
+
+            var itemsCount = VdomSpectreTranslator.TryGetIntAttribute(node, "data-items-count", 0);
+
+            if (!int.TryParse(VdomSpectreTranslator.GetAttribute(node, "data-offset"), out var offset))
+            {
+                return false;
+            }
+
+            if (!VdomSpectreTranslator.TryParsePositiveInt(VdomSpectreTranslator.GetAttribute(node, "data-page-size"),
+                    out var pageSize))
+            {
+                return false;
+            }
+
+            if (!VdomSpectreTranslator.TryGetBoolAttribute(node, "data-enable-embedded", out var enableEmbedded))
+            {
+                return false;
+            }
 
             // Extract styling parameters
             if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-track-char"), out var trackChar))
@@ -69,8 +74,6 @@ public class ScrollableTranslator : IVdomElementTranslator
                 return false;
             }
 
-            // Scrollbar cannot be translated explicitly
-            // node.RemoveChildAt(node.Children.ToList().IndexOf(scrollbarNode));
             if (!VdomSpectreTranslator.TryConvertChildrenToRenderables(node.Children, context,
                     out var contentRenderable))
             {
@@ -78,7 +81,7 @@ public class ScrollableTranslator : IVdomElementTranslator
             }
 
             renderable = new ScrollableWithBarRenderable(
-                contentRenderable, itemsCount, offset, pageSize,
+                contentRenderable, itemsCount, offset, pageSize, enableEmbedded,
                 trackColor: trackColor,
                 thumbColor: thumbColor,
                 trackChar: trackChar,

@@ -14,6 +14,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
     private readonly int _totalItems;
     private readonly int _offset;
     private readonly int _pageSize;
+    private readonly bool _enableEmbeddedScrollbar;
     private readonly Color _trackColor;
     private readonly Color _thumbColor;
     private readonly char _trackChar;
@@ -25,6 +26,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         int totalItems,
         int offset,
         int pageSize,
+        bool enableEmbeddedScrollbar,
         Color? trackColor = null,
         Color? thumbColor = null,
         char? trackChar = null,
@@ -36,6 +38,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         _totalItems = totalItems;
         _offset = offset;
         _pageSize = pageSize;
+        _enableEmbeddedScrollbar = enableEmbeddedScrollbar;
         _trackColor = trackColor ?? Color.Grey;
         _thumbColor = thumbColor ?? Color.White;
         _trackChar = trackChar ?? '│';
@@ -54,7 +57,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         var tables = _items.OfType<Table>().ToList();
         var panels = _items.OfType<Panel>().ToList();
 
-        if (tables.Count + panels.Count == 1)
+        if (tables.Count + panels.Count == 1 && _enableEmbeddedScrollbar)
         {
             var targetTable = tables.FirstOrDefault();
             var targetPanel = panels.FirstOrDefault();
@@ -422,7 +425,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
             _thumbChar,
             _trackColor,
             _thumbColor,
-            minThumbHeight: 1
+            minThumbHeight: _minThumbHeight
         );
 
         return Segment.SplitLines(scrollBar.Render(options, 1).ToList());
