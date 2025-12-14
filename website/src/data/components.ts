@@ -244,6 +244,12 @@ export const components: ComponentInfo[] = [
             "type": "EventCallback<int>",
             "default": "null",
             "description": "Invoked when offset changes (e.g. via keyboard)."
+        },
+        {
+            name: "EnableEmbeddedScrollbar",
+            type: "bool",
+            default: "true",
+            description: "Determines whether the scrollbar should be visually embedded within the border of a Table or Panel/Border components."
         }
     ],
     examples: ["Scrollable_1.razor"]

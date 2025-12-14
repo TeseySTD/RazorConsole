@@ -185,13 +185,14 @@ Shows a Spectre spinner with optional message.
 ## Scrollable
 Renders a limited portion of a collection (`PageSize`) and enables keyboard scrolling.
 
-| Parameter | Type | Default                | Description |
-|-----------|------|------------------------|-------------|
-| `Items` | `IReadOnlyList<TItem>` | `Array.Empty<TItem>()` | Full data source. |
-| `PageSize` | `int` | `1`                    | Items shown at once. |
+| Parameter | Type                                   | Default                | Description |
+|-----------|----------------------------------------|------------------------|-------------|
+| `Items` | `IReadOnlyList<TItem>`                 | `Array.Empty<TItem>()` | Full data source. |
+| `PageSize` | `int`                                  | `1`                    | Items shown at once. |
 | `ChildContent` | `RenderFragment<ScrollContext<TItem>>` | —                      | Markup for the visible page. |
-| `ScrollOffset` | `int` | `0`                    | Two-way – start index of current page. |
-| `ScrollOffsetChanged` | `EventCallback<int>` | —                      | Fired when offset changes. |
+| `ScrollOffset` | `int`                                  | `0`                    | Two-way – start index of current page. |
+| `ScrollOffsetChanged` | `EventCallback<int>`                   | —                      | Fired when offset changes. |
+| `EnableEmbeddedScrollbar` | `bool`                                 | `true`                  | Determines whether the scrollbar should be visually embedded within the border of a `Table` or `Panel`/`Border` components. |
 
 ### `ScrollContext<TItem>`
 Context to get access with paginated items, keyboard event and other info.
