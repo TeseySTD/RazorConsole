@@ -249,6 +249,74 @@ export const components: ComponentInfo[] = [
     examples: ["Scrollable_1.razor"]
 },
 {
+    name: "Scrollbar",
+    description: "Renders a visual scrollbar inside a `Scrollable` component and handles focus interactions.",
+    category: "Layout",
+    parameters: [
+        {
+            "name": "TrackChar",
+            "type": "char",
+            "default": "'│'",
+            "description": "Character used for the scrollbar track."
+        },
+        {
+            "name": "ThumbChar",
+            "type": "char",
+            "default": "'█'",
+            "description": "Character used for the scrollbar thumb."
+        },
+        {
+            "name": "TrackColor",
+            "type": "Color",
+            "default": "Color.Grey",
+            "description": "Color of the track in normal state."
+        },
+        {
+            "name": "ThumbColor",
+            "type": "Color",
+            "default": "Color.White",
+            "description": "Color of the thumb in normal state."
+        },
+        {
+            "name": "TrackFocusedColor",
+            "type": "Color",
+            "default": "Color.Grey74",
+            "description": "Color of the track when focused."
+        },
+        {
+            "name": "ThumbFocusedColor",
+            "type": "Color",
+            "default": "Color.DeepSkyBlue1",
+            "description": "Color of the thumb when focused."
+        },
+        {
+            "name": "MinThumbHeight",
+            "type": "int",
+            "default": "1",
+            "description": "Minimum height of the thumb in characters."
+        },
+        {
+            "name": "KeyDownEventHandler",
+            "type": "Func<KeyboardEventArgs,Task>",
+            "default": "null",
+            "description": "Required. Must be bound to `context.KeyDownEventHandler` from the parent Scrollable."
+        },
+        {
+            "name": "OnFocusInCallback",
+            "type": "Action<FocusEventArgs>?",
+            "default": "null",
+            "description": "Invoked when scrollbar gains focus."
+        },
+        {
+            "name": "OnFocusOutCallback",
+            "type": "Action<FocusEventArgs>?",
+            "default": "null",
+            "description": "Invoked when scrollbar loses focus."
+        }
+    ],
+    examples: ["Scrollbar_1.razor"]
+},
+{
     name: "StepChart",
     description: "Renders a terminal step chart using Unicode box-drawing characters. Perfect for displaying discrete value changes over time or categories.",
     category: "Display",
@@ -508,7 +576,7 @@ export const components: ComponentInfo[] = [
         "default": "BoxBorder.Rounded",
         "description": "Border style for the input panel."
       },
-    
+
       // --- Appearance Parameters ---
       {
         "name": "PlaceholderColor",

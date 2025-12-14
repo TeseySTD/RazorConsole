@@ -205,6 +205,42 @@ Context to get access with paginated items, keyboard event and other info.
 | `CurrentOffset` | `int` | Same as `ScrollOffset`. |
 | `PagesCount` | `int` | Total pages: `PageSize >= Items.Count ? 1 : Items.Count - PageSize + 1`. |
 
+## Scrollbar
+Component, that enables scrollbar inside the Scrollable component.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `TrackChar` | `char` | `'│'` | Character used for the scrollbar track. |
+| `ThumbChar` | `char` | `'█'` | Character used for the scrollbar thumb. |
+| `TrackColor` | `Color` | `Color.Grey` | Color of the track in normal state. |
+| `ThumbColor` | `Color` | `Color.White` | Color of the thumb in normal state. |
+| `TrackFocusedColor` | `Color` | `Color.Grey74` | Color of the track when focused. |
+| `ThumbFocusedColor` | `Color` | `Color.DeepSkyBlue1` | Color of the thumb when focused. |
+| `MinThumbHeight` | `int` | `1` | Minimum height of the thumb in characters. |
+| `KeyDownEventHandler` | `Func<KeyboardEventArgs,Task>` | — | **Required**. Must be bound to `context.KeyDownEventHandler` from parent. |
+| `OnFocusInCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar gains focus. |
+| `OnFocusOutCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar loses focus. |
+> [!WARNING]
+> Scrollbar can be used only as explicit and single children of Scrollable component.
+> For example:
+> ```razor
+><Scrollable Items="@AlphabetData" PageSize="6">
+>    <Panel Border="BoxBorder.Rounded" Title="Panel with list (ol)" Expand>
+>        <ol start="@(context.CurrentOffset + 1)">
+>            @foreach (var item in context)
+>            {
+>                <li>
+>                   <Markup Content=@($"{item.Letter}") Foreground="@item.Color"/>
+>                </li>
+>            }
+>        </ol>
+>    </Panel>
+>
+>    <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
+>    <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
+></Scrollable>
+> ```
+
 ### Keyboard access (with `@onkeydown="context.KeyDownEventHandler"`)
 | Key | Action |
 |-----|--------|
