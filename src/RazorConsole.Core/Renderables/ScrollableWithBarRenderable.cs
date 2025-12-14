@@ -183,7 +183,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
     private IEnumerable<Segment> RenderTableWithScrollBar(Table originalTable, RenderOptions options, int maxWidth)
     {
-        var tempLines = GetRenderedLines(originalTable, options, maxWidth - 1);
+        var tempLines = GetRenderedLines(originalTable, options, maxWidth);
         if (tempLines.Count == 0)
         {
             yield break;
