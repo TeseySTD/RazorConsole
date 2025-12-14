@@ -22,89 +22,87 @@ public class ScrollableTranslator : ITranslationMiddleware
         var scrollbars = node.Children
             .Where(n => VdomSpectreTranslator.TryGetBoolAttribute(n, "data-scrollbar", out var value) && value)
             .ToList();
-        // Accept only one scrollbar
-        if (scrollbars.Count == 1)
+        // If there are many scrollbars - then component cannot be translated
+        if (scrollbars.Count > 1)
         {
-            var scrollbarNode = scrollbars.Single();
-
-            var itemsCount = VdomSpectreTranslator.TryGetIntAttribute(node, "data-items-count", 0);
-
-            if (!int.TryParse(VdomSpectreTranslator.GetAttribute(node, "data-offset"), out var offset))
-            {
-                return next(node);
-            }
-
-            if (!VdomSpectreTranslator.TryParsePositiveInt(VdomSpectreTranslator.GetAttribute(node, "data-page-size"),
-                    out var pageSize))
-            {
-                return next(node);
-            }
-
-            if (!VdomSpectreTranslator.TryGetBoolAttribute(node, "data-enable-embedded", out var enableEmbedded))
-            {
-                return next(node);
-            }
-
-            // Extract styling parameters
-            if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-track-char"), out var trackChar))
-            {
-                return next(node);
-            }
-
-            if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-thumb-char"), out var thumbChar))
-            {
-                return next(node);
-            }
-
-            if (!scrollbarNode.Attributes.TryGetValue("data-track-color", out var trackColorStr) ||
-                string.IsNullOrEmpty(trackColorStr) ||
-                !Color.TryFromHex(trackColorStr, out var trackColor))
-            {
-                return next(node);
-            }
-
-            if (!scrollbarNode.Attributes.TryGetValue("data-thumb-color", out var thumbColorStr) ||
-                string.IsNullOrEmpty(thumbColorStr) ||
-                !Color.TryFromHex(thumbColorStr, out var thumbColor))
-            {
-                return next(node);
-            }
-
-            if (!VdomSpectreTranslator.TryParsePositiveInt(
-                    VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-min-thumb-height"), out var minThumbHeight))
-            {
-                return next(node);
-            }
-
-            if (!TranslationHelpers.TryConvertChildrenToRenderables(node.Children, context,
-                    out var contentRenderable))
-            {
-                return next(node);
-            }
-
-            return new ScrollableWithBarRenderable(
-                contentRenderable, itemsCount, offset, pageSize, enableEmbedded,
-                trackColor: trackColor,
-                thumbColor: thumbColor,
-                trackChar: trackChar,
-                thumbChar: thumbChar,
-                minThumbHeight: minThumbHeight
-            );
+            return next(node);
         }
 
         // If there is not any scrollbar - render just rows layout
-        if (!scrollbars.Any())
+        if (scrollbars.Count == 0)
         {
-            if (!TranslationHelpers.TryConvertChildrenToRenderables(node.Children, context,
-                    out var contentRenderable))
+            if (!TranslationHelpers.TryConvertChildrenToRenderables(node.Children, context, out var simpleContent))
             {
                 return next(node);
             }
 
-            return new Rows(contentRenderable);
+            return new Rows(simpleContent);
         }
 
-        // If there are many scrollbars - then component cannot be translated
-        return next(node);
+        var scrollbarNode = scrollbars.Single();
+
+        var itemsCount = VdomSpectreTranslator.TryGetIntAttribute(node, "data-items-count", 0);
+
+        if (!int.TryParse(VdomSpectreTranslator.GetAttribute(node, "data-offset"), out var offset))
+        {
+            return next(node);
+        }
+
+        if (!VdomSpectreTranslator.TryParsePositiveInt(VdomSpectreTranslator.GetAttribute(node, "data-page-size"),
+                out var pageSize))
+        {
+            return next(node);
+        }
+
+        if (!VdomSpectreTranslator.TryGetBoolAttribute(node, "data-enable-embedded", out var enableEmbedded))
+        {
+            return next(node);
+        }
+
+        // Extracting styling parameters
+        if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-track-char"), out var trackChar))
+        {
+            return next(node);
+        }
+
+        if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-thumb-char"), out var thumbChar))
+        {
+            return next(node);
+        }
+
+        if (!scrollbarNode.Attributes.TryGetValue("data-track-color", out var trackColorStr) ||
+            string.IsNullOrEmpty(trackColorStr) ||
+            !Color.TryFromHex(trackColorStr, out var trackColor))
+        {
+            return next(node);
+        }
+
+        if (!scrollbarNode.Attributes.TryGetValue("data-thumb-color", out var thumbColorStr) ||
+            string.IsNullOrEmpty(thumbColorStr) ||
+            !Color.TryFromHex(thumbColorStr, out var thumbColor))
+        {
+            return next(node);
+        }
+
+        if (!VdomSpectreTranslator.TryParsePositiveInt(
+                VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-min-thumb-height"), out var minThumbHeight))
+        {
+            return next(node);
+        }
+
+        // Converting children
+        if (!TranslationHelpers.TryConvertChildrenToRenderables(node.Children, context, out var contentRenderable))
+        {
+            return next(node);
+        }
+
+        return new ScrollableWithBarRenderable(
+            contentRenderable, itemsCount, offset, pageSize, enableEmbedded,
+            trackColor: trackColor,
+            thumbColor: thumbColor,
+            trackChar: trackChar,
+            thumbChar: thumbChar,
+            minThumbHeight: minThumbHeight
+        );
     }
 }
