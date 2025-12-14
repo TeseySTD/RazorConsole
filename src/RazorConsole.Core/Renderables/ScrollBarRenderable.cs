@@ -10,8 +10,8 @@ internal sealed class ScrollBarRenderable(
     int offset,
     int pageSize,
     int viewportHeight,
-    string trackChar,
-    string thumbChar,
+    char trackChar,
+    char thumbChar,
     Color trackColor,
     Color thumbColor,
     int minThumbHeight)
@@ -29,19 +29,6 @@ internal sealed class ScrollBarRenderable(
 
         var trackStyle = new Style(foreground: trackColor);
         var thumbStyle = new Style(foreground: thumbColor);
-        // If items fit completely in viewport, show just track
-        // if (itemsCount <= height)
-        // {
-        //     for (int i = 0; i < height; i++)
-        //     {
-        //         yield return new Segment(trackChar, trackStyle);
-        //         if (i < height - 1)
-        //         {
-        //             yield return Segment.LineBreak;
-        //         }
-        //     }
-        //     yield break;
-        // }
 
         // Calculate thumb size and position
         var thumbSize = CalculateThumbSize(height, itemsCount, pageSize, minThumbHeight);
@@ -52,11 +39,11 @@ internal sealed class ScrollBarRenderable(
         {
             if (i >= thumbPosition && i < thumbPosition + thumbSize)
             {
-                yield return new Segment(thumbChar, thumbStyle);
+                yield return new Segment(thumbChar.ToString(), thumbStyle);
             }
             else
             {
-                yield return new Segment(trackChar, trackStyle);
+                yield return new Segment(trackChar.ToString(), trackStyle);
             }
 
             if (i < height - 1)
@@ -73,7 +60,8 @@ internal sealed class ScrollBarRenderable(
         return Math.Max(minThumbHeight, Math.Min(proportionalSize, viewportHeight));
     }
 
-    private static int CalculateThumbPosition(int viewportHeight, int itemsCount, int pageSize, int offset, int thumbSize)
+    private static int CalculateThumbPosition(int viewportHeight, int itemsCount, int pageSize, int offset,
+        int thumbSize)
     {
         // Maximum offset is when the last page is shown
         var maxOffset = Math.Max(0, itemsCount - pageSize);
@@ -97,4 +85,3 @@ internal sealed class ScrollBarRenderable(
         return Math.Clamp(position, 0, availableSpace);
     }
 }
-

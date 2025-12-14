@@ -1,57 +1,26 @@
 ﻿@using Spectre.Console
 @namespace RazorConsole.Components
 
-<div data-scrollbar="true"
-     data-items-count="@ItemsCount"
-     data-offset="@Offset"
-     data-page-size="@PageSize"
-     data-viewport-height="@ViewportHeight"
-     data-track-char="@TrackChar"
-     data-thumb-char="@ThumbChar"
-     data-track-color="@TrackColor.ToHex()"
-     data-thumb-color="@ThumbColor.ToHex()"
-     data-min-thumb-height="@MinThumbHeight">
-</div>
+<scrollbar
+    data-track-char="@TrackChar"
+    data-thumb-char="@ThumbChar"
+    data-track-color="@TrackColor.ToHex()"
+    data-thumb-color="@ThumbColor.ToHex()"
+    data-min-thumb-height="@MinThumbHeight"
+/>
 
 @code {
-    /// <summary>
-    /// Total number of items in the scrollable content
-    /// </summary>
-    [Parameter]
-    [EditorRequired]
-    public int ItemsCount { get; set; }
-
-    /// <summary>
-    /// Current scroll offset (which item is at the top)
-    /// </summary>
-    [Parameter]
-    [EditorRequired]
-    public int Offset { get; set; }
-
-    /// <summary>
-    /// Number of visible items in the viewport (page size)
-    /// </summary>
-    [Parameter]
-    [EditorRequired]
-    public int PageSize { get; set; }
-
-    /// <summary>
-    /// Height of the visible viewport (will be auto-determined by container if not set)
-    /// </summary>
-    [Parameter]
-    public int? ViewportHeight { get; set; }
-
     /// <summary>
     /// Character to use for the scrollbar track
     /// </summary>
     [Parameter]
-    public string TrackChar { get; set; } = "│";
+    public char TrackChar { get; set; } = '│';
 
     /// <summary>
     /// Character to use for the scrollbar thumb
     /// </summary>
     [Parameter]
-    public string ThumbChar { get; set; } = "█";
+    public char ThumbChar { get; set; } = '█';
 
     /// <summary>
     /// Style for the track

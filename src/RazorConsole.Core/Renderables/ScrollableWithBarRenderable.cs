@@ -16,8 +16,9 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
     private readonly int _pageSize;
     private readonly Color _trackColor;
     private readonly Color _thumbColor;
-    private readonly string _trackChar;
-    private readonly string _thumbChar;
+    private readonly char _trackChar;
+    private readonly char _thumbChar;
+    private readonly int _minThumbHeight;
 
     public ScrollableWithBarRenderable(
         IEnumerable<IRenderable> items,
@@ -26,8 +27,9 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         int pageSize,
         Color? trackColor = null,
         Color? thumbColor = null,
-        string? trackChar = null,
-        string? thumbChar = null)
+        char? trackChar = null,
+        char? thumbChar = null,
+        int minThumbHeight = 1)
     {
         _items = items.ToList();
         _compositeContent = new Rows(_items);
@@ -36,8 +38,9 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         _pageSize = pageSize;
         _trackColor = trackColor ?? Color.Grey;
         _thumbColor = thumbColor ?? Color.White;
-        _trackChar = trackChar ?? "│";
-        _thumbChar = thumbChar ?? "█";
+        _trackChar = trackChar ?? '│';
+        _thumbChar = thumbChar ?? '█';
+        _minThumbHeight = minThumbHeight;
     }
 
     public Measurement Measure(RenderOptions options, int maxWidth)
