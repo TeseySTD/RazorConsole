@@ -1,5 +1,6 @@
 ﻿@using Spectre.Console
 @namespace RazorConsole.Components
+@typeparam TItem
 
 <div
     data-scrollbar="true"
@@ -59,11 +60,11 @@
     public int MinThumbHeight { get; set; } = 1;
 
     /// <summary>
-    /// Key down event handler, must be provided from Scrollable.
+    /// Scroll context, must be provided from Scrollable.
     /// </summary>
     [Parameter]
     [EditorRequired]
-    public required Func<KeyboardEventArgs,Task> KeyDownEventHandler { get; set; }
+    public required Scrollable<TItem>.ScrollContext<TItem> ScrollContext { get; set; }
 
     /// <summary>
     /// Callback, that called after focus in event, can be used for any UI changes outside scrollbar.
@@ -76,6 +77,8 @@
     /// </summary>
     [Parameter]
     public Action<FocusEventArgs>? OnFocusOutCallback { get; set; }
+
+    private Func<KeyboardEventArgs, Task> KeyDownEventHandler => ScrollContext.KeyDownEventHandler;
 
     private string TrackColorAttribute => !_isFocused ? TrackColor.ToHex() : TrackFocusedColor.ToHex();
 

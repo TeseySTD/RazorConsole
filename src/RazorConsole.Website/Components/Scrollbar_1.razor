@@ -25,7 +25,7 @@
         </SpectreTable>
 
         <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
-        <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
+        <Scrollbar ScrollContext="context"/>
     </Scrollable>
 
     <Markup Content="   "/> @*Spaces beteween panels*@
@@ -43,7 +43,7 @@
         </Panel>
 
         <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
-        <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
+        <Scrollbar ScrollContext="context"/>
     </Scrollable>
 
     <Markup Content="   "/>
@@ -62,7 +62,7 @@
             </ol>
 
             <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
-            <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
+            <Scrollbar ScrollContext="context"/>
         </Scrollable>
     </Rows>
 </Panel>

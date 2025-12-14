@@ -43,7 +43,7 @@
                     </SpectreTable>
 
                     <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
-                    <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
+                    <Scrollbar ScrollContext="context"/>
                 </Scrollable>
 
                 <Scrollable Items="@AlphabetData" PageSize="6">
@@ -59,7 +59,7 @@
                     </Panel>
 
                     <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
-                    <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
+                    <Scrollbar ScrollContext="context"/>
                 </Scrollable>
             </Panel>
 
@@ -69,7 +69,7 @@
                     {
                         <Markup Content=@($"{item.Letter}") Foreground="@item.Color"/>
                     }
-                    <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
+                    <Scrollbar ScrollContext="context"/>
                 </Scrollable>
             </Panel>
         </Rows>
@@ -128,7 +128,7 @@
         </SpectreTable>
 
         <Markup Content=@($""Page: {context.CurrentOffset + 1} / {context.PagesCount}"")/>
-        <Scrollbar KeyDownEventHandler=""context.KeyDownEventHandler""/>
+        <Scrollbar ScrollContext=""context""/>
     </Scrollable>
 
     <Scrollable Items=""@AlphabetData"" PageSize=""6"">
@@ -144,7 +144,7 @@
         </Panel>
 
         <Markup Content=@($""Page: {context.CurrentOffset + 1} / {context.PagesCount}"")/>
-        <Scrollbar KeyDownEventHandler=""context.KeyDownEventHandler""/>
+        <Scrollbar ScrollContext=""context""/>
     </Scrollable>
 </Panel>
 
@@ -154,7 +154,7 @@
             {
                 <Markup Content=@($""{item.Letter}"") Foreground=""@item.Color""/>
             }
-        <Scrollbar KeyDownEventHandler=""context.KeyDownEventHandler""/>
+        <Scrollbar ScrollContext=""context""/>
     </Scrollable>
 </Panel>";
 

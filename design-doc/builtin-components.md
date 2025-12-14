@@ -209,18 +209,18 @@ Context to get access with paginated items, keyboard event and other info.
 ## Scrollbar
 Component, that enables scrollbar inside the Scrollable component.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `TrackChar` | `char` | `'│'` | Character used for the scrollbar track. |
-| `ThumbChar` | `char` | `'█'` | Character used for the scrollbar thumb. |
-| `TrackColor` | `Color` | `Color.Grey` | Color of the track in normal state. |
-| `ThumbColor` | `Color` | `Color.White` | Color of the thumb in normal state. |
-| `TrackFocusedColor` | `Color` | `Color.Grey74` | Color of the track when focused. |
-| `ThumbFocusedColor` | `Color` | `Color.DeepSkyBlue1` | Color of the thumb when focused. |
-| `MinThumbHeight` | `int` | `1` | Minimum height of the thumb in characters. |
-| `KeyDownEventHandler` | `Func<KeyboardEventArgs,Task>` | — | **Required**. Must be bound to `context.KeyDownEventHandler` from parent. |
-| `OnFocusInCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar gains focus. |
-| `OnFocusOutCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar loses focus. |
+| Parameter | Type | Default | Description                                                                                |
+|-----------|------|---------|--------------------------------------------------------------------------------------------|
+| `TrackChar` | `char` | `'│'` | Character used for the scrollbar track.                                                    |
+| `ThumbChar` | `char` | `'█'` | Character used for the scrollbar thumb.                                                    |
+| `TrackColor` | `Color` | `Color.Grey` | Color of the track in normal state.                                                        |
+| `ThumbColor` | `Color` | `Color.White` | Color of the thumb in normal state.                                                        |
+| `TrackFocusedColor` | `Color` | `Color.Grey74` | Color of the track when focused.                                                           |
+| `ThumbFocusedColor` | `Color` | `Color.DeepSkyBlue1` | Color of the thumb when focused.                                                           |
+| `MinThumbHeight` | `int` | `1` | Minimum height of the thumb in characters.                                                 |
+| `ScrollContext` | `Scrollable<TItem>.ScrollContext<TItem>` | — | Scroll context, must be provided from `Scrollable` parent element. **Required**. |
+| `OnFocusInCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar gains focus.                                                        |
+| `OnFocusOutCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar loses focus.                                                        |
 > [!WARNING]
 > Scrollbar can be used only as explicit and single children of Scrollable component.
 > For example:

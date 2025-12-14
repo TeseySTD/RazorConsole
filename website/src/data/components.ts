@@ -302,10 +302,9 @@ export const components: ComponentInfo[] = [
             "description": "Minimum height of the thumb in characters."
         },
         {
-            "name": "KeyDownEventHandler",
-            "type": "Func<KeyboardEventArgs,Task>",
-            "default": "null",
-            "description": "Required. Must be bound to `context.KeyDownEventHandler` from the parent Scrollable."
+            "name": "ScrollContext",
+            "type": "Scrollable<TItem>.ScrollContext<TItem>",
+            "description": "Scroll context, must be provided from Scrollable. Required."
         },
         {
             "name": "OnFocusInCallback",
