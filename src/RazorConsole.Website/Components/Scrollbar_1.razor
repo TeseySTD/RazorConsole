@@ -28,6 +28,8 @@
         <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
     </Scrollable>
 
+    <Markup Content="   "/> @*Spaces beteween panels*@
+
     <Scrollable Items="@GetAlphabetData()" PageSize="6">
         <Panel Border="BoxBorder.Rounded" Title="Panel" Expand>
             <ol start="@(context.CurrentOffset + 1)">
@@ -43,8 +45,12 @@
         <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
         <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
     </Scrollable>
+
+    <Markup Content="   "/>
+
     <Rows>
-        <Markup Content="Not embedded  (full container height)"/>
+        <Markup Content="Not embedded"/>
+        <Markup Content="(full container height)" Decoration="Decoration.Italic"/>
         <Scrollable Items="@GetAlphabetData()" PageSize="6">
             <ol start="@(context.CurrentOffset + 1)">
                 @foreach (var item in context)
