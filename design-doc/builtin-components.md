@@ -237,7 +237,7 @@ Component, that enables scrollbar inside the Scrollable component.
 >        </ol>
 >    </Panel>
 >
->    <Scrollbar KeyDownEventHandler="context.KeyDownEventHandler"/>
+>    <Scrollbar ScrollContext="context"/>
 >    <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
 ></Scrollable>
 > ```
