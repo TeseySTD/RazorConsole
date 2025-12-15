@@ -192,7 +192,7 @@ Renders a limited portion of a collection (`PageSize`) and enables keyboard scro
 | `ChildContent` | `RenderFragment<ScrollContext<TItem>>` | —                      | Markup for the visible page. |
 | `ScrollOffset` | `int`                                  | `0`                    | Two-way – start index of current page. |
 | `ScrollOffsetChanged` | `EventCallback<int>`                   | —                      | Fired when offset changes. |
-| `EnableEmbeddedScrollbar` | `bool`                                 | `true`                  | Determines whether the scrollbar should be visually embedded within the border of a `Table` or `Panel`/`Border` components. |
+| `IsScrollbarEmbedded` | `bool`                                 | `true`                  | Determines whether the scrollbar should be visually embedded within the border of a `Table` or `Panel`/`Border` components. |
 
 ### `ScrollContext<TItem>`
 Context to get access with paginated items, keyboard event and other info.

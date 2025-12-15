@@ -246,7 +246,7 @@ export const components: ComponentInfo[] = [
             "description": "Invoked when offset changes (e.g. via keyboard)."
         },
         {
-            name: "EnableEmbeddedScrollbar",
+            name: "IsScrollbarEmbedded",
             type: "bool",
             default: "true",
             description: "Determines whether the scrollbar should be visually embedded within the border of a Table or Panel/Border components."

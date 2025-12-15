@@ -7,7 +7,7 @@
         data-items-count="@Items.Count"
         data-offset="@ScrollOffset"
         data-page-size="@PageSize"
-        data-enable-embedded="@EnableEmbeddedScrollbar.ToString()"
+        data-enable-embedded="@IsScrollbarEmbedded.ToString()"
     >
     @ChildContent(new ScrollContext<TItem>(VisibleItems, HandleKeyDown, ScrollOffset, PagesCount))
 </scrollable>
@@ -78,7 +78,7 @@
     /// </remarks>
     /// <value>true</value>
     [Parameter]
-    public bool EnableEmbeddedScrollbar { get; set; } = true;
+    public bool IsScrollbarEmbedded { get; set; } = true;
 
     private IReadOnlyList<TItem> VisibleItems
         => Items.Skip(ScrollOffset).Take(PageSize).ToList();
