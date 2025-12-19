@@ -19,7 +19,7 @@
         </Panel>
         <Rows>
             <Panel Title="Embedded scrollbar" Border="BoxBorder.Rounded" Expand>
-                <Scrollable Items="@AlphabetData" PageSize="3">
+                <Scrollable Scrollbar="new()" Items="@AlphabetData" PageSize="3">
                     <SpectreTable Title="Table" Border="TableBorder.Rounded" Expand>
                         <SpectreTHead>
                             <SpectreTR>
@@ -43,10 +43,9 @@
                     </SpectreTable>
 
                     <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
-                    <Scrollbar ScrollContext="context"/>
                 </Scrollable>
 
-                <Scrollable Items="@AlphabetData" PageSize="6">
+                <Scrollable Scrollbar="@new()" Items="@AlphabetData" PageSize="6">
                     <Panel Border="BoxBorder.Rounded" Title="Panel with list (ol)" Expand>
                         <ol start="@(context.CurrentOffset + 1)">
                             @foreach (var item in context)
@@ -59,17 +58,15 @@
                     </Panel>
 
                     <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
-                    <Scrollbar ScrollContext="context"/>
                 </Scrollable>
             </Panel>
 
             <Panel Title="Not embedded scrollbar - just list of markups" Border="BoxBorder.Rounded" Expand>
-                <Scrollable Items="@AlphabetData" PageSize="4">
+                <Scrollable Scrollbar="new()" Items="@AlphabetData" PageSize="4">
                     @foreach (var item in context)
                     {
                         <Markup Content=@($"{item.Letter}") Foreground="@item.Color"/>
                     }
-                    <Scrollbar ScrollContext="context"/>
                 </Scrollable>
             </Panel>
         </Rows>

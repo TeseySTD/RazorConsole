@@ -206,8 +206,8 @@ Context to get access with paginated items, keyboard event and other info.
 | `CurrentOffset` | `int` | Same as `ScrollOffset`. |
 | `PagesCount` | `int` | Total pages: `PageSize >= Items.Count ? 1 : Items.Count - PageSize + 1`. |
 
-## Scrollbar
-Component, that enables scrollbar inside the Scrollable component.
+### `ScrollbarSettings`
+Record, that enables and adjusts scrollbar inside the Scrollable component.
 
 | Parameter | Type | Default | Description                                                                                |
 |-----------|------|---------|--------------------------------------------------------------------------------------------|
@@ -218,37 +218,8 @@ Component, that enables scrollbar inside the Scrollable component.
 | `TrackFocusedColor` | `Color` | `Color.Grey74` | Color of the track when focused.                                                           |
 | `ThumbFocusedColor` | `Color` | `Color.DeepSkyBlue1` | Color of the thumb when focused.                                                           |
 | `MinThumbHeight` | `int` | `1` | Minimum height of the thumb in characters.                                                 |
-| `ScrollContext` | `Scrollable<TItem>.ScrollContext<TItem>` | — | Scroll context, must be provided from `Scrollable` parent element. **Required**. |
 | `OnFocusInCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar gains focus.                                                        |
 | `OnFocusOutCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar loses focus.                                                        |
-> [!WARNING]
-> Scrollbar can be used only as explicit and single children of Scrollable component.
-> For example:
-> ```razor
-><Scrollable Items="@AlphabetData" PageSize="6">
->    <Panel Border="BoxBorder.Rounded" Title="Panel with list (ol)" Expand>
->        <ol start="@(context.CurrentOffset + 1)">
->            @foreach (var item in context)
->            {
->                <li>
->                   <Markup Content=@($"{item.Letter}") Foreground="@item.Color"/>
->                </li>
->            }
->        </ol>
->    </Panel>
->
->    <Scrollbar ScrollContext="context"/>
->    <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
-></Scrollable>
-> ```
-
-### Keyboard access (with `@onkeydown="context.KeyDownEventHandler"`)
-| Key | Action |
-|-----|--------|
-| Up / Down | Move 1 row |
-| PageUp / PageDown / Space | Move 1 page |
-| Home | First page |
-| End | Last page |
 
 ## StepChart
 

@@ -30,9 +30,6 @@ public partial class Registry
             case "Scrollable":
                 _renderers[elementID] = new RazorConsoleRenderer<Scrollable_1>(elementID, cols, rows);
                 break;
-            case "Scrollbar":
-                _renderers[elementID] = new RazorConsoleRenderer<Scrollbar_1>(elementID, cols, rows);
-                break;
             case "Columns":
                 _renderers[elementID] = new RazorConsoleRenderer<Columns_1>(elementID, cols, rows);
                 break;
