@@ -68,25 +68,50 @@ export const componentMetadata: Record<string, Partial<ComponentInfo>> = {
     description: "Provides scrollable content area.",
     examples: ["Scrollable_1.razor"]
   },
+  Select: {
+      category: "Input",
+      description: "Interactive dropdown for choosing a value with keyboard navigation.",
+      examples: ["Select_1.razor"]
+  },
+  StepChart:{
+      category: "Display",
+      description: "Renders a terminal step chart using Unicode box-drawing characters. Perfect for displaying discrete value changes over time or categories.",
+      examples: ["StepChart1_.razor"]
+  },
+  SyntaxHighlighter:{
+      category: "Display",
+      description: "Renders highlighted code blocks with SyntaxHighlightingService.",
+      examples: ["SyntaxHighlighter_1.razor"]
+  },
+  Spinner:{
+      category: "Utilities",
+      description: "Shows a Spectre spinner with optional message.",
+      examples: ["Spinner_1.razor"]
+  },
+  SpectreCanvas:{
+      category: "Display",
+      description: "Renders an array of pixels with different colors.",
+      examples: ["SpectreCanvas_1.razor"]
+  },
+  Newline:{
+      category: "Utilities",
+      description: "Emits a single line break. No parameters.",
+      examples: ["Newline_1.razor"]
+  },
   Table: {
     category: "Display",
     description: "Renders a data table.",
     examples: ["Table_1.razor"]
-  },
-  Text: {
-    category: "Display",
-    description: "Renders plain text content.",
-    examples: ["Text_1.razor"]
   },
   TextInput: {
     category: "Input",
     description: "Single-line text input field.",
     examples: ["TextInput_1.razor"]
   },
-  Button: {
+  TextButton: {
     category: "Input",
     description: "Interactive button component.",
-    examples: ["Button_1.razor"]
+    examples: ["TextButton_1.razor"]
   },
 }
 
