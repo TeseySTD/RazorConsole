@@ -76,7 +76,7 @@ export const componentMetadata: Record<string, Partial<ComponentInfo>> = {
   StepChart:{
       category: "Display",
       description: "Renders a terminal step chart using Unicode box-drawing characters. Perfect for displaying discrete value changes over time or categories.",
-      examples: ["StepChart1_.razor"]
+      examples: ["StepChart_1.razor"]
   },
   SyntaxHighlighter:{
       category: "Display",
