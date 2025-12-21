@@ -1,7 +1,7 @@
 @inherits LayoutComponentBase
 
 <Header/>
-<Panel Expand="true">
+<Panel Expand="true" Border="BoxBorder.Double">
     <Grid Columns="2" Expand="true">
         <Padder Padding="@(new (1, 1, 1, 1))">
             <NavBar @bind-IsFocused="NavBarIsFocused" />
@@ -14,5 +14,5 @@
 <Footer NavBarIsFocused="NavBarIsFocused" />
 
 @code {
-    private bool NavBarIsFocused;
+    private bool NavBarIsFocused { get; set; }
 }
