@@ -87,7 +87,7 @@
     /// Event raised when the committed value changes.
     /// </summary>
     [Parameter]
-    public EventCallback<string?> ValueChanged { get; set; }
+    public EventCallback<string> ValueChanged { get; set; }
 
     /// <summary>
     /// Currently highlighted option during keyboard navigation (may differ from committed Value).
@@ -130,7 +130,7 @@
     // Focus-adjusted styling methods
     private Color GetFocusAdjustedColor(Color color) => IsFocused ? color : Color.Grey50;
 
-    private Decoration GetFocusAdjustedDecoration(Decoration decoration) => 
+    private Decoration GetFocusAdjustedDecoration(Decoration decoration) =>
         IsFocused ? decoration : decoration | Decoration.Dim;
 
     private async Task NotifyFocusedValueChangedAsync()

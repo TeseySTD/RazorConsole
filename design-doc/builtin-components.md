@@ -151,7 +151,7 @@ Interactive dropdown for choosing a value. Integrates with the focus and keyboar
 |-----------|------|---------|-------------|
 | `Options` | `string[]` | `Array.Empty<string>()` | Available options. |
 | `Value` | `string?` | `null` | Current selection. |
-| `ValueChanged` | `EventCallback<string?>` | — | Raised on selection change. |
+| `ValueChanged` | `EventCallback<string>` | — | Raised on selection change. |
 | `OnSelected` | `EventCallback<string?>` | — | Fired after a user confirms an option. |
 | `OnClear` | `EventCallback` | — | Fired when selection is cleared. |
 | `Placeholder` | `string` | `"Select an option"` | Placeholder when no selection is set. |
