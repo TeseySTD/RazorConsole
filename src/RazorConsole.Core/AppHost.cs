@@ -1,5 +1,6 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,9 +28,12 @@ public static class HostBuilderExtension
     /// <param name="hostBuilder">The host builder to configure.</param>
     /// <param name="configure">An optional callback to perform additional configuration.</param>
     /// <returns>The configured <see cref="IHostBuilder"/> instance.</returns>
-    public static IHostBuilder UseRazorConsole<TComponent>(
+    public static IHostBuilder UseRazorConsole
+        <[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TComponent>
+    (
         this IHostBuilder hostBuilder,
-        Action<IHostBuilder>? configure = null)
+        Action<IHostBuilder>? configure = null
+    )
         where TComponent : IComponent
     {
         hostBuilder.ConfigureServices(RegisterDefaults<TComponent>);
@@ -45,9 +49,12 @@ public static class HostBuilderExtension
     /// <param name="hostBuilder">The host application builder to configure.</param>
     /// <param name="configure">An optional callback to perform additional configuration.</param>
     /// <returns>The configured <see cref="IHostApplicationBuilder"/> instance.</returns>
-    public static IHostApplicationBuilder UseRazorConsole<TComponent>(
+    public static IHostApplicationBuilder UseRazorConsole
+    <[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TComponent>
+    (
         this IHostApplicationBuilder hostBuilder,
-        Action<IHostApplicationBuilder>? configure = null)
+        Action<IHostApplicationBuilder>? configure = null
+    )
         where TComponent : IComponent
     {
         RuntimeEncoding.EnsureUtf8();
@@ -58,7 +65,8 @@ public static class HostBuilderExtension
         return hostBuilder;
     }
 
-    private static void RegisterDefaults<TComponent>(IServiceCollection services) where TComponent : IComponent
+    private static void RegisterDefaults<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+    TComponent>(IServiceCollection services) where TComponent : IComponent
     {
         services.AddRazorConsoleServices();
         services.AddHostedService<ComponentService<TComponent>>();
@@ -71,7 +79,7 @@ public static class HostBuilderExtension
     }
 }
 
-internal class ComponentService<TComponent>(
+internal class ComponentService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TComponent>(
     ConsoleAppOptions options,
     ConsoleRenderer consoleRenderer,
     FocusManager focusManager,
@@ -144,7 +152,8 @@ internal class ComponentService<TComponent>(
             _renderLock.Release();
         }
     }
-
+    [UnconditionalSuppressMessage("Trimming", "IL2075",
+        Justification = "Reflection allows using anonymous objects for parameters in non-AOT scenarios. AOT users should use Dictionary.")]
     private static ParameterView CreateParameterView(object? parameters)
     {
         if (parameters is null)
