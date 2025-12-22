@@ -1,0 +1,5 @@
+<Project>
+  <ItemGroup Condition="'$(PublishAot)' == 'true'">
+    <TrimmerRootAssembly Include="$(AssemblyName)" />
+  </ItemGroup>
+</Project>
