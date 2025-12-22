@@ -1,0 +1,11 @@
+﻿@page "/zindex"
+
+<Panel>
+    <Markup Content="Main flow content"/>
+</Panel>
+
+<div position="absolute" top="0" left="10" z-index="100">
+    <Panel Border="BoxBorder.Rounded" BorderColor="Color.Red">
+        <Markup Content="Modal window! And some other content to make it larger."/>
+    </Panel>
+</div>
