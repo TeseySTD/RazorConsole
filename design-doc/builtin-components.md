@@ -185,13 +185,14 @@ Shows a Spectre spinner with optional message.
 ## Scrollable
 Renders a limited portion of a collection (`PageSize`) and enables keyboard scrolling.
 
-| Parameter | Type | Default                | Description |
-|-----------|------|------------------------|-------------|
-| `Items` | `IReadOnlyList<TItem>` | `Array.Empty<TItem>()` | Full data source. |
-| `PageSize` | `int` | `1`                    | Items shown at once. |
+| Parameter | Type                                   | Default                | Description |
+|-----------|----------------------------------------|------------------------|-------------|
+| `Items` | `IReadOnlyList<TItem>`                 | `Array.Empty<TItem>()` | Full data source. |
+| `PageSize` | `int`                                  | `1`                    | Items shown at once. |
 | `ChildContent` | `RenderFragment<ScrollContext<TItem>>` | —                      | Markup for the visible page. |
-| `ScrollOffset` | `int` | `0`                    | Two-way – start index of current page. |
-| `ScrollOffsetChanged` | `EventCallback<int>` | —                      | Fired when offset changes. |
+| `ScrollOffset` | `int`                                  | `0`                    | Two-way – start index of current page. |
+| `ScrollOffsetChanged` | `EventCallback<int>`                   | —                      | Fired when offset changes. |
+| `IsScrollbarEmbedded` | `bool`                                 | `true`                  | Determines whether the scrollbar should be visually embedded within the border of a `Table` or `Panel`/`Border` components. |
 
 ### `ScrollContext<TItem>`
 Context to get access with paginated items, keyboard event and other info.
@@ -205,13 +206,20 @@ Context to get access with paginated items, keyboard event and other info.
 | `CurrentOffset` | `int` | Same as `ScrollOffset`. |
 | `PagesCount` | `int` | Total pages: `PageSize >= Items.Count ? 1 : Items.Count - PageSize + 1`. |
 
-### Keyboard access (with `@onkeydown="context.KeyDownEventHandler"`)
-| Key | Action |
-|-----|--------|
-| Up / Down | Move 1 row |
-| PageUp / PageDown / Space | Move 1 page |
-| Home | First page |
-| End | Last page |
+### `ScrollbarSettings`
+Record, that enables and adjusts scrollbar inside the Scrollable component.
+
+| Parameter | Type | Default | Description                                                                                |
+|-----------|------|---------|--------------------------------------------------------------------------------------------|
+| `TrackChar` | `char` | `'│'` | Character used for the scrollbar track.                                                    |
+| `ThumbChar` | `char` | `'█'` | Character used for the scrollbar thumb.                                                    |
+| `TrackColor` | `Color` | `Color.Grey` | Color of the track in normal state.                                                        |
+| `ThumbColor` | `Color` | `Color.White` | Color of the thumb in normal state.                                                        |
+| `TrackFocusedColor` | `Color` | `Color.Grey74` | Color of the track when focused.                                                           |
+| `ThumbFocusedColor` | `Color` | `Color.DeepSkyBlue1` | Color of the thumb when focused.                                                           |
+| `MinThumbHeight` | `int` | `1` | Minimum height of the thumb in characters.                                                 |
+| `OnFocusInCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar gains focus.                                                        |
+| `OnFocusOutCallback` | `Action<FocusEventArgs>?` | `null` | Invoked when scrollbar loses focus.                                                        |
 
 ## StepChart
 

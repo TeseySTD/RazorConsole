@@ -1,14 +1,34 @@
 ﻿@namespace RazorConsole.Components
+@using Spectre.Console
 
 @typeparam TItem
 
-@if (VisibleItems.Any())
-{
+<scrollable
+    data-items-count="@Items.Count"
+    data-offset="@ScrollOffset"
+    data-page-size="@PageSize"
+    data-enable-embedded="@IsScrollbarEmbedded.ToString()">
+
+    @if (Scrollbar != null)
+    {
+        <div data-scrollbar="true"
+             @onfocusin="OnFocusIn"
+             @onfocusout="OnFocusOut"
+             @onkeydown="HandleKeyDown"
+             data-track-char="@Scrollbar.TrackChar"
+             data-thumb-char="@Scrollbar.ThumbChar"
+             data-track-color="@ScrollbarTrackColorAttribute"
+             data-thumb-color="@ScrollbarThumbColorAttribute"
+             data-min-thumb-height="@Scrollbar.MinThumbHeight">
+        </div>
+    }
+
     @ChildContent(new ScrollContext<TItem>(VisibleItems, HandleKeyDown, ScrollOffset, PagesCount))
-}
+</scrollable>
 
 
 @code {
+
     /// <summary>
     /// Provides scrollable navigation through a list of items with keyboard support.
     /// </summary>
@@ -64,6 +84,19 @@
     [Parameter]
     public EventCallback<int> ScrollOffsetChanged { get; set; }
 
+    [Parameter] public ScrollbarSettings? Scrollbar { get; set; }
+
+    /// <summary>
+    /// Scrollbar settings. If provided, the scrollbar is enabled.
+    /// </summary>
+    /// <remarks>
+    /// This feature is only active when there is exactly one direct child of type <see cref="Table"/> or <see cref="Panel"/>/<see cref="Border"/>.
+    /// If multiple block-level elements are detected, the scrollbar will revert to the default side-rendering behavior.
+    /// </remarks>
+    /// <value>true</value>
+    [Parameter]
+    public bool IsScrollbarEmbedded { get; set; } = true;
+
     private IReadOnlyList<TItem> VisibleItems
         => Items.Skip(ScrollOffset).Take(PageSize).ToList();
 
@@ -99,18 +132,30 @@
             StateHasChanged();
         }
     }
+
+    private bool _isFocused;
+
+    private string? ScrollbarTrackColorAttribute => !_isFocused ? Scrollbar?.TrackColor.ToHex() : Scrollbar?.TrackFocusedColor.ToHex();
+
+    private string? ScrollbarThumbColorAttribute => !_isFocused ? Scrollbar?.ThumbColor.ToHex() : Scrollbar?.ThumbFocusedColor.ToHex();
+
+    private void OnFocusIn(FocusEventArgs eventArgs)
+    {
+        _isFocused = true;
+        Scrollbar?.OnFocusInCallback?.Invoke(eventArgs);
+    }
+
+    private void OnFocusOut(FocusEventArgs eventArgs)
+    {
+        _isFocused = false;
+        Scrollbar?.OnFocusOutCallback?.Invoke(eventArgs);
+    }
+
 }
 
-@code {
-    /// <summary>
-    /// Represents the context passed to the child render fragment containing visible items and scroll state.
-    /// </summary>
-    /// <typeparam name="T">The type of items in the scrollable list.</typeparam>
-    /// <param name="Items">The currently visible items in the scrollable viewport.</param>
-    /// <param name="KeyDownEventHandler">The keyboard event handler for navigation (arrow keys, page up/down, etc.).</param>
-    /// <param name="CurrentOffset">The current scroll offset (index of the first visible item).</param>
-    /// <param name="PagesCount">The total number of available scroll positions.</param>
-    public sealed record ScrollContext<T>(IReadOnlyList<T> Items, Func<KeyboardEventArgs,Task> KeyDownEventHandler, int CurrentOffset, int PagesCount)
+@code{
+
+    public sealed record ScrollContext<T>(IReadOnlyList<T> Items, Func<KeyboardEventArgs, Task> KeyDownEventHandler, int CurrentOffset, int PagesCount)
     {
         /// <summary>
         /// Gets the item at the specified index within the visible items.
@@ -130,4 +175,75 @@
         /// <returns>An enumerator for the visible items.</returns>
         public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
     }
+
+    public sealed record ScrollbarSettings
+    {
+        public ScrollbarSettings(
+            char trackChar = '│',
+            char thumbChar = '█',
+            Color? trackColor = null,
+            Color? thumbColor = null,
+            Color? trackFocusedColor = null,
+            Color? thumbFocusedColor = null,
+            int minThumbHeight = 1,
+            Action<FocusEventArgs>? onFocusInCallback = null,
+            Action<FocusEventArgs>? onFocusOutCallback = null)
+        {
+            TrackChar = trackChar;
+            ThumbChar = thumbChar;
+            TrackColor = trackColor ?? Color.Grey;
+            ThumbColor = thumbColor ?? Color.White;
+            TrackFocusedColor = trackFocusedColor ?? Color.Grey74;
+            ThumbFocusedColor = thumbFocusedColor ?? Color.DeepSkyBlue1;
+            MinThumbHeight = minThumbHeight;
+            OnFocusInCallback = onFocusInCallback;
+            OnFocusOutCallback = onFocusOutCallback;
+        }
+
+        /// <summary>
+        /// Character to use for the scrollbar track. Default is │.
+        /// </summary>
+        public char TrackChar { get; set; } = '│';
+
+        /// <summary>
+        /// Character to use for the scrollbar thumb. Default is █.
+        /// </summary>
+        public char ThumbChar { get; set; } = '█';
+
+        /// <summary>
+        /// Color for the track. Default is <see cref="Color.Gray"/>.
+        /// </summary>
+        public Color TrackColor { get; set; } = Color.Grey;
+
+        /// <summary>
+        /// Color for the thumb. Default is <see cref="Color.White"/>.
+        /// </summary>
+        public Color ThumbColor { get; set; } = Color.White;
+
+        /// <summary>
+        /// Color for the track when scrollbar is focused. Default is <see cref="Color.Gray74"/>.
+        /// </summary>
+        public Color TrackFocusedColor { get; set; } = Color.Grey74;
+
+        /// <summary>
+        /// Color for the track when scrollbar is focused. Default is <see cref="Color.DeepSkyBlue1"/>.
+        /// </summary>
+        public Color ThumbFocusedColor { get; set; } = Color.DeepSkyBlue1;
+
+        /// <summary>
+        /// Minimum height for the thumb in characters.
+        /// </summary>
+        public int MinThumbHeight { get; set; } = 1;
+
+        /// <summary>
+        /// Callback, that called after focus in event, can be used for any UI changes outside scrollbar.
+        /// </summary>
+        public Action<FocusEventArgs>? OnFocusInCallback { get; set; }
+
+        /// <summary>
+        /// Callback, that called after focus out event, can be used for any UI changes outside scrollbar.
+        /// </summary>
+        public Action<FocusEventArgs>? OnFocusOutCallback { get; set; }
+    }
+
 }
