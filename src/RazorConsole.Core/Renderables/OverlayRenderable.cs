@@ -8,6 +8,9 @@ namespace RazorConsole.Core.Renderables;
 
 public sealed class OverlayRenderable(IRenderable background, IEnumerable<OverlayItem> overlays) : IRenderable
 {
+    private readonly List<OverlayItem> _sortedOverlays = overlays.OrderBy(o => o.ZIndex).ToList();
+    private readonly Dictionary<int, List<OverlayPosition>> _overlayMapCache = new();
+
     public Measurement Measure(RenderOptions options, int maxWidth) => background.Measure(options, maxWidth);
 
     public IEnumerable<Segment> Render(RenderOptions options, int maxWidth)
@@ -15,14 +18,31 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
         var bgSegments = background.Render(options, maxWidth);
         var canvas = Segment.SplitLines(bgSegments);
 
-        var overlayMap = overlays
-            .OrderBy(o => o.ZIndex)
-            .SelectMany(o =>
+        _overlayMapCache.Clear();
+
+        foreach (var overlay in _sortedOverlays)
+        {
+            var lines = Segment.SplitLines(
+                overlay.Renderable.Render(options, Math.Max(0, maxWidth - overlay.Left))
+            );
+
+            for (int i = 0; i < lines.Count; i++)
             {
-                var lines = Segment.SplitLines(o.Renderable.Render(options, Math.Max(0, maxWidth - o.Left)));
-                return lines.Select((line, index) => new { TargetY = o.Top + index, Line = line, o.Left });
-            })
-            .GroupBy(x => x.TargetY);
+                int targetY = overlay.Top + i;
+                if (targetY < 0)
+                {
+                    continue;
+                }
+
+                if (!_overlayMapCache.TryGetValue(targetY, out var positions))
+                {
+                    positions = new List<OverlayPosition>(4);
+                    _overlayMapCache[targetY] = positions;
+                }
+
+                positions.Add(new OverlayPosition(lines[i], overlay.Left));
+            }
+        }
 
         var cellPool = ArrayPool<Cell>.Shared;
         Cell[]? lineBuffer = null;
@@ -31,13 +51,10 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
         {
             lineBuffer = cellPool.Rent(maxWidth);
 
-            foreach (var rowGroup in overlayMap)
+            foreach (var kvp in _overlayMapCache)
             {
-                int y = rowGroup.Key;
-                if (y < 0)
-                {
-                    continue;
-                }
+                int y = kvp.Key;
+                var overlayPositions = kvp.Value;
 
                 while (canvas.Count <= y)
                 {
@@ -46,9 +63,9 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
 
                 int actualWidth = ToBuffer(canvas[y], lineBuffer, maxWidth);
 
-                foreach (var ov in rowGroup)
+                foreach (var overlayPos in overlayPositions)
                 {
-                    actualWidth = MergeToBuffer(ov.Line, lineBuffer, ov.Left, maxWidth, actualWidth);
+                    actualWidth = MergeToBuffer(overlayPos.Line, lineBuffer, overlayPos.Left, maxWidth, actualWidth);
                 }
 
                 canvas[y] = FromBuffer(lineBuffer, actualWidth);
@@ -124,28 +141,34 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
         {
             if (!buffer[i].Style.Equals(currentStyle))
             {
-                result.Add(new Segment(new string(ExtractChars(buffer, start, i - start)), currentStyle));
+                result.Add(new Segment(CreateStringFromBuffer(buffer, start, i - start), currentStyle));
                 currentStyle = buffer[i].Style;
                 start = i;
             }
         }
 
-        result.Add(new Segment(new string(ExtractChars(buffer, start, length - start)), currentStyle));
+        result.Add(new Segment(CreateStringFromBuffer(buffer, start, length - start), currentStyle));
         return result;
     }
 
-    private static char[] ExtractChars(Cell[] buffer, int start, int count)
+    private static string CreateStringFromBuffer(Cell[] buffer, int start, int count)
     {
-        char[] chars = new char[count];
-        for (int i = 0; i < count; i++)
+        return string.Create(count, (buffer, start), static (span, state) =>
         {
-            chars[i] = buffer[start + i].Char;
-        }
-
-        return chars;
+            for (int i = 0; i < span.Length; i++)
+            {
+                span[i] = state.buffer[state.start + i].Char;
+            }
+        });
     }
 
     private record struct Cell(char Char, Style Style);
+
+    private readonly struct OverlayPosition(SegmentLine line, int left)
+    {
+        public readonly SegmentLine Line = line;
+        public readonly int Left = left;
+    }
 }
 
 public record OverlayItem(IRenderable Renderable, int Top, int Left, int ZIndex);
