@@ -1,21 +1,48 @@
 ﻿@page "/zindex"
 
 <Panel>
-    <Markup Content="Main flow content"/>
+    <Rows>
+        <Markup Content="Main flow content"/>
+        <TextButton FocusedColor="Color.DeepSkyBlue1" Content="Change z-indexes" OnClick="ChangeZIndexes"/>
+        <TextButton FocusedColor="Color.DeepSkyBlue1" Content="Make Second modal overlap" OnClick="OverlapSecondModal"/>
+    </Rows>
 </Panel>
 
-<div position="absolute" top="0" left="10" z-index="100">
+<div position="absolute" top="0" left="10" z-index="@_firstModalZIndex">
     <Panel Border="BoxBorder.Rounded" BorderColor="Color.Red">
         <Markup Content="Modal window!"/>
         <Newline/>
-        <Markup Content="top=0 left=10 z-index=100"/>
+        <Markup Content="@($"top=0 left=10 z-index={_firstModalZIndex}")"/>
     </Panel>
 </div>
 
-<div position="absolute" top="2" left="25" z-index="101">
+<div position="absolute" top="2" left="25" z-index="@_secondModalZIndex">
     <Panel Border="BoxBorder.Rounded" BorderColor="Color.Red">
         <Markup Content="Modal window!"/>
         <Newline/>
-        <Markup Content="top=2 left=25 z-index=101"/>
+        <Markup Content="@($"top=2 left=25 z-index={_secondModalZIndex}")"/>
+        @if (_overlappedContent != string.Empty)
+        {
+            <Markup Content="@($"Overlapped content: {_overlappedContent}")"/>
+        }
     </Panel>
 </div>
+
+@code{
+    private int _firstModalZIndex = 1;
+    private int _secondModalZIndex = 2;
+    private string _overlappedContent = string.Empty;
+
+    private void ChangeZIndexes()
+    {
+        _firstModalZIndex = _firstModalZIndex == 1 ? 2 : 1;
+        _secondModalZIndex = _secondModalZIndex == 2 ? 1 : 2;
+        StateHasChanged();
+    }
+
+    private void OverlapSecondModal()
+    {
+        _overlappedContent =_overlappedContent == string.Empty ? string.Concat(Enumerable.Repeat("Overlapped content. ", 10)) : string.Empty;
+        StateHasChanged();
+    }
+}
