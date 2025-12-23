@@ -20,11 +20,6 @@
   <PropertyGroup>
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
- 
-  <ItemGroup>
-    <None Include="build/RazorConsole.Core.targets" Pack="true" PackagePath="build/" />
-    <None Include="build/RazorConsole.Core.targets" Pack="true" PackagePath="buildTransitive/" />
-  </ItemGroup>
 
   <PropertyGroup>
     <NoWarn>$(NoWarn);BL0007</NoWarn>
