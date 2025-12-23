@@ -2,8 +2,4 @@
   <ItemGroup Condition="'$(PublishAot)' == 'true'">
     <TrimmerRootAssembly Include="$(AssemblyName)" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <NoWarn>$(NoWarn);IL2104</NoWarn>
-  </PropertyGroup>
 </Project>
