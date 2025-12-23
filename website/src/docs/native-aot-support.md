@@ -11,7 +11,7 @@ This document explains how to use **Native Ahead-of-Time (AOT)** compilation wit
 
 ## 1. What is Native AOT?
 
-Native AOT compiles your .NET application directly into native machine code (like C or Rust), rather than Intermediate Language (IL) that requires a JIT compiler at runtime.
+Native AOT compiles your .NET application directly into _native machine code_ like other compiled languages does, rather than Intermediate Language (IL) that requires a JIT compiler at runtime.
 
 **Benefits for Console Apps:**
 
