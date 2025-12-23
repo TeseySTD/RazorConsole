@@ -24,38 +24,7 @@ Native AOT compiles your .NET application directly into native machine code (lik
 ## 2. Prerequisites
 
 To build Native AOT applications, you need platform-specific build tools installed on your development machine or CI environment.
-
-### Windows
-
-Install **Visual Studio 2022 (or higher)** or **Visual Studio Build Tools**  with the **"Desktop development with C++"** workload.
-*Ensure "MSVC v143 - VS 2022(or higher) C++ x64/x86 build tools" is selected.*
-
-### Linux
-
-Install clang and zlib:
-
-```bash
-sudo apt-get update
-sudo apt-get install clang zlib1g-dev
-
-```
-
-### macOS
-
-Install Xcode Command Line Tools:
-```bash
-xcode-select --install
-```
-
-**For Apple Silicon Macs (M1/M2/M3):** Use the `osx-arm64` RID.
-**For Intel Macs:** Use `osx-x64`.
-
-You can check your architecture:
-```bash
-uname -m  # arm64 = Apple Silicon, x86_64 = Intel
-```
-
-
+Look at this article in [msdocs](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/?tabs=windows%2Cnet8).
 ---
 
 ## 3. How to Publish
