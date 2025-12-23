@@ -59,7 +59,7 @@ public static class RazorConsoleServiceCollectionExtensions
 
         // Register translation middlewares in order of priority
         // Overlay catcher
-        services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.AbsolutePositionMiddleware>();
+        services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.FixedPositionMiddleware>();
 
         // Text nodes and basic elements first
         services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.TextNodeTranslator>();
