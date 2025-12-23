@@ -1,6 +1,7 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
 using RazorConsole.Core.Abstractions.Rendering;
+using RazorConsole.Core.Renderables;
 using RazorConsole.Core.Rendering.ComponentMarkup;
 using RazorConsole.Core.Vdom;
 
@@ -40,6 +41,22 @@ public sealed class TranslationContext
     /// </para>
     /// </remarks>
     public HashSet<IAnimatedConsoleRenderable> AnimatedRenderables { get; } = [];
+
+    /// <summary>
+    /// Gets a collection of overlays that require special rendering in <see cref="ConsoleRenderer"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Middleware component <see cref="RazorConsole.Core.Rendering.Translation.Translators.AbsolutePositionMiddleware"/> can add <see cref="OverlayItem"/> to this collection during translation.
+    /// These items are collected and used by the rendering system to render these overlays.
+    /// </para>
+    /// <para>
+    /// The collection is cleared before each translation pass and populated as nodes are translated.
+    /// After translation completes, the collection contains all overlay items discovered during
+    /// the translation process.
+    /// </para>
+    /// </remarks>
+    public List<OverlayItem> CollectedOverlays { get; } = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TranslationContext"/> class with the specified middleware components.

@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using RazorConsole.Core.Extensions;
 using RazorConsole.Core.Renderables;
 using RazorConsole.Core.Rendering.ComponentMarkup;
-using RazorConsole.Core.Rendering.Vdom;
 using RazorConsole.Core.Vdom;
 using Spectre.Console.Rendering;
 
@@ -493,27 +492,16 @@ internal sealed class ConsoleRenderer(
                 return RenderSnapshot.Empty;
             }
 
-            var (flowNode, overlays) = SeparateOverlays(rootNode);
+            _translationContext.CollectedOverlays.Clear();
+            _translationContext.AnimatedRenderables.Clear();
 
-            var mainRenderable = _translationContext.Translate(flowNode);
+            var mainRenderable = _translationContext.Translate(rootNode);
 
-            var overlayItems = new List<OverlayItem>();
-            foreach (var item in overlays)
-            {
-                var top = VdomSpectreTranslator.TryGetIntAttribute(item.Node, "top", 0);
-                var left = VdomSpectreTranslator.TryGetIntAttribute(item.Node, "left", 0);
-                var zIndex = VdomSpectreTranslator.TryGetIntAttribute(item.Node, "z-index", 0);
-
-                var renderable = _translationContext.Translate(item.Node);
-                overlayItems.Add(new OverlayItem(renderable, top, left, zIndex));
-            }
-
-            IRenderable finalRenderable = overlayItems.Count > 0
-                ? new OverlayRenderable(mainRenderable, overlayItems)
+            IRenderable finalRenderable = _translationContext.CollectedOverlays.Count > 0
+                ? new OverlayRenderable(mainRenderable, _translationContext.CollectedOverlays)
                 : mainRenderable;
 
             return new RenderSnapshot(rootNode, finalRenderable, _translationContext.AnimatedRenderables);
-
         }
         catch (Exception ex)
         {
@@ -521,48 +509,6 @@ internal sealed class ConsoleRenderer(
             return RenderSnapshot.Empty;
         }
     }
-    private (VNode FlowNode, List<(VNode Node, int ZIndex)> Overlays) SeparateOverlays(VNode root)
-    {
-        var overlays = new List<(VNode, int)>();
-
-        if (IsAbsolute(root, out var rootZ))
-        {
-            return (VNode.CreateElement("div"), [(root, rootZ)]);
-        }
-
-        ExtractOverlaysRecursively(root, overlays);
-
-        return (root, overlays);
-    }
-
-    private void ExtractOverlaysRecursively(VNode parent, List<(VNode, int)> overlays)
-    {
-        for (var i = parent.Children.Count - 1; i >= 0; i--)
-        {
-            var child = parent.Children[i];
-
-            if (IsAbsolute(child, out var zIndex))
-            {
-                overlays.Add((child, zIndex));
-
-                parent.RemoveChildAt(i);
-            }
-            else
-            {
-                ExtractOverlaysRecursively(child, overlays);
-            }
-        }
-    }
-
-
-    private bool IsAbsolute(VNode node, out int zIndex)
-    {
-        var position = VdomSpectreTranslator.GetAttribute(node, "position");
-        zIndex = VdomSpectreTranslator.TryGetIntAttribute(node, "z-index", 0);
-
-        return string.Equals(position, "absolute", StringComparison.OrdinalIgnoreCase) || zIndex > 0;
-    }
-
     private VNode? CreateRenderableRoot(VNode node)
     {
         var visitedComponents = new HashSet<int>();
