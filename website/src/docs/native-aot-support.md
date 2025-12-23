@@ -78,7 +78,15 @@ basic component rendering, test thoroughly with AOT.
 
 ### 4.2. Routing and Pages
 
-RazorConsole automatically protects your `@page` components from being trimmed (removed) by the compiler. You generally do not need to add manual `[DynamicallyAccessedMembers]` attributes to your pages.
+By default, the .NET AOT compiler trims unused code aggressively. Because the Router finds pages via reflection, the trimmer might accidentally remove your page components if they aren't directly referenced.
+
+To ensure routing works correctly, you must prevent your application assembly from being trimmed. Add this to your project file (`.csproj`):
+
+```xml
+<ItemGroup>
+  <TrimmerRootAssembly Include="$(AssemblyName)" />
+</ItemGroup>
+```
 
 ### 4.3. Reflection & Parameters
 Native AOT aggressively trims unused code. Anonymous types rely on reflection 
