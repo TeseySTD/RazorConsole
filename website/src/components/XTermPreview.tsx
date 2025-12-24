@@ -111,7 +111,10 @@ export default function XTermPreview({
             scrollback: 1000,
             cursorInactiveStyle: 'none',
             theme: isDark ? TERMINAL_THEME.dark : TERMINAL_THEME.light,
-            allowProposedApi: true
+            allowProposedApi: true,
+            minimumContrastRatio: 1,  // Not allow xterm to change origin colors
+            allowTransparency: true,
+            convertEol: true,        // Correct processing of newline
         });
 
         const fitAddon = new FitAddon();

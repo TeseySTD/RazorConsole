@@ -74,7 +74,7 @@ internal class RazorConsoleRenderer<[DynamicallyAccessedMembers(DynamicallyAcces
         _ansiConsole = AnsiConsole.Create(new AnsiConsoleSettings
         {
             Ansi = AnsiSupport.Yes,
-            ColorSystem = ColorSystemSupport.Standard,
+            ColorSystem = ColorSystemSupport.TrueColor,
             Out = new AnsiConsoleOutput(_sw)
         });
 
