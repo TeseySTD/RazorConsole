@@ -1,48 +1,149 @@
 ﻿@page "/zindex"
+@using System.Timers
 
-<Panel>
+<Panel Border="BoxBorder.Double" Title="Layer Engine Demo" TitleColor="Color.Yellow" BorderColor="Color.Grey">
     <Rows>
-        <Markup Content="Main flow content"/>
-        <TextButton FocusedColor="Color.DeepSkyBlue1" Content="Change z-indexes" OnClick="ChangeZIndexes"/>
-        <TextButton FocusedColor="Color.DeepSkyBlue1" Content="Make Second modal overlap" OnClick="OverlapSecondModal"/>
+        <Markup Content="Main flow text."/>
+        <Newline/>
+
+        <Columns>
+            <Rows>
+                <Markup Content="Overlays operating menu:" Decoration="Decoration.Underline"/>
+                <TextButton Content="Swap Z-Indexes" OnClick="ChangeZIndexes"/>
+                <TextButton Content="@(_isCenteredVisible ? "Hide Center Modal" : "Show Center Modal")"
+                            OnClick="() => _isCenteredVisible = !_isCenteredVisible"/>
+            </Rows>
+            <Rows>
+                <TextButton Content="Send Notification" OnClick="AddToastWithTimer"/>
+                <TextButton Content="Move Floating Modal" OnClick="MoveModal"/>
+            </Rows>
+        </Columns>
     </Rows>
 </Panel>
 
-<div position="fixed" top="0" left="10" z-index="@_firstModalZIndex">
-    <Panel Border="BoxBorder.Rounded" BorderColor="Color.Red">
-        <Markup Content="Modal window!"/>
-        <Newline/>
-        <Markup Content="@($"top=0 left=10 z-index={_firstModalZIndex}")"/>
+@if (_isCenteredVisible)
+{
+    var screenW = AnsiConsole.Console.Profile.Width;
+    var screenH = AnsiConsole.Console.Profile.Height;
+
+    int modalW = 30;
+    int modalH = 7;
+
+    int left = (screenW - modalW) / 2;
+    int top = (screenH - modalH) / 2;
+    <div position="fixed" top="@top" left="@left" z-index="1000">
+        <Panel Border="BoxBorder.Heavy" BorderColor="Color.DeepSkyBlue1" Title="DIALOG">
+            <Rows>
+                <Markup Content="I am positioned exactly in the center"/>
+                <Markup Content="using screen width."/>
+                <Newline/>
+                <TextButton Content="CLOSE" FocusedColor="Color.DeepSkyBlue1"
+                            OnClick="() => _isCenteredVisible = false"/>
+            </Rows>
+        </Panel>
+    </div>
+}
+
+<div position="fixed" top="@_floatingTop" left="@_floatingLeft" z-index="@_firstModalZIndex">
+    <Panel Border="BoxBorder.Rounded" BorderColor="Color.Red" Title="Layer A">
+        <Rows>
+            <Markup Content="Modal window A" Decoration="Decoration.Bold"/>
+            <Markup Content="@($"Z-Index: {_firstModalZIndex}")"/>
+            <Markup Content="I can be moved!"/>
+        </Rows>
     </Panel>
 </div>
 
-<div position="fixed" top="2" left="25" z-index="@_secondModalZIndex">
-    <Panel Border="BoxBorder.Rounded" BorderColor="Color.Red">
-        <Markup Content="Modal window!"/>
-        <Newline/>
-        <Markup Content="@($"top=2 left=25 z-index={_secondModalZIndex}")"/>
-        @if (_overlappedContent != string.Empty)
-        {
-            <Markup Content="@($"Overlapped content: {_overlappedContent}")"/>
-        }
+<div position="fixed" top="5" left="40" z-index="@_secondModalZIndex">
+    <Panel Border="BoxBorder.Rounded" BorderColor="Color.Green" Title="Layer B">
+        <Rows>
+            <Markup Content="Modal window B" Decoration="Decoration.Bold"/>
+            <Markup Content="@($"Z-Index: {_secondModalZIndex}")"/>
+        </Rows>
     </Panel>
 </div>
 
-@code{
-    private int _firstModalZIndex = 1;
-    private int _secondModalZIndex = 2;
-    private string _overlappedContent = string.Empty;
+@if (_toasts.Any())
+{
+    <div position="fixed" top="1" right="2" z-index="2000">
+        <Rows>
+            @foreach (var toast in _toasts)
+            {
+                <Panel Border="BoxBorder.Rounded" BorderColor="Color.Blue">
+                    <Markup Content="@($"🔔 {toast}")"/>
+                </Panel>
+            }
+        </Rows>
+    </div>
+}
+
+<div position="fixed" right="1" bottom="4" z-index="500">
+    <Panel Border="BoxBorder.Rounded">
+        <Columns>
+            <Markup Content="STATUS: READY" Decoration="Decoration.Bold" Foreground="Color.Green"/>
+            <Markup Content="@($"LOGS: {_lastAction} ")" Decoration="Decoration.Underline" Foreground="Color.Yellow"/>
+            <Markup Content="@($"TIME: {DateTime.Now:HH:mm:ss} ")"/>
+        </Columns>
+    </Panel>
+</div>
+
+
+@code {
+    private int _firstModalZIndex = 10;
+    private int _secondModalZIndex = 20;
+    private bool _isCenteredVisible;
+    private int _floatingTop = 2;
+    private int _floatingLeft = 15;
+    private string _lastAction = "None";
+
+    private sealed record ToastItem(string Message, DateTime Expiry);
+
+    private List<ToastItem> _toasts = new();
+    private System.Timers.Timer? _cleanupTimer;
 
     private void ChangeZIndexes()
     {
-        _firstModalZIndex = _firstModalZIndex == 1 ? 2 : 1;
-        _secondModalZIndex = _secondModalZIndex == 2 ? 1 : 2;
+        (_firstModalZIndex, _secondModalZIndex) = (_secondModalZIndex, _firstModalZIndex);
+        _lastAction = "Z-Indexes swapped";
         StateHasChanged();
     }
 
-    private void OverlapSecondModal()
+    private void MoveModal()
     {
-        _overlappedContent =_overlappedContent == string.Empty ? string.Concat(Enumerable.Repeat("Overlapped content. ", 10)) : string.Empty;
+        _floatingLeft += 2;
+        _floatingTop += 1;
+        if (_floatingLeft > 60) _floatingLeft = 10;
+        if (_floatingTop > 15) _floatingTop = 2;
+
+        _lastAction = $"Moved to {_floatingTop}:{_floatingLeft}";
         StateHasChanged();
     }
+
+    protected override void OnInitialized()
+    {
+        _cleanupTimer = new System.Timers.Timer(1000);
+        _cleanupTimer.Elapsed += OnCleanupTimerElapsed;
+        _cleanupTimer.AutoReset = true;
+        _cleanupTimer.Enabled = true;
+    }
+
+    private void AddToastWithTimer()
+    {
+        var id = Guid.NewGuid().ToString()[..4];
+        _toasts.Add(new ToastItem($"Update {id}", DateTime.Now.AddSeconds(2)));
+
+        _lastAction = $"Toast {id} added";
+        StateHasChanged();
+    }
+
+    private void OnCleanupTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        var now = DateTime.Now;
+        if (_toasts.Any(t => t.Expiry <= now))
+        {
+            _toasts.RemoveAll(t => t.Expiry <= now);
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
 }

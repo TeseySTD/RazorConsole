@@ -22,13 +22,39 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
 
         foreach (var overlay in _sortedOverlays)
         {
+            int finalLeft;
+            int widthToRender;
+
+            if (overlay.Left.HasValue && overlay.Right.HasValue)
+            {
+                // CSS-like horizontal stretching
+                finalLeft = overlay.Left.Value;
+                widthToRender = maxWidth - overlay.Left.Value - overlay.Right.Value;
+            }
+            else if (overlay.Right.HasValue)
+            {
+                int constraint = Math.Max(0, maxWidth - overlay.Right.Value);
+                var measurement = overlay.Renderable.Measure(options, constraint);
+                widthToRender = measurement.Max;
+                finalLeft = maxWidth - overlay.Right.Value - widthToRender;
+            }
+            else
+            {
+                finalLeft = overlay.Left ?? 0;
+                widthToRender = maxWidth - finalLeft;
+            }
+
             var lines = Segment.SplitLines(
-                overlay.Renderable.Render(options, Math.Max(0, maxWidth - overlay.Left))
+                overlay.Renderable.Render(options, Math.Max(0, widthToRender))
             );
+
+            int finalTop = overlay.Top ?? (overlay.Bottom.HasValue
+                ? Math.Max(0, canvas.Count - overlay.Bottom.Value - lines.Count)
+                : 0);
 
             for (int i = 0; i < lines.Count; i++)
             {
-                int targetY = overlay.Top + i;
+                int targetY = finalTop + i;
                 if (targetY < 0)
                 {
                     continue;
@@ -40,7 +66,7 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
                     _overlayMapCache[targetY] = positions;
                 }
 
-                positions.Add(new OverlayPosition(lines[i], overlay.Left));
+                positions.Add(new OverlayPosition(lines[i], finalLeft));
             }
         }
 
@@ -61,11 +87,19 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
                     canvas.Add(new SegmentLine());
                 }
 
-                int actualWidth = ToBuffer(canvas[y], lineBuffer, maxWidth);
+                // Clean up array
+                Array.Fill(lineBuffer, new Cell(' ', Style.Plain), 0, maxWidth);
+
+                int backgroundWidth = ToBuffer(canvas[y], lineBuffer, maxWidth);
+                int actualWidth = backgroundWidth;
 
                 foreach (var overlayPos in overlayPositions)
                 {
-                    actualWidth = MergeToBuffer(overlayPos.Line, lineBuffer, overlayPos.Left, maxWidth, actualWidth);
+                    int endX = MergeToBuffer(overlayPos.Line, lineBuffer, overlayPos.Left, maxWidth);
+                    if (endX > actualWidth)
+                    {
+                        actualWidth = endX;
+                    }
                 }
 
                 canvas[y] = FromBuffer(lineBuffer, actualWidth);
@@ -109,8 +143,7 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
         return cursor;
     }
 
-    private static int MergeToBuffer(IEnumerable<Segment> overlaySegments, Cell[] buffer, int left, int maxWidth,
-        int currentWidth)
+    private static int MergeToBuffer(IEnumerable<Segment> overlaySegments, Cell[] buffer, int left, int maxWidth)
     {
         int cursor = left;
         foreach (var segment in overlaySegments)
@@ -119,11 +152,16 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
             var style = segment.Style;
             for (int i = 0; i < text.Length && cursor < maxWidth; i++)
             {
-                buffer[cursor++] = new Cell(text[i], style);
+                if (cursor >= 0)
+                {
+                    buffer[cursor] = new Cell(text[i], style);
+                }
+
+                cursor++;
             }
         }
 
-        return Math.Max(currentWidth, cursor);
+        return cursor;
     }
 
     private static SegmentLine FromBuffer(Cell[] buffer, int length)
@@ -171,4 +209,11 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
     }
 }
 
-public record OverlayItem(IRenderable Renderable, int Top, int Left, int ZIndex);
+public record OverlayItem(
+    IRenderable Renderable,
+    int? Top,
+    int? Left,
+    int? Right,
+    int? Bottom,
+    int ZIndex
+);
