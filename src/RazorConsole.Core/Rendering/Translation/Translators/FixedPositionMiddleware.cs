@@ -21,13 +21,23 @@ public class FixedPositionMiddleware : ITranslationMiddleware
             return next(node);
         }
 
-        var top = VdomSpectreTranslator.TryGetIntAttribute(node, "top", 0);
-        var left = VdomSpectreTranslator.TryGetIntAttribute(node, "left", 0);
+        var top = VdomSpectreTranslator.GetAttribute(node, "top") != null
+            ? int.Parse(VdomSpectreTranslator.GetAttribute(node, "top")!, 0)
+            : (int?)null;
+        var left = VdomSpectreTranslator.GetAttribute(node, "left") != null
+            ? int.Parse(VdomSpectreTranslator.GetAttribute(node, "left")!, 0)
+            : (int?)null;
+        var bottom = VdomSpectreTranslator.GetAttribute(node, "bottom") != null
+            ? int.Parse(VdomSpectreTranslator.GetAttribute(node, "bottom")!, 0)
+            : (int?)null;
+        var right = VdomSpectreTranslator.GetAttribute(node, "right") != null
+            ? int.Parse(VdomSpectreTranslator.GetAttribute(node, "right")!, 0)
+            : (int?)null;
         var zIndex = VdomSpectreTranslator.TryGetIntAttribute(node, "z-index", 0);
 
         var renderable = next(node);
 
-        context.CollectedOverlays.Add(new OverlayItem(renderable, top, left, zIndex));
+        context.CollectedOverlays.Add(new OverlayItem(renderable, top, left, right, bottom, zIndex));
 
         // Return empty div in main layout flow
         return new Markup(string.Empty);
