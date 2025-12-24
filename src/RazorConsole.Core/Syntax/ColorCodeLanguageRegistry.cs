@@ -62,7 +62,7 @@ public sealed class ColorCodeLanguageRegistry : ISyntaxLanguageRegistry
         Register("plain", _plainText);
         Register("csharp", Languages.FindById(LanguageId.CSharp));
         Register("cs", Languages.FindById(LanguageId.CSharp));
-        Register("razor", Languages.Html); // Razor currently tokenizes as HTML/C# hybrid
+        Register("razor", new RazorLanguage());
         Register("html", Languages.Html);
         Register("json", Languages.FindById(LanguageId.Json));
         Register("xml", Languages.Xml);
