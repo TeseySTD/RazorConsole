@@ -1,4 +1,4 @@
-﻿// Copyright (c) RazorConsole. All rights reserved.
+// Copyright (c) RazorConsole. All rights reserved.
 
 namespace RazorConsole.Core.Rendering.Syntax;
 
