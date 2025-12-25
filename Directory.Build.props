@@ -37,8 +37,4 @@
     <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
 
-  <!-- For Native AOT trimming -->
-  <ItemGroup Condition="'$(OutputType)' == 'Exe' AND '$(PublishAot)' == 'true'">
-    <TrimmerRootAssembly Include="$(AssemblyName)" />
-  </ItemGroup>
 </Project>
