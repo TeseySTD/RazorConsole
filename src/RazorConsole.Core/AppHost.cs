@@ -5,13 +5,11 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
 using RazorConsole.Core.Controllers;
 using RazorConsole.Core.Focus;
 using RazorConsole.Core.Input;
 using RazorConsole.Core.Rendering;
 using RazorConsole.Core.Utilities;
-
 using Spectre.Console;
 
 namespace RazorConsole.Core;
@@ -113,7 +111,7 @@ internal class ComponentService<[DynamicallyAccessedMembers(DynamicallyAccessedM
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
-        var initialView = await RenderComponentInternalAsync(null, token).ConfigureAwait(false);
+        var initialView = await RenderComponentInternalAsync(token).ConfigureAwait(false);
 
         var callback = options.AfterRenderAsync ?? ConsoleAppOptions.DefaultAfterRenderAsync;
 
@@ -133,14 +131,14 @@ internal class ComponentService<[DynamicallyAccessedMembers(DynamicallyAccessedM
         await Task.Delay(Timeout.InfiniteTimeSpan, token).ConfigureAwait(false);
     }
 
-    private async Task<ConsoleViewResult> RenderComponentInternalAsync(object? parameters, CancellationToken cancellationToken)
+    private async Task<ConsoleViewResult> RenderComponentInternalAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         await _renderLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var parameterView = CreateParameterView(parameters);
+            var parameterView = CreateParameterView();
             var snapshot = await consoleRenderer.MountComponentAsync<TComponent>(parameterView, cancellationToken).ConfigureAwait(false);
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -152,36 +150,6 @@ internal class ComponentService<[DynamicallyAccessedMembers(DynamicallyAccessedM
             _renderLock.Release();
         }
     }
-    [UnconditionalSuppressMessage("Trimming", "IL2075",
-        Justification = "Reflection allows using anonymous objects for parameters in non-AOT scenarios. AOT users should use Dictionary.")]
-    private static ParameterView CreateParameterView(object? parameters)
-    {
-        if (parameters is null)
-        {
-            return ParameterView.Empty;
-        }
 
-        if (parameters is ParameterView parameterView)
-        {
-            return parameterView;
-        }
-
-        if (parameters is IDictionary<string, object?> dictionary)
-        {
-            return ParameterView.FromDictionary(new Dictionary<string, object?>(dictionary));
-        }
-
-        if (parameters is IReadOnlyDictionary<string, object?> readOnlyDictionary)
-        {
-            return ParameterView.FromDictionary(readOnlyDictionary.ToDictionary(pair => pair.Key, pair => pair.Value));
-        }
-
-        var props = parameters
-            .GetType()
-            .GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public)
-            .Where(property => property.GetMethod is not null)
-            .ToDictionary(property => property.Name, property => property.GetValue(parameters));
-
-        return ParameterView.FromDictionary(props);
-    }
+    private static ParameterView CreateParameterView() => ParameterView.Empty;
 }
