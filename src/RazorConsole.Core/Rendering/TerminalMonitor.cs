@@ -37,6 +37,7 @@ internal sealed class TerminalMonitor : IDisposable
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             _posixRegistration = PosixSignalRegistration.Create(PosixSignal.SIGWINCH, _ => OnResized?.Invoke());
+            _isStarted = true;
             return;
         }
 
