@@ -1,4 +1,4 @@
-﻿// Copyright (c) RazorConsole. All rights reserved.
+// Copyright (c) RazorConsole. All rights reserved.
 
 using System.Runtime.InteropServices;
 using Spectre.Console;
@@ -8,10 +8,12 @@ namespace RazorConsole.Core.Rendering;
 internal sealed class TerminalMonitor : IDisposable
 {
     public static readonly TimeSpan CheckInterval = TimeSpan.FromMilliseconds(250);
+    public static readonly TimeSpan CheckDebounce = TimeSpan.FromMilliseconds(100);
     private int _width = AnsiConsole.Console.Profile.Width;
     private int _height = AnsiConsole.Console.Profile.Height;
     private IDisposable? _posixRegistration;
     private CancellationTokenSource? _cts;
+    private CancellationTokenSource? _debounceCts;
     private bool _isStarted = false;
 #if NET9_0_OR_GREATER
     private readonly Lock _sync = new();
@@ -36,7 +38,10 @@ internal sealed class TerminalMonitor : IDisposable
         }
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            _posixRegistration = PosixSignalRegistration.Create(PosixSignal.SIGWINCH, _ => OnResized?.Invoke());
+            _posixRegistration = PosixSignalRegistration.Create(PosixSignal.SIGWINCH, _ =>
+            {
+                RequestDebouncedResize();
+            });
             _isStarted = true;
             return;
         }
@@ -45,7 +50,29 @@ internal sealed class TerminalMonitor : IDisposable
         _ = PollResizeAsync(_cts.Token);
         _isStarted = true;
     }
+    private void RequestDebouncedResize()
+    {
+#if NET9_0_OR_GREATER
+        using (_sync.EnterScope())
+#else
+        lock (_sync)
+#endif
+        {
+            _debounceCts?.Cancel();
+            _debounceCts?.Dispose();
+            _debounceCts = new CancellationTokenSource();
 
+            var token = _debounceCts.Token;
+
+            Task.Delay(CheckDebounce, token).ContinueWith(t =>
+            {
+                if (t.IsCompletedSuccessfully)
+                {
+                    OnResized?.Invoke();
+                }
+            }, token);
+        }
+    }
     private async Task PollResizeAsync(CancellationToken token)
     {
         using var timer = new PeriodicTimer(CheckInterval);
