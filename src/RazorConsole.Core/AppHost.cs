@@ -75,7 +75,8 @@ internal class ComponentService<TComponent>(
     ConsoleAppOptions options,
     ConsoleRenderer consoleRenderer,
     FocusManager focusManager,
-    KeyboardEventManager keyboardEventManager) : BackgroundService where TComponent : IComponent
+    KeyboardEventManager keyboardEventManager,
+    TerminalMonitor terminalMonitor) : BackgroundService where TComponent : IComponent
 {
     private readonly SemaphoreSlim _renderLock = new(1, 1);
 
@@ -114,11 +115,12 @@ internal class ComponentService<TComponent>(
             AnsiConsole.Clear();
         }
 
-        using var liveContext = new ConsoleLiveDisplayContext(new LiveDisplayCanvas(AnsiConsole.Console), consoleRenderer, null);
+        using var liveContext = new ConsoleLiveDisplayContext(new LiveDisplayCanvas(AnsiConsole.Console), consoleRenderer, terminalMonitor, null);
         using var _ = consoleRenderer.Subscribe(focusManager);
         using var focusSession = focusManager.BeginSession(liveContext, initialView, token);
         await focusSession.InitializationTask.ConfigureAwait(false);
         var keyListenerTask = keyboardEventManager.RunAsync(token);
+        terminalMonitor.Start(token);
 
         await callback(liveContext, initialView, token).ConfigureAwait(false);
 
