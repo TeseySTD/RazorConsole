@@ -126,7 +126,10 @@ internal class ComponentService<[DynamicallyAccessedMembers(DynamicallyAccessedM
         using var focusSession = focusManager.BeginSession(liveContext, initialView, token);
         await focusSession.InitializationTask.ConfigureAwait(false);
         var keyListenerTask = keyboardEventManager.RunAsync(token);
-        terminalMonitor.Start(token);
+        if (options.EnableTerminalResizing)
+        {
+            terminalMonitor.Start(token);
+        }
 
         await callback(liveContext, initialView, token).ConfigureAwait(false);
 
