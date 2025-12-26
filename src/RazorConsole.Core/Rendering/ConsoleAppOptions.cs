@@ -13,6 +13,12 @@ public sealed class ConsoleAppOptions
     /// </summary>
     public bool AutoClearConsole { get; set; } = false;
 
+    /// <summary>
+    /// Gets or sets whether the console should be re-rendered after resizing.
+    /// Default value is false.
+    /// </summary>
+    public bool EnableTerminalResizing { get; set; } = false;
+
     public ConsoleLiveDisplayOptions ConsoleLiveDisplayOptions { get; } = ConsoleLiveDisplayOptions.Default;
 
     /// <summary>
