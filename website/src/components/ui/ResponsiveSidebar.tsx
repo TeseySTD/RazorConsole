@@ -45,7 +45,7 @@ export function ResponsiveSidebar({
       </aside>
 
       {/* Mobile Trigger Button */}
-      <MobileNavOpenButton setMobileSidebarOpen={setIsOpen} />
+      <MobileNavOpenButton classname={cn("hidden", mobileVisibleClass)} setMobileSidebarOpen={setIsOpen} />
 
       {/* Mobile Drawer Overlay */}
       <div
