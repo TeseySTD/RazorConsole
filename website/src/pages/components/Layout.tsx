@@ -16,7 +16,7 @@ export default function ComponentsLayout() {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
       <div className="flex flex-col md:block">
-        <ResponsiveSidebar breakpoint="md" className="w-60 px-4 py-6 lg:w-64">
+        <ResponsiveSidebar breakpoint="lg" className="w-72 px-6 py-6">
           <Sidebar groupedComponents={groupedComponents} categories={categories} />
         </ResponsiveSidebar>
 
