@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { lazy, Suspense } from "react"
-import Layout from "@/components/Layout"
-import LoadingOverlay from "@/components/LoadingOverlay"
-import { useThemeEffect } from "@/components/ThemeProvider"
-import ScrollToTop from "@/components/ScrollToTop"
+import Layout from "@/components/app/Layout"
+import LoadingOverlay from "@/components/app/LoadingOverlay"
+import { useThemeEffect } from "@/hooks/useThemeEffect"
+import ScrollToTop from "@/components/app/ScrollToTop"
 
 // --- Eager Imports ---
 import Home from "@/pages/Home"

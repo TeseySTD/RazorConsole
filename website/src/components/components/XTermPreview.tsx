@@ -8,7 +8,7 @@ import {
 } from "@/lib/xtermConsole";
 import 'xterm/css/xterm.css';
 import { Terminal } from "xterm";
-import { useTheme } from "@/components/ThemeProvider";
+import { useTheme } from "@/hooks/useTheme";
 import { FitAddon } from '@xterm/addon-fit';
 interface XTermPreviewProps {
     elementId: string;

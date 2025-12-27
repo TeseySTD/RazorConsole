@@ -1,7 +1,7 @@
 ﻿import {useEffect, useState} from 'react';
 import {codeToHtml, type BundledLanguage} from 'shiki';
-import { useTheme } from '@/components/ThemeProvider';
-import { CopyButton } from '@/components/CopyButton';
+import { useTheme } from '@/hooks/useTheme';
+import { CopyButton } from '@/components/ui/CopyButton';
 
 interface CodeBlockProps {
     code: string;

@@ -1,10 +1,10 @@
 import { Link, Outlet, useLocation } from "react-router-dom"
 import { Github, X, Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/ThemeToggle"
+import { ThemeToggle } from "@/components/app/ThemeToggle"
 import { useState, useEffect } from "react"
 import { useGitHubStars } from "@/hooks/useGitHubStars"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/Button"
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)

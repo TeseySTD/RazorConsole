@@ -1,9 +1,9 @@
-import CodeBlock from "@/components/CodeBlock";
-import XTermPreview from "@/components/XTermPreview";
+import CodeBlock from "@/components/ui/CodeBlock";
+import XTermPreview from "@/components/components/XTermPreview";
 import type { ComponentInfo } from "@/data/components";
 
 const examples = import.meta.glob(
-    "../../../src/RazorConsole.Website/Components/*.razor",
+    "../../../../src/RazorConsole.Website/Components/*.razor",
     {
         query: "?raw",
         import: "default",
@@ -13,7 +13,7 @@ const examples = import.meta.glob(
 
 export function ComponentPreview({ component }: { component: ComponentInfo }) {
     const exampleFilename = component.examples[0];
-    const examplePath = `../../../src/RazorConsole.Website/Components/${exampleFilename}`;
+    const examplePath = `../../../../src/RazorConsole.Website/Components/${exampleFilename}`;
     const code = examples[examplePath] || `Example not found: ${examplePath}`;
 
     return (

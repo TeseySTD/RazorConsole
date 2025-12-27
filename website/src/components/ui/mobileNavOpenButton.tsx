@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react"
-import { Button } from "./button"
+import { Button } from "./Button"
 import type React from "react"
 
 interface Props {
