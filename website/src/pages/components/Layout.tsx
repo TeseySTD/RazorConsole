@@ -5,19 +5,24 @@ import Sidebar from "@/components/components/Sidebar"
 
 export default function ComponentsLayout() {
   const categories = ["Layout", "Input", "Display", "Utilities"]
-  const groupedComponents = categories.reduce((acc, category) => {
-    acc[category] = components.filter(c => c.category === category)
-    return acc
-  }, {} as Record<string, ComponentInfo[]>)
+  const groupedComponents = categories.reduce(
+    (acc, category) => {
+      acc[category] = components.filter((c) => c.category === category)
+      return acc
+    },
+    {} as Record<string, ComponentInfo[]>
+  )
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
       <div className="flex flex-col md:block">
-        <ResponsiveSidebar breakpoint="md" className="w-60 lg:w-64 px-4 py-6">
+        <ResponsiveSidebar breakpoint="md" className="w-60 px-4 py-6 lg:w-64">
           <Sidebar groupedComponents={groupedComponents} categories={categories} />
         </ResponsiveSidebar>
 
-        <main className="relative min-w-0"><Outlet /></main>
+        <main className="relative min-w-0">
+          <Outlet />
+        </main>
       </div>
     </div>
   )

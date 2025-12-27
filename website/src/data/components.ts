@@ -1,4 +1,4 @@
-import { generateComponents } from './components.generated'
+import { generateComponents } from "./components.generated"
 
 export interface ComponentInfo {
   name: string

@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useState } from "react"
 
-export default function ImageBanner({ imageUrls, alt }: { imageUrls: string[], alt: string }) {
+export default function ImageBanner({ imageUrls, alt }: { imageUrls: string[]; alt: string }) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   if (imageUrls.length === 0) return null
@@ -19,30 +19,30 @@ export default function ImageBanner({ imageUrls, alt }: { imageUrls: string[], a
   }
 
   return (
-    <div className="relative h-72 overflow-hidden rounded-t-lg group">
+    <div className="group relative h-72 overflow-hidden rounded-t-lg">
       <img
         src={imageUrls[currentIndex]}
         alt={`${alt} screenshot ${currentIndex + 1}`}
-        className="w-full h-full object-cover"
+        className="h-full w-full object-cover"
         loading="lazy"
       />
       {imageUrls.length > 1 && (
         <>
           <button
             onClick={goToPrevious}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
             aria-label="Previous image"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={goToNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
             aria-label="Next image"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="h-4 w-4" />
           </button>
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+          <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
             {imageUrls.map((_, index) => (
               <button
                 key={index}
@@ -51,7 +51,7 @@ export default function ImageBanner({ imageUrls, alt }: { imageUrls: string[], a
                   e.stopPropagation()
                   setCurrentIndex(index)
                 }}
-                className={`w-2 h-2 rounded-full transition-colors ${
+                className={`h-2 w-2 rounded-full transition-colors ${
                   index === currentIndex ? "bg-white" : "bg-white/50"
                 }`}
                 aria-label={`Go to image ${index + 1}`}
