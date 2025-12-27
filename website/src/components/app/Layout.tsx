@@ -10,10 +10,7 @@ export default function Layout() {
     location.pathname.startsWith("/api") ||
     location.pathname.startsWith("/components")
 
-  const layoutClasses = cn(
-    "min-h-screen flex flex-col",
-    isDocs && "lg:pl-72",
-  )
+  const layoutClasses = cn("min-h-screen flex flex-col", isDocs && "lg:pl-72")
 
   return (
     <div className={layoutClasses}>

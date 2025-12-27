@@ -1,4 +1,4 @@
-import type { ComponentInfo } from "./components"
+import type { ComponentInfo } from "@/types/components/componentInfo"
 import { apiItems, type DocfxApiItem, type DocfxApiMember } from "./api-docs"
 
 // Manual metadata that can't be extracted from XML

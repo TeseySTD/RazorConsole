@@ -1,4 +1,4 @@
-import type { ComponentInfo } from "@/data/components"
+import type { ComponentInfo } from "@/types/components/componentInfo"
 import { cn } from "@/lib/utils"
 import { NavLink } from "react-router-dom"
 

@@ -1,6 +1,6 @@
 import CodeBlock from "@/components/ui/CodeBlock"
 import XTermPreview from "@/components/components/XTermPreview"
-import type { ComponentInfo } from "@/data/components"
+import type { ComponentInfo } from "@/types/components/componentInfo"
 
 const examples = import.meta.glob("../../../../src/RazorConsole.Website/Components/*.razor", {
   query: "?raw",

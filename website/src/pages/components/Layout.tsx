@@ -6,7 +6,7 @@ import type { Category } from "@/types/components/category"
 import type { ComponentInfo } from "@/types/components/componentInfo"
 
 export default function ComponentsLayout() {
-  const categories : Category[] = ["Layout", "Input", "Display", "Utilities"]
+  const categories: Category[] = ["Layout", "Input", "Display", "Utilities"]
   const groupedComponents = categories.reduce(
     (acc, category) => {
       acc[category] = components.filter((c) => c.category === category)

@@ -1,1 +1,1 @@
-export type Category = "Layout" | "Input" | "Display" | "Utilities";
+export type Category = "Layout" | "Input" | "Display" | "Utilities"

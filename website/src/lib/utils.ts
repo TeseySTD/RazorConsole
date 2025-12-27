@@ -20,4 +20,3 @@ export function getCategoryBadgeColor(category: Category) {
       return "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-500/40 dark:bg-slate-500/10 dark:text-slate-300"
   }
 }
-
