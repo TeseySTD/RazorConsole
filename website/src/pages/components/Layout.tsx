@@ -1,10 +1,12 @@
 import { Outlet } from "react-router-dom"
-import { components, type ComponentInfo } from "@/data/components"
+import { components } from "@/data/components"
 import { ResponsiveSidebar } from "@/components/ui/ResponsiveSidebar"
 import Sidebar from "@/components/components/Sidebar"
+import type { Category } from "@/types/components/category"
+import type { ComponentInfo } from "@/types/components/componentInfo"
 
 export default function ComponentsLayout() {
-  const categories = ["Layout", "Input", "Display", "Utilities"]
+  const categories : Category[] = ["Layout", "Input", "Display", "Utilities"]
   const groupedComponents = categories.reduce(
     (acc, category) => {
       acc[category] = components.filter((c) => c.category === category)
