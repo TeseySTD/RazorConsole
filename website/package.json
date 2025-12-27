@@ -9,6 +9,7 @@
     "build:docfx": "dotnet tool restore && dotnet docfx metadata ../docfx/docfx.json",
     "lint": "eslint .",
     "preview": "vite preview",
+    "build:wasm": "node scripts/build-wasm.js",
     "format": "prettier --write \"./src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
