@@ -27,8 +27,22 @@ export function ResponsiveSidebar({
   const desktopHiddenClass = breakpoint === "md" ? "md:block" : "lg:block"
   const mobileVisibleClass = breakpoint === "md" ? "md:hidden" : "lg:hidden"
 
-  const scrollbarStyles =
-    "[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-300 dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-700"
+  const scrollbarStyles = cn(
+    // Firefox
+    "[scrollbar-color:theme('colors.slate.300')_transparent]",
+    "dark:[scrollbar-color:theme('colors.slate.700')_transparent]", 
+
+    // Other Browsers
+    "[&::-webkit-scrollbar-thumb]:bg-slate-300",
+    "dark:[&::-webkit-scrollbar-thumb]:bg-slate-700",
+    "hover:[&::-webkit-scrollbar-thumb]:bg-slate-400",
+    "dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-600",
+
+    "[&::-webkit-scrollbar]:w-1",
+    "[&::-webkit-scrollbar]:h-1",
+    "[&::-webkit-scrollbar-track]:bg-transparent",
+    "[&::-webkit-scrollbar-thumb]:rounded-full",
+  )
 
   return (
     <>
@@ -46,7 +60,7 @@ export function ResponsiveSidebar({
 
       {/* Mobile Trigger Button */}
       <MobileNavOpenButton
-        classname={cn("hidden", mobileVisibleClass)}
+        className={cn("hidden", mobileVisibleClass)}
         setMobileSidebarOpen={setIsOpen}
       />
 
