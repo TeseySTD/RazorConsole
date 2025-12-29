@@ -1,7 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
-import { lazy, Suspense } from "react"
 import Layout from "@/components/app/Layout"
-import LoadingOverlay from "@/components/app/LoadingOverlay"
 import { useThemeEffect } from "@/hooks/useThemeEffect"
 import ScrollToTop from "@/components/app/ScrollToTop"
 
@@ -13,11 +11,9 @@ import Advanced from "@/pages/Advanced"
 import Collaborators from "@/pages/Collaborators"
 import Showcase from "@/pages/Showcase"
 import ApiDocs from "@/pages/ApiDocs"
-
-// --- Lazy Imports ---
-const ComponentsLayout = lazy(() => import("@/pages/components/Layout"))
-const ComponentsOverview = lazy(() => import("@/pages/components/Overview"))
-const ComponentDetail = lazy(() => import("@/pages/components/Detail"))
+import ComponentsLayout from "./pages/components/Layout"
+import ComponentsOverview from "./pages/components/Overview"
+import ComponentDetail from "./pages/components/Detail"
 
 function App() {
   useThemeEffect()
@@ -32,14 +28,7 @@ function App() {
           <Route path="quick-start" element={<QuickStart />} />
           <Route path="api/:uid?" element={<ApiDocs />} />
 
-          <Route
-            path="components"
-            element={
-              <Suspense fallback={<LoadingOverlay text={"Importing WASM runtime"} />}>
-                <ComponentsLayout />
-              </Suspense>
-            }
-          >
+          <Route path="components" element={<ComponentsLayout />}>
             <Route index element={<ComponentsOverview />} />
             <Route path=":name" element={<ComponentDetail />} />
           </Route>
