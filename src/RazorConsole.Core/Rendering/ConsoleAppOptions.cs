@@ -17,6 +17,9 @@ public sealed class ConsoleAppOptions
     /// Gets or sets whether the console should be re-rendered after resizing.
     /// Default value is false.
     /// </summary>
+    /// <remarks>
+    /// Not supported in WASM environment.
+    /// </remarks>
     public bool EnableTerminalResizing { get; set; } = false;
 
     public ConsoleLiveDisplayOptions ConsoleLiveDisplayOptions { get; } = ConsoleLiveDisplayOptions.Default;
