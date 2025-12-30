@@ -3,6 +3,8 @@
 using RazorConsole.Core.Controllers;
 using RazorConsole.Core.Rendering;
 
+namespace RazorConsole.Core;
+
 /// <summary>
 /// Options that control how console applications render output.
 /// </summary>
