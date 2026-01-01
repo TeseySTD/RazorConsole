@@ -128,18 +128,8 @@ public sealed class ConsoleLiveDisplayContext : IDisposable, IObserver<ConsoleRe
             DisposeAnimations();
         }
     }
-    private void HandleTerminalResize()
-    {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
-        lock (_sync)
-#endif
-        {
-            _currentView = null;
-        }
-        _renderer.HandleResize();
-    }
+
+    private void HandleTerminalResize() => _canvas.Refresh();
 
     public void Dispose()
     {

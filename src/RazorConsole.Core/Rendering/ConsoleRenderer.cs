@@ -502,16 +502,6 @@ internal sealed class ConsoleRenderer(
         }
     }
 
-    public void HandleResize()
-    {
-        if (_rootComponentId != -1)
-        {
-            _ = Dispatcher.InvokeAsync(() =>
-                RenderRootComponentAsync(_rootComponentId, ParameterView.Empty));
-        }
-    }
-
-
     private VNode? CreateRenderableRoot(VNode node)
     {
         var visitedComponents = new HashSet<int>();
