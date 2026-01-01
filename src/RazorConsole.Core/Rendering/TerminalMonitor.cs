@@ -14,7 +14,7 @@ internal sealed class TerminalMonitor : IDisposable
     private IDisposable? _posixRegistration;
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _debounceCts;
-    private bool _isStarted = false;
+    private bool _isStarted;
 #if NET9_0_OR_GREATER
     private readonly Lock _sync = new();
 #else
@@ -39,11 +39,7 @@ internal sealed class TerminalMonitor : IDisposable
 
     public void Start(CancellationToken cancellationToken)
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             if (_isStarted)
             {
@@ -74,11 +70,7 @@ internal sealed class TerminalMonitor : IDisposable
 
     private void RequestDebouncedResize()
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             _debounceCts?.Cancel();
             _debounceCts?.Dispose();
