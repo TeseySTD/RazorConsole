@@ -1,7 +1,7 @@
 ﻿@page "/zindex"
 @using System.Timers
 
-<Panel Border="BoxBorder.Double" Title="Layer Engine Demo" TitleColor="Color.Yellow" BorderColor="Color.Grey">
+<Panel Border="BoxBorder.Double" Title="Z-Index and absolute positioning" TitleColor="Color.Yellow" BorderColor="Color.Grey">
     <Rows>
         <Markup Content="Main flow text."/>
         <Newline/>
@@ -31,7 +31,7 @@
 
     int left = (screenW - modalW) / 2;
     int top = (screenH - modalH) / 2;
-    <div position="fixed" top="@top" left="@left" z-index="1000">
+    <div position="absolute" top="@top" left="@left" z-index="1000">
         <Panel Border="BoxBorder.Heavy" BorderColor="Color.DeepSkyBlue1" Title="DIALOG">
             <Rows>
                 <Markup Content="I am positioned exactly in the center"/>
@@ -44,7 +44,7 @@
     </div>
 }
 
-<div position="fixed" top="@_floatingTop" left="@_floatingLeft" z-index="@_firstModalZIndex">
+<div position="absolute" top="@_floatingTop" left="@_floatingLeft" z-index="@_firstModalZIndex">
     <Panel Border="BoxBorder.Rounded" BorderColor="Color.Red" Title="Layer A">
         <Rows>
             <Markup Content="Modal window A" Decoration="Decoration.Bold"/>
@@ -54,7 +54,7 @@
     </Panel>
 </div>
 
-<div position="fixed" top="5" left="40" z-index="@_secondModalZIndex">
+<div position="absolute" top="5" left="40" z-index="@_secondModalZIndex">
     <Panel Border="BoxBorder.Rounded" BorderColor="Color.Green" Title="Layer B">
         <Rows>
             <Markup Content="Modal window B" Decoration="Decoration.Bold"/>
@@ -65,7 +65,7 @@
 
 @if (_toasts.Any())
 {
-    <div position="fixed" top="1" right="2" z-index="2000">
+    <div position="absolute" top="1" right="2" z-index="2000">
         <Rows>
             @foreach (var toast in _toasts)
             {
@@ -77,7 +77,7 @@
     </div>
 }
 
-<div position="fixed" right="1" bottom="4" z-index="500">
+<div position="absolute" right="1" bottom="4" z-index="500">
     <Panel Border="BoxBorder.Rounded">
         <Columns>
             <Markup Content="STATUS: READY" Decoration="Decoration.Bold" Foreground="Color.Green"/>

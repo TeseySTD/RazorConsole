@@ -48,7 +48,7 @@ public sealed class TranslationContext
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Middleware component <see cref="FixedPositionMiddleware"/> can add <see cref="OverlayItem"/> to this collection during translation.
+    /// Middleware component <see cref="AbsolutePositionMiddleware"/> can add <see cref="OverlayItem"/> to this collection during translation.
     /// These items are collected and used by the rendering system to render these overlays.
     /// </para>
     /// <para>

@@ -18,15 +18,6 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
         var bgSegments = background.Render(options, maxWidth);
         var canvas = Segment.SplitLines(bgSegments);
 
-        int terminalHeight = AnsiConsole.Console.Profile.Height;
-        int viewHeight = Math.Max(canvas.Count, terminalHeight);
-
-        // Canvas in overlay case must have at least terminal height
-        while (canvas.Count < viewHeight)
-        {
-            canvas.Add(new SegmentLine());
-        }
-
         _overlayMapCache.Clear();
 
         foreach (var overlay in _sortedOverlays)
@@ -58,7 +49,7 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
             );
 
             int finalTop = overlay.Top ?? (overlay.Bottom.HasValue
-                ? Math.Max(0, viewHeight - overlay.Bottom.Value - lines.Count)
+                ? Math.Max(0, canvas.Count - overlay.Bottom.Value - lines.Count)
                 : 0);
 
             for (int i = 0; i < lines.Count; i++)
