@@ -9,13 +9,13 @@ using Spectre.Console.Rendering;
 
 namespace RazorConsole.Core.Rendering.Translation.Translators;
 
-public class FixedPositionMiddleware : ITranslationMiddleware
+public class AbsolutePositionMiddleware : ITranslationMiddleware
 {
     public IRenderable Translate(TranslationContext context, TranslationDelegate next, VNode node)
     {
         var position = VdomSpectreTranslator.GetAttribute(node, "position");
 
-        if (!string.Equals(position, "fixed", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(position, "absolute", StringComparison.OrdinalIgnoreCase))
         {
             return next(node);
         }
