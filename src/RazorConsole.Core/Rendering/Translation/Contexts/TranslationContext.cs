@@ -59,6 +59,9 @@ public sealed class TranslationContext
     /// </remarks>
     public List<OverlayItem> CollectedOverlays { get; } = [];
 
+    public int CumulativeTop { get; set; } = 0;
+    public int CumulativeLeft { get; set; } = 0;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="TranslationContext"/> class with the specified middleware components.
     /// </summary>

@@ -63,6 +63,26 @@
     </Panel>
 </div>
 
+<div position="absolute" top="20" left="40" z-index="1">
+    <Panel Border="BoxBorder.Rounded" BorderColor="Color.Green" Title="Layer C">
+        <Rows>
+            <Markup Content="Modal window C with Nested window E" Decoration="Decoration.Bold"/>
+            <Markup Content="Z-Index: 1"/>
+            <Markup Content="top=20 left=40"/>
+        </Rows>
+        <div position="absolute" top="2" left="20" z-index="2">
+            <Panel Border="BoxBorder.Rounded" BorderColor="Color.Green" Title="Layer E">
+                <Rows>
+                    <Markup Content="Modal window E that is nested in window C and relative to its position" Decoration="Decoration.Bold"/>
+                    <Markup Content="Z-Index: 2"/>
+                    <Markup Content="top=2 left=20"/>
+                </Rows>
+            </Panel>
+        </div>
+    </Panel>
+</div>
+
+
 @if (_toasts.Any())
 {
     <div position="absolute" top="1" right="2" z-index="2000">
