@@ -1,8 +1,8 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
+using System.Buffers;
 using Spectre.Console;
 using Spectre.Console.Rendering;
-using System.Buffers;
 
 namespace RazorConsole.Core.Renderables;
 
