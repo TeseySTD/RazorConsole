@@ -1,9 +1,7 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
 using RazorConsole.Core.Abstractions.Rendering;
-using RazorConsole.Core.Renderables;
 using RazorConsole.Core.Rendering.ComponentMarkup;
-using RazorConsole.Core.Rendering.Translation.Translators;
 using RazorConsole.Core.Vdom;
 
 using Spectre.Console.Rendering;
@@ -48,7 +46,7 @@ public sealed class TranslationContext
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Middleware component <see cref="AbsolutePositionMiddleware"/> can add <see cref="OverlayItem"/> to this collection during translation.
+    /// Middleware components can add <see cref="OverlayItem"/> to this collection during translation.
     /// These items are collected and used by the rendering system to render these overlays.
     /// </para>
     /// <para>
@@ -59,8 +57,8 @@ public sealed class TranslationContext
     /// </remarks>
     public List<OverlayItem> CollectedOverlays { get; } = [];
 
-    public int CumulativeTop { get; set; } = 0;
-    public int CumulativeLeft { get; set; } = 0;
+    public int CumulativeTop { get; set; }
+    public int CumulativeLeft { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TranslationContext"/> class with the specified middleware components.

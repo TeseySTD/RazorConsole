@@ -1,6 +1,7 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
 using System.Buffers;
+using RazorConsole.Core.Rendering;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
@@ -22,26 +23,19 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
 
         foreach (var overlay in _sortedOverlays)
         {
-            int finalLeft;
-            int widthToRender;
+            var (widthToRender, finalLeft) = overlay switch
+            {
+                // CSS-like stretching
+                { Left: { } l, Right: { } r } => (maxWidth - l - r, l),
+                { Right: { } r } => CalculateRightPosition(overlay, r, options, maxWidth),
+                _ => (maxWidth - (overlay.Left ?? 0), overlay.Left ?? 0)
+            };
 
-            if (overlay.Left.HasValue && overlay.Right.HasValue)
+            (int Width, int Left) CalculateRightPosition(OverlayItem item, int r, RenderOptions opt, int maxW)
             {
-                // CSS-like horizontal stretching
-                finalLeft = overlay.Left.Value;
-                widthToRender = maxWidth - overlay.Left.Value - overlay.Right.Value;
-            }
-            else if (overlay.Right.HasValue)
-            {
-                int constraint = Math.Max(0, maxWidth - overlay.Right.Value);
-                var measurement = overlay.Renderable.Measure(options, constraint);
-                widthToRender = measurement.Max;
-                finalLeft = maxWidth - overlay.Right.Value - widthToRender;
-            }
-            else
-            {
-                finalLeft = overlay.Left ?? 0;
-                widthToRender = maxWidth - finalLeft;
+                var constraint = Math.Max(0, maxW - r);
+                var width = item.Renderable.Measure(opt, constraint).Max;
+                return (width, maxW - r - width);
             }
 
             var lines = Segment.SplitLines(
@@ -77,11 +71,8 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
         {
             lineBuffer = cellPool.Rent(maxWidth);
 
-            foreach (var kvp in _overlayMapCache)
+            foreach (var (y, overlayPositions) in _overlayMapCache)
             {
-                int y = kvp.Key;
-                var overlayPositions = kvp.Value;
-
                 // If overlay is over the canvas
                 while (canvas.Count <= y)
                 {
@@ -128,7 +119,7 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
         }
     }
 
-    private static int ToBuffer(IEnumerable<Segment> segments, Cell[] buffer, int maxWidth)
+    private static int ToBuffer(IReadOnlyList<Segment> segments, Cell[] buffer, int maxWidth)
     {
         int cursor = 0;
         foreach (var segment in segments)
@@ -144,7 +135,7 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
         return cursor;
     }
 
-    private static int MergeToBuffer(IEnumerable<Segment> overlaySegments, Cell[] buffer, int left, int maxWidth)
+    private static int MergeToBuffer(IReadOnlyList<Segment> overlaySegments, Cell[] buffer, int left, int maxWidth)
     {
         int cursor = left;
         foreach (var segment in overlaySegments)
@@ -203,18 +194,5 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
 
     private record struct Cell(char Char, Style Style);
 
-    private readonly struct OverlayPosition(SegmentLine line, int left)
-    {
-        public readonly SegmentLine Line = line;
-        public readonly int Left = left;
-    }
+    private record struct OverlayPosition(SegmentLine Line, int Left);
 }
-
-public record OverlayItem(
-    IRenderable Renderable,
-    int? Top,
-    int? Left,
-    int? Right,
-    int? Bottom,
-    int ZIndex
-);
