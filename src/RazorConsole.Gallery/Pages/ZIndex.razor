@@ -1,48 +1,31 @@
 @page "/zindex"
 @using System.Timers
 
-<Panel Border="BoxBorder.Double" Title="Z-Index and absolute positioning" TitleColor="Color.Yellow" BorderColor="Color.Grey">
-    <Rows>
-        <Markup Content="Main flow text."/>
-        <Newline/>
-
-        <Columns>
+<Rows>
+    <Markup Content="Z-Index and absolute positioning"
+            Foreground="@Color.Grey70"/>
+    <Markup Content="Source Code: OverlayRenderable.cs" Foreground="@Color.DeepSkyBlue1"
+            Decoration="@Decoration.Underline"
+            link="@DocumentationUrl"/>
+    <Newline/>
+    <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
+        <SyntaxHighlighter Language="razor"
+                           Code="@ExampleCode"
+                           ShowLineNumbers="true"/>
+    </Panel>
+    <Panel Border="BoxBorder.Double" Title="Overlays operating menu:" TitleColor="Color.Orange1"
+           BorderColor="Color.Grey">
+        <Rows>
+            <Markup Content="Main flow text."/>
+            <Newline/>
             <Rows>
-                <Markup Content="Overlays operating menu:" Decoration="Decoration.Underline"/>
                 <TextButton Content="Swap Z-Indexes" OnClick="ChangeZIndexes"/>
-                <TextButton Content="@(_isCenteredVisible ? "Hide Center Modal" : "Show Center Modal")"
-                            OnClick="() => _isCenteredVisible = !_isCenteredVisible"/>
-            </Rows>
-            <Rows>
                 <TextButton Content="Send Notification" OnClick="AddToastWithTimer"/>
                 <TextButton Content="Move Floating Modal" OnClick="MoveModal"/>
             </Rows>
-        </Columns>
-    </Rows>
-</Panel>
-
-@if (_isCenteredVisible)
-{
-    var screenW = AnsiConsole.Console.Profile.Width;
-    var screenH = AnsiConsole.Console.Profile.Height;
-
-    int modalW = 30;
-    int modalH = 7;
-
-    int left = (screenW - modalW) / 2;
-    int top = (screenH - modalH) / 2;
-    <div position="absolute" top="@top" left="@left" z-index="1000">
-        <Panel Border="BoxBorder.Heavy" BorderColor="Color.DeepSkyBlue1" Title="DIALOG">
-            <Rows>
-                <Markup Content="I am positioned exactly in the center"/>
-                <Markup Content="using screen width."/>
-                <Newline/>
-                <TextButton Content="CLOSE" FocusedColor="Color.DeepSkyBlue1"
-                            OnClick="() => _isCenteredVisible = false"/>
-            </Rows>
-        </Panel>
-    </div>
-}
+        </Rows>
+    </Panel>
+</Rows>
 
 <div position="absolute" top="@_floatingTop" left="@_floatingLeft" z-index="@_firstModalZIndex">
     <Panel Border="BoxBorder.Rounded" BorderColor="Color.Red" Title="Layer A">
@@ -62,26 +45,6 @@
         </Rows>
     </Panel>
 </div>
-
-<div position="absolute" top="20" left="40" z-index="1">
-    <Panel Border="BoxBorder.Rounded" BorderColor="Color.Green" Title="Layer C">
-        <Rows>
-            <Markup Content="Modal window C with Nested window E" Decoration="Decoration.Bold"/>
-            <Markup Content="Z-Index: 1"/>
-            <Markup Content="top=20 left=40"/>
-        </Rows>
-        <div position="absolute" top="2" left="20" z-index="2">
-            <Panel Border="BoxBorder.Rounded" BorderColor="Color.Green" Title="Layer E">
-                <Rows>
-                    <Markup Content="Modal window E that is nested in window C and relative to its position" Decoration="Decoration.Bold"/>
-                    <Markup Content="Z-Index: 2"/>
-                    <Markup Content="top=2 left=20"/>
-                </Rows>
-            </Panel>
-        </div>
-    </Panel>
-</div>
-
 
 @if (_toasts.Any())
 {
@@ -111,14 +74,15 @@
 @code {
     private int _firstModalZIndex = 10;
     private int _secondModalZIndex = 20;
-    private bool _isCenteredVisible;
     private int _floatingTop = 2;
     private int _floatingLeft = 15;
     private string _lastAction = "None";
 
+    // ReSharper disable once NotAccessedPositionalProperty.Local
+    // Using for default ToString method implementation
     private sealed record ToastItem(string Message, DateTime Expiry);
 
-    private List<ToastItem> _toasts = new();
+    private readonly List<ToastItem> _toasts = new();
     private System.Timers.Timer? _cleanupTimer;
 
     private void ChangeZIndexes()
@@ -166,4 +130,46 @@
         }
     }
 
+    private static readonly string ExampleCode = @"
+<div position=""absolute"" top=""@_floatingTop"" left=""@_floatingLeft"" z-index=""@_firstModalZIndex"">
+    <Panel Border=""BoxBorder.Rounded"" BorderColor=""Color.Red"" Title=""Layer A"">
+        <Rows>
+            <Markup Content=""Modal window A"" Decoration=""Decoration.Bold""/>
+            <Markup Content=""@($""Z-Index: {_firstModalZIndex}"")""/>
+            <Markup Content=""I can be moved!""/>
+        </Rows>
+    </Panel>
+</div>
+<div position=""absolute"" top=""5"" left=""40"" z-index=""@_secondModalZIndex"">
+    <Panel Border=""BoxBorder.Rounded"" BorderColor=""Color.Green"" Title=""Layer B"">
+        <Rows>
+            <Markup Content=""Modal window B"" Decoration=""Decoration.Bold""/>
+            <Markup Content=""@($""Z-Index: {_secondModalZIndex}"")""/>
+        </Rows>
+    </Panel>
+</div>
+@if (_toasts.Any()) {
+    <div position=""absolute"" top=""1"" right=""2"" z-index=""2000"">
+        <Rows>
+            @foreach (var toast in _toasts)
+            {
+                <Panel Border=""BoxBorder.Rounded"" BorderColor=""Color.Blue"">
+                    <Markup Content=""@($""🔔 {toast}"")""/>
+                </Panel>
+            }
+        </Rows>
+    </div>
+}
+<div position=""absolute"" right=""1"" bottom=""4"" z-index=""500"">
+    <Panel Border=""BoxBorder.Rounded"">
+        <Columns>
+            <Markup Content=""STATUS: READY"" Decoration=""Decoration.Bold"" Foreground=""Color.Green""/>
+            <Markup Content=""@($""LOGS: {_lastAction} "")"" Decoration=""Decoration.Underline"" Foreground=""Color.Yellow""/>
+            <Markup Content=""@($""TIME: {DateTime.Now:HH:mm:ss} "")""/>
+        </Columns>
+    </Panel>
+</div>
+".Trim();
+
+    private const string DocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Renderables/OverlayRenderable.cs";
 }
