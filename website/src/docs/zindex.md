@@ -29,7 +29,8 @@ You can control the position of an absolute element using four attributes: `top`
 
 ### 2.1. Stretching
 
-If you provide both `left` and `right` (or `top` and `bottom` for height-aware components), the element will **stretch** to fill the specified range.
+If you provide both `left` and `right` , the element will **stretch** to fill the specified range.
+`top` and `bottom` vertical stretching doesn't work, because of the current render system, that does not allow to set height directly.
 
 ```razor
 <div position="absolute" left="0" right="0" top="5">
@@ -37,6 +38,7 @@ If you provide both `left` and `right` (or `top` and `bottom` for height-aware c
 </div>
 
 ```
+> [!NOTE] Horizontal stretch will work correctly only with elements that allows to be expanded (like `<Panel Expand="true">`).
 
 ---
 
