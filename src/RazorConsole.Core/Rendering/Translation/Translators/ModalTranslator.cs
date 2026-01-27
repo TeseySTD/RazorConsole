@@ -20,13 +20,8 @@ public class ModalTranslator : ITranslationMiddleware
         var zindex = VdomSpectreTranslator.TryGetIntAttribute(node, "zindex", 9999);
 
         // Wrap in div because modal tag is not translated in middleware
-        var nodeToRender = VNode.CreateElement("div");
-        foreach (var child in node.Children)
-        {
-            nodeToRender.AddChild(child);
-        }
-
-        var renderable = next(nodeToRender);
+        node.SetTagName("div");
+        var renderable = next(node);
 
         context.CollectedOverlays.Add(new OverlayItem(
             renderable,
