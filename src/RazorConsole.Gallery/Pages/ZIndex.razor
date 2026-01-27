@@ -1,5 +1,6 @@
 @page "/zindex"
 @using System.Timers
+@using RazorConsole.Core.Components
 
 <Rows>
     <Markup Content="Z-Index and absolute positioning"
@@ -19,13 +20,23 @@
             <Markup Content="Main flow text."/>
             <Newline/>
             <Rows>
-                <TextButton Content="Swap Z-Indexes" OnClick="ChangeZIndexes"/>
-                <TextButton Content="Send Notification" OnClick="AddToastWithTimer"/>
                 <TextButton Content="Move Floating Modal" OnClick="MoveModal"/>
+                <TextButton Content="Swap Z-Indexes" OnClick="ChangeZIndexes"/>
+                <TextButton Content="Open/Close centered modal window" OnClick="ToggleModal"/>
+                <TextButton Content="Send Notification" OnClick="AddToastWithTimer"/>
             </Rows>
         </Rows>
     </Panel>
 </Rows>
+
+<ModalWindow IsOpened="_isModalOpened">
+    <Panel Border="BoxBorder.Double" BorderColor="Color.Aqua" Title="Centered modal window">
+        <Rows>
+            <Markup Content="Z-Index is 9999 by default." Decoration="Decoration.Bold"/>
+            <Markup Content="Some text to make it bigger."/>
+        </Rows>
+    </Panel>
+</ModalWindow>
 
 <div position="absolute" top="@_floatingTop" left="@_floatingLeft" z-index="@_firstModalZIndex">
     <Panel Border="BoxBorder.Rounded" BorderColor="Color.Red" Title="Layer A">
@@ -97,6 +108,7 @@
     private int _floatingTop = 2;
     private int _floatingLeft = 15;
     private string _lastAction = "None";
+    private bool _isModalOpened = false;
 
     // ReSharper disable once NotAccessedPositionalProperty.Local
     // Using for default ToString method implementation
@@ -150,7 +162,17 @@
         }
     }
 
+    private void ToggleModal() => _isModalOpened = !_isModalOpened;
+
     private static readonly string ExampleCode = @"
+<ModalWindow IsOpened=""_isModalOpened"">
+    <Panel Border=""BoxBorder.Double"" BorderColor=""Color.Aqua"" Title=""Centered modal window"">
+        <Rows>
+            <Markup Content=""Z-Index is 9999 by default."" Decoration=""Decoration.Bold""/>
+            <Markup Content=""Some text to make it bigger.""/>
+        </Rows>
+    </Panel>
+</ModalWindow>
 <div position=""absolute"" top=""@_floatingTop"" left=""@_floatingLeft"" z-index=""@_firstModalZIndex"">
     <Panel Border=""BoxBorder.Rounded"" BorderColor=""Color.Red"" Title=""Layer A"">
         <Rows>
