@@ -322,34 +322,4 @@ internal class RazorConsoleRenderer<[DynamicallyAccessedMembers(DynamicallyAcces
         // Trigger a refresh to re-render with the new dimensions
         _canvas.Refresh();
     }
-
-    public void OnCompleted()
-    {
-        return;
-    }
-    public void OnError(Exception error)
-    {
-        throw error;
-    }
-
-    public void OnNext(ConsoleRenderer.RenderSnapshot value)
-    {
-        try
-        {
-            if (value.Renderable is null)
-            {
-                return;
-            }
-
-            var output = _sw.ToString();
-            SnapshotRendered?.Invoke(output);
-            XTermInterop.WriteToTerminal(_componentId, output);
-            _sw.GetStringBuilder().Clear();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error rendering component: {ex.Message} {ex.StackTrace}");
-            throw;
-        }
-    }
 }
