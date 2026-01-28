@@ -53,7 +53,7 @@ public sealed class OverlayRenderable(IRenderable background, IEnumerable<Overla
             );
             int finalTop = overlay switch
             {
-                { IsCentered: true } => (canvas.Count - lines.Count) / 2,
+                { IsCentered: true } => Math.Max(0, (canvas.Count - lines.Count) / 2),
                 { Top: { } t } => t,
                 { Bottom: { } b } => Math.Max(0, canvas.Count - b - lines.Count),
                 _ => 0
