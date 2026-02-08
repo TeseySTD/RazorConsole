@@ -3,6 +3,7 @@
 using Spectre.Console;
 using Spectre.Console.Rendering;
 using static RazorConsole.Core.Utilities.AnsiSequences;
+
 namespace RazorConsole.Core.Renderables;
 
 internal class DiffRenderable : Renderable
@@ -55,6 +56,7 @@ internal class DiffRenderable : Renderable
             {
                 DidOverflow = true;
             }
+
             var previousLines = _previousLines ?? EmptyLines;
             var totalLines = segmentLines.Count;
             var renderFromLine = 0;
@@ -129,6 +131,7 @@ internal class DiffRenderable : Renderable
                     yield return Segment.Control(EL(2)); // Clean line
                     yield return Segment.Control(NEL()); // Go to next line
                 }
+
                 yield return Segment.Control(CUU(remaining));
             }
 
@@ -147,14 +150,7 @@ internal class DiffRenderable : Renderable
             return true;
         }
 
-        try
-        {
-            return linesToMoveUp > Console.CursorTop;
-        }
-        catch
-        {
-            return true;
-        }
+        return linesToMoveUp > Console.CursorTop;
     }
 
     private static bool LinesAreEqual(SegmentLine line1, SegmentLine line2)
@@ -181,7 +177,7 @@ internal class DiffRenderable : Renderable
     private static bool SegmentsAreEqual(Segment segment1, Segment segment2)
     {
         return string.Equals(segment1.Text, segment2.Text, StringComparison.Ordinal)
-            && Equals(segment1.Style, segment2.Style);
+               && Equals(segment1.Style, segment2.Style);
     }
 
     internal static IEnumerable<Segment> RenderLineDiff(SegmentLine line, SegmentLine previousLine)
