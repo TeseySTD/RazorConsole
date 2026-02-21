@@ -42,20 +42,23 @@ internal sealed class ScrollableRenderable : IRenderable
 
     public Measurement Measure(RenderOptions options, int maxWidth)
     {
+        var hasScrollbar = _scrollbarSettings != null;
+
         if (_isEmbeddedScrollbarMode)
         {
-            var contentMeasure = _compositeContent.Measure(options, maxWidth - 1); // For scrollbar
+            var reserve = hasScrollbar ? 1 : 0; // For scrollbar
+            var contentMeasure = _compositeContent.Measure(options, maxWidth - reserve);
 
-            return new Measurement(contentMeasure.Min + 1, contentMeasure.Max + 1);
+            return new Measurement(contentMeasure.Min + reserve, contentMeasure.Max + reserve);
         }
         else
         {
-            var contentMeasure = _compositeContent.Measure(options, maxWidth - 2); // For scrollbar and space before
+            var reserve = hasScrollbar ? 2 : 0; // For scrollbar and space before
+            var contentMeasure = _compositeContent.Measure(options, maxWidth - reserve);
 
-            return new Measurement(contentMeasure.Min + 2, contentMeasure.Max + 2);
+            return new Measurement(contentMeasure.Min + reserve, contentMeasure.Max + reserve);
         }
     }
-
 
     public IEnumerable<Segment> Render(RenderOptions options, int maxWidth)
     {
@@ -110,7 +113,8 @@ internal sealed class ScrollableRenderable : IRenderable
 
     private IEnumerable<Segment> RenderPanelWithScrollBar(Panel originalPanel, RenderOptions options, int maxWidth)
     {
-        var tempLines = GetRenderedLines(originalPanel, options, maxWidth - 1);
+        var reserve = _scrollbarSettings != null ? 1 : 0;
+        var tempLines = GetRenderedLines(originalPanel, options, maxWidth - reserve);
         if (tempLines.Count == 0)
         {
             yield break;
@@ -122,16 +126,28 @@ internal sealed class ScrollableRenderable : IRenderable
         var dataEnd = hasBorder ? tempLines.Count - 1 : tempLines.Count;
         var totalContentLines = dataEnd - dataStart;
         var actualOffset = _offset;
+
         if (_cropLines && totalContentLines > 0)
         {
             actualOffset = Math.Clamp(_offset, 0, Math.Max(0, totalContentLines - _pageSize));
 
             var headerLines = tempLines.Take(dataStart).ToList();
             var footerLines = tempLines.Skip(dataEnd).ToList();
-            var visibleContent = tempLines.Skip(dataStart + actualOffset).Take(_pageSize).ToList();
+
+            var linesToTake = Math.Min(_pageSize, totalContentLines - actualOffset);
+            var visibleContent = tempLines.Skip(dataStart + actualOffset).Take(linesToTake).ToList();
 
             tempLines = headerLines.Concat(visibleContent).Concat(footerLines).ToList();
             dataEnd = dataStart + visibleContent.Count;
+        }
+
+        if (_scrollbarSettings == null)
+        {
+            foreach (var segment in RenderRawLines(tempLines))
+            {
+                yield return segment;
+            }
+            yield break;
         }
 
         var totalItemsForScrollbar = _cropLines ? totalContentLines : _totalItems;
@@ -154,7 +170,6 @@ internal sealed class ScrollableRenderable : IRenderable
         {
             var lineSegments = tempLines[i].ToList();
 
-            // Insert bottom border part to ensure proper spacing for the scrollbar
             var borderIndex = lineSegments.Count - 1;
             if (borderIndex >= 0)
             {
@@ -202,17 +217,28 @@ internal sealed class ScrollableRenderable : IRenderable
         var (dataStart, dataEnd) = FindTableContentRange(tempLines, originalTable);
         var totalContentLines = dataEnd - dataStart;
         var actualOffset = _offset;
-        // Check if there are any items
+
         if (_cropLines && totalContentLines > 0)
         {
             actualOffset = Math.Clamp(_offset, 0, Math.Max(0, totalContentLines - _pageSize));
 
             var headerLines = tempLines.Take(dataStart).ToList();
             var footerLines = tempLines.Skip(dataEnd).ToList();
-            var visibleContent = tempLines.Skip(dataStart + actualOffset).Take(_pageSize).ToList();
+
+            var linesToTake = Math.Min(_pageSize, totalContentLines - actualOffset);
+            var visibleContent = tempLines.Skip(dataStart + actualOffset).Take(linesToTake).ToList();
 
             tempLines = headerLines.Concat(visibleContent).Concat(footerLines).ToList();
             dataEnd = dataStart + visibleContent.Count;
+        }
+
+        if (_scrollbarSettings == null)
+        {
+            foreach (var segment in RenderRawLines(tempLines))
+            {
+                yield return segment;
+            }
+            yield break;
         }
 
         var totalItemsForScrollbar = _cropLines ? totalContentLines : _totalItems;
@@ -266,7 +292,8 @@ internal sealed class ScrollableRenderable : IRenderable
 
     private IEnumerable<Segment> RenderSideScrollBar(RenderOptions options, int maxWidth)
     {
-        var tempLines = GetRenderedLines(_compositeContent, options, maxWidth - 2); // 2 because reserving place for bar and space before
+        var reserve = _scrollbarSettings != null ? 2 : 0;
+        var tempLines = GetRenderedLines(_compositeContent, options, maxWidth - reserve);
         if (tempLines.Count == 0)
         {
             yield break;
@@ -278,7 +305,16 @@ internal sealed class ScrollableRenderable : IRenderable
         if (_cropLines)
         {
             actualOffset = Math.Clamp(_offset, 0, Math.Max(0, totalContentLines - _pageSize));
-            tempLines = tempLines.Skip(_offset).Take(_pageSize).ToList();
+            tempLines = tempLines.Skip(actualOffset).Take(_pageSize).ToList();
+        }
+
+        if (_scrollbarSettings == null)
+        {
+            foreach (var segment in RenderRawLines(tempLines))
+            {
+                yield return segment;
+            }
+            yield break;
         }
 
         var totalItemsForScrollbar = _cropLines ? totalContentLines : _totalItems;
@@ -422,7 +458,6 @@ internal sealed class ScrollableRenderable : IRenderable
                 }
             }
         }
-
 
         var bottom = table.Border != TableBorder.None ? lines.Count - 1 : lines.Count;
         return top >= bottom ? (0, 0) : (top, bottom);
