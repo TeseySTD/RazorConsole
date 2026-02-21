@@ -1,5 +1,6 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components.Web;
 using RazorConsole.Core.Controllers;
 using RazorConsole.Core.Rendering;
@@ -20,6 +21,9 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 #endif
     private List<FocusTarget> _focusTargets = new();
     private int _currentIndex = -1;
+    private string? _pendingFocusKey;
+    private bool _pendingFocusNext;
+    private bool _pendingFocusPrevious;
     private ConsoleLiveDisplayContext? _context;
     private CancellationTokenSource? _sessionCts;
 
@@ -50,11 +54,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
     {
         get
         {
-#if NET9_0_OR_GREATER
-            using (_sync.EnterScope())
-#else
             lock (_sync)
-#endif
             {
                 return _focusTargets.Count > 0;
             }
@@ -76,11 +76,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
     /// <returns><see langword="true"/> when a focus target is active; otherwise <see langword="false"/>.</returns>
     internal bool TryGetFocusedTarget(out FocusTarget? snapshot)
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             if (_currentIndex < 0 || _currentIndex >= _focusTargets.Count)
             {
@@ -100,7 +96,8 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
     /// <param name="initialView">The initial view rendered to the console.</param>
     /// <param name="shutdownToken">Token that signals when the session should be cancelled.</param>
     /// <returns>A disposable scope that tears down focus tracking when disposed.</returns>
-    public FocusSession BeginSession(ConsoleLiveDisplayContext context, ConsoleViewResult initialView, CancellationToken shutdownToken)
+    public FocusSession BeginSession(ConsoleLiveDisplayContext context, ConsoleViewResult initialView,
+        CancellationToken shutdownToken)
     {
         if (context is null)
         {
@@ -116,11 +113,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
         FocusTarget? initialFocus = null;
 
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             ResetState_NoLock();
 
@@ -139,7 +132,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         }
 
         var initializationTask = initialFocus is not null
-            ? TriggerFocusChangedAsync(null, initialFocus!, linkedCts.Token)
+            ? TriggerFocusChangedAsync(null, initialFocus, linkedCts.Token)
             : Task.CompletedTask;
 
         return new FocusSession(this, context, linkedCts, initializationTask);
@@ -157,7 +150,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
             return false;
         }
 
-        await TriggerFocusChangedAsync(previousTarget, nextTarget!, token).ConfigureAwait(false);
+        await TriggerFocusChangedAsync(previousTarget, nextTarget, token).ConfigureAwait(false);
         return true;
     }
 
@@ -173,20 +166,17 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
             return false;
         }
 
-        await TriggerFocusChangedAsync(previousTarget, nextTarget!, token).ConfigureAwait(false);
+        await TriggerFocusChangedAsync(previousTarget, nextTarget, token).ConfigureAwait(false);
         return true;
     }
 
-    private bool TryMoveFocus(int direction, out FocusTarget? previousTarget, out FocusTarget? nextTarget)
+    private bool TryMoveFocus(int direction, out FocusTarget? previousTarget,
+        [NotNullWhen(true)] out FocusTarget? nextTarget)
     {
         previousTarget = null;
         nextTarget = null;
 
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             if (_focusTargets.Count == 0)
             {
@@ -231,11 +221,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         FocusTarget? previousTarget = null;
         FocusTarget? target;
 
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             if (_focusTargets.Count == 0)
             {
@@ -263,17 +249,43 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
             target = _focusTargets[index];
         }
 
-        await TriggerFocusChangedAsync(previousTarget, target!, token).ConfigureAwait(false);
+        await TriggerFocusChangedAsync(previousTarget, target, token).ConfigureAwait(false);
         return true;
+    }
+
+    /// <summary>
+    /// Attempts to focus the target that matches the supplied key after rendering.
+    /// </summary>
+    /// <param name="key">Focus key to activate.</param>
+    public void FocusAfterRender(string key)
+    {
+        _pendingFocusKey = key;
+        _pendingFocusNext = false;
+    }
+
+    /// <summary>
+    /// Moves focus to the next focusable target in traversal order after rendering.
+    /// </summary>
+    public void FocusNextAfterRender()
+    {
+        _pendingFocusNext = true;
+        _pendingFocusPrevious = false;
+        _pendingFocusKey = null;
+    }
+
+    /// <summary>
+    /// Moves focus to the previous focusable target in traversal order after rendering.
+    /// </summary>
+    public void FocusPreviousAfterRender()
+    {
+        _pendingFocusPrevious = true;
+        _pendingFocusNext = false;
+        _pendingFocusKey = null;
     }
 
     internal void EndSession(ConsoleLiveDisplayContext context)
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             if (!ReferenceEquals(_context, context))
             {
@@ -284,7 +296,8 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         }
     }
 
-    private async Task TriggerFocusChangedAsync(FocusTarget? previousTarget, FocusTarget target, CancellationToken token)
+    private async Task TriggerFocusChangedAsync(FocusTarget? previousTarget, FocusTarget target,
+        CancellationToken token)
     {
         if (token.IsCancellationRequested)
         {
@@ -296,7 +309,8 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         await DispatchFocusEventsAsync(previousTarget, target, token).ConfigureAwait(false);
     }
 
-    private async Task DispatchFocusEventsAsync(FocusTarget? previousTarget, FocusTarget target, CancellationToken token)
+    private async Task DispatchFocusEventsAsync(FocusTarget? previousTarget, FocusTarget target,
+        CancellationToken token)
     {
         var dispatcher = _eventDispatcher;
         if (dispatcher is null)
@@ -313,7 +327,8 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         {
             try
             {
-                await dispatcher.DispatchAsync(focusOutEvent.HandlerId, new FocusEventArgs { Type = "focusout" }, token).ConfigureAwait(false);
+                await dispatcher.DispatchAsync(focusOutEvent.HandlerId, new FocusEventArgs { Type = "focusout" }, token)
+                    .ConfigureAwait(false);
             }
             catch (ArgumentException ex) when (ex.ParamName == "eventHandlerId")
             {
@@ -324,12 +339,14 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
         if (target.Events.TryGetEvent("onfocusin", out var focusInEvent))
         {
-            await dispatcher.DispatchAsync(focusInEvent.HandlerId, new FocusEventArgs { Type = "focusin" }, token).ConfigureAwait(false);
+            await dispatcher.DispatchAsync(focusInEvent.HandlerId, new FocusEventArgs { Type = "focusin" }, token)
+                .ConfigureAwait(false);
         }
 
         if (target.Events.TryGetEvent("onfocus", out var focusEvent))
         {
-            await dispatcher.DispatchAsync(focusEvent.HandlerId, new FocusEventArgs { Type = "focus" }, token).ConfigureAwait(false);
+            await dispatcher.DispatchAsync(focusEvent.HandlerId, new FocusEventArgs { Type = "focus" }, token)
+                .ConfigureAwait(false);
         }
     }
 
@@ -344,11 +361,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
     private FocusTarget? UpdateFocusTargets(ConsoleRenderer.RenderSnapshot view)
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             return UpdateFocusTargets_NoLock(view);
         }
@@ -419,8 +432,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
     {
         var targets = new List<FocusTarget>();
         var path = new List<int> { 0 };
-        var sequence = 0;
-        CollectRecursive(root, path, targets, ref sequence);
+        CollectRecursive(root, path, targets);
 
         // Sort by focus order if specified, maintaining DOM order for elements with same/no order
         targets = targets
@@ -441,7 +453,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         return targets;
     }
 
-    private static void CollectRecursive(VNode node, List<int> path, List<FocusTarget> targets, ref int sequence)
+    private static void CollectRecursive(VNode node, List<int> path, List<FocusTarget> targets)
     {
         if (node.Kind == VNodeKind.Element && IsFocusable(node))
         {
@@ -452,7 +464,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         for (var i = 0; i < children.Count; i++)
         {
             path.Add(i);
-            CollectRecursive(children[i], path, targets, ref sequence);
+            CollectRecursive(children[i], path, targets);
             path.RemoveAt(path.Count - 1);
         }
     }
@@ -464,7 +476,8 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
             return false;
         }
 
-        if (!element.Attributes.TryGetValue("data-focusable", out var focusableValue) || string.IsNullOrWhiteSpace(focusableValue))
+        if (!element.Attributes.TryGetValue("data-focusable", out var focusableValue) ||
+            string.IsNullOrWhiteSpace(focusableValue))
         {
             return element.Events.Count > 0;
         }
@@ -479,8 +492,24 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
     private static string ResolveKey(VNode element, IReadOnlyList<int> path)
     {
-        return element.Key ?? string.Join('.', path);
+        if (element.Key is not null)
+        {
+            return element.Key;
+        }
+
+        if (element.Attributes.TryGetValue("id", out var id) && !string.IsNullOrWhiteSpace(id))
+        {
+            return id;
+        }
+
+        if (element.Attributes.TryGetValue("data-focus-key", out var focusKey) && !string.IsNullOrWhiteSpace(focusKey))
+        {
+            return focusKey;
+        }
+
+        return string.Join('.', path);
     }
+
 
     public void OnCompleted()
     {
@@ -492,11 +521,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
     void IObserver<ConsoleRenderer.RenderSnapshot>.OnNext(ConsoleRenderer.RenderSnapshot value)
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             FocusTarget? previousFocusTarget = _currentIndex >= 0 ? _focusTargets[_currentIndex] : null;
 
@@ -505,13 +530,54 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
                 return;
             }
 
+            if (_pendingFocusKey != null)
+            {
+                var targetIndex = _focusTargets.FindIndex(t => t.Key == _pendingFocusKey);
+                _pendingFocusKey = null;
+
+                if (targetIndex >= 0)
+                {
+                    _currentIndex = targetIndex;
+                    CurrentFocusKey = _focusTargets[targetIndex].Key;
+                    TriggerFocusChangedAsync(previousFocusTarget, _focusTargets[targetIndex],
+                        _sessionCts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+                    return;
+                }
+            }
+
+            if (_pendingFocusNext)
+            {
+                _pendingFocusNext = false;
+
+                if (TryMoveFocus(+1, out var prevTarget, out var nextTarget))
+                {
+                    TriggerFocusChangedAsync(prevTarget ?? previousFocusTarget, nextTarget,
+                        _sessionCts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+                    return;
+                }
+            }
+            else if (_pendingFocusPrevious)
+            {
+                _pendingFocusPrevious = false;
+
+                if (TryMoveFocus(-1, out var prevTarget, out var nextTarget))
+                {
+                    TriggerFocusChangedAsync(prevTarget, nextTarget, _sessionCts?.Token ?? CancellationToken.None)
+                        .ConfigureAwait(false);
+
+                    return;
+                }
+            }
+
             if (previousFocusTarget?.Key != newFocus.Key)
             {
-                TriggerFocusChangedAsync(previousFocusTarget, newFocus, _sessionCts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+                TriggerFocusChangedAsync(previousFocusTarget, newFocus, _sessionCts?.Token ?? CancellationToken.None)
+                    .ConfigureAwait(false);
             }
             else
             {
-                TriggerFocusChangedAsync(null, newFocus, _sessionCts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+                TriggerFocusChangedAsync(null, newFocus, _sessionCts?.Token ?? CancellationToken.None)
+                    .ConfigureAwait(false);
             }
         }
     }
@@ -548,7 +614,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
             }
 
             return _vnode == other._vnode
-                && Key == other.Key;
+                   && Key == other.Key;
         }
 
         public override bool Equals(object? obj)
@@ -593,12 +659,13 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         private readonly Task _initializationTask;
         private bool _disposed;
 
-        internal FocusSession(FocusManager manager, ConsoleLiveDisplayContext context, CancellationTokenSource cts, Task initializationTask)
+        internal FocusSession(FocusManager manager, ConsoleLiveDisplayContext context, CancellationTokenSource cts,
+            Task initializationTask)
         {
             _manager = manager;
             _context = context;
             _cts = cts;
-            _initializationTask = initializationTask ?? Task.CompletedTask;
+            _initializationTask = initializationTask;
         }
 
         /// <summary>
