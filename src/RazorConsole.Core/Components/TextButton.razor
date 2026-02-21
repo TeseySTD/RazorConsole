@@ -5,12 +5,18 @@
 <div @onfocus="OnFocus" @onfocusout="OnFocusOut" @onclick="OnClick"
      data-focusable="true"
      data-focus-order="@FocusOrderAttribute"
-     @key="@_generatedFocusKey"
-     data-focus-key="@_generatedFocusKey">
+     @attributes="AdditionalAttributes">
+
     <Markup Content="@Content" Background="@(_isFocused ? FocusedColor : BackgroundColor)"/>
 </div>
 
 @code {
+
+    /// <summary>
+    /// Additional attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object?>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Clickable button with text that changes appearance when focused.
@@ -20,7 +26,6 @@
     /// </remarks>
     private bool _isFocused = false;
 
-    private readonly string _generatedFocusKey = Guid.NewGuid().ToString("N");
 
     /// <summary>
     /// Background color when focused. Default is <see cref="Color.DeepSkyBlue1"/>.
@@ -67,4 +72,5 @@
         _isFocused = false;
         StateHasChanged();
     }
+
 }
