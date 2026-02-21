@@ -91,7 +91,7 @@ public sealed class ScrollableTranslatorTests
         var result = _translator.Translate(_context, _next, node);
 
         // Assert
-        result.ShouldBeOfType<ScrollableWithBarRenderable>();
+        result.ShouldBeOfType<ScrollableRenderable>();
         _next.DidNotReceive().Invoke(Arg.Any<VNode>());
     }
 

@@ -95,6 +95,7 @@ public static class RazorConsoleServiceCollectionExtensions
         services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.PadderElementTranslator>();
         services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.AlignElementTranslator>();
         services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.ScrollableTranslator>();
+        services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.ViewHeightScrollableTranslator>();
 
         // Special elements (must be before generic HTML elements)
         services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.FigletElementTranslator>();

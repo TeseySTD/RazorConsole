@@ -1,12 +1,13 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
+using RazorConsole.Core.Rendering;
 using RazorConsole.Core.Rendering.Renderables;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
 namespace RazorConsole.Tests.Renderables;
 
-public class ScrollableWithBarRenderableTests
+public class ScrollableRenderableTests
 {
     private static RenderOptions CreateTestRenderOptions(int width = 80)
     {
@@ -24,12 +25,13 @@ public class ScrollableWithBarRenderableTests
     {
         // Arrange: Single Panel + Enabled -> Embedded Mode
         var panel = new Panel("Content");
-        var renderable = new ScrollableWithBarRenderable(
-            new[] { panel },
+        var renderable = new ScrollableRenderable(
+            [panel],
             totalItems: 10,
             offset: 0,
             pageSize: 5,
-            enableEmbeddedScrollbar: true);
+            enableEmbeddedScrollbar: true,
+            new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();
 
@@ -46,12 +48,13 @@ public class ScrollableWithBarRenderableTests
     {
         // Arrange: Markup (not Panel/Table) -> Side Mode
         var markup = new Markup("Content");
-        var renderable = new ScrollableWithBarRenderable(
-            new[] { markup },
+        var renderable = new ScrollableRenderable(
+            [markup],
             totalItems: 10,
             offset: 0,
             pageSize: 5,
-            enableEmbeddedScrollbar: true);
+            enableEmbeddedScrollbar: true,
+            new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();
 
@@ -67,12 +70,13 @@ public class ScrollableWithBarRenderableTests
     {
         // Arrange
         var panel = new Panel("Content") { Border = BoxBorder.Rounded };
-        var renderable = new ScrollableWithBarRenderable(
-            new[] { panel },
+        var renderable = new ScrollableRenderable(
+            [panel],
             totalItems: 10,
             offset: 0,
             pageSize: 5,
-            enableEmbeddedScrollbar: true);
+            enableEmbeddedScrollbar: true,
+            new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();
 
@@ -91,12 +95,13 @@ public class ScrollableWithBarRenderableTests
         table.AddColumn("Col");
         table.AddRow("Val");
 
-        var renderable = new ScrollableWithBarRenderable(
-            new[] { table },
+        var renderable = new ScrollableRenderable(
+            [table],
             totalItems: 10,
             offset: 0,
             pageSize: 5,
-            enableEmbeddedScrollbar: true);
+            enableEmbeddedScrollbar: true,
+            new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();
 
@@ -112,12 +117,13 @@ public class ScrollableWithBarRenderableTests
     {
         // Arrange
         var markup = new Markup("Content");
-        var renderable = new ScrollableWithBarRenderable(
-            new[] { markup },
+        var renderable = new ScrollableRenderable(
+            [markup],
             totalItems: 10,
             offset: 0,
             pageSize: 5,
-            enableEmbeddedScrollbar: false); // Explicit side mode
+            enableEmbeddedScrollbar: false,
+            new ScrollbarSettings()); // Explicit side mode
 
         var options = CreateTestRenderOptions();
 
@@ -133,12 +139,13 @@ public class ScrollableWithBarRenderableTests
     {
         // Arrange
         var panel = new Panel("Empty");
-        var renderable = new ScrollableWithBarRenderable(
-            new[] { panel },
+        var renderable = new ScrollableRenderable(
+            [panel],
             totalItems: 0,
             offset: 0,
             pageSize: 5,
-            enableEmbeddedScrollbar: true);
+            enableEmbeddedScrollbar: true,
+            new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();
 

@@ -1,8 +1,9 @@
 @page "/scrollable"
 
 <Rows>
-    <Markup Content="Scrollable component that adds ability to scroll through items and render limited count. Has scrollbar support using special component. Also, scrollbar has ability to be embedded in table and panel/border components."
-            Foreground="@Color.Grey70"/>
+    <Markup
+        Content="Scrollable component that adds ability to scroll through items and render limited count. Has scrollbar support using special component. Also, scrollbar has ability to be embedded in table and panel/border components."
+        Foreground="@Color.Grey70"/>
     <Markup Content="Source Code: Scrollable.razor"
             Foreground="@Color.DeepSkyBlue1" Decoration="@Decoration.Underline"
             link="@ScrollableDocumentationUrl"/>
@@ -12,11 +13,14 @@
     <Newline/>
 
     <Rows>
-        <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
-            <SyntaxHighlighter Language="razor"
-                               Code="@_scrollableMarkup"
-                               ShowLineNumbers="true"/>
-        </Panel>
+        <ViewHeightScrollable Scrollbar="new ()" LinesToRender="15">
+            <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
+                <SyntaxHighlighter Language="razor"
+                                   Code="@_scrollableMarkup"
+                                   ShowLineNumbers="true"/>
+            </Panel>
+        </ViewHeightScrollable>
+
         <Rows>
             <Panel Title="Embedded scrollbar" Border="BoxBorder.Rounded" Expand>
                 <Scrollable Scrollbar="new()" Items="@AlphabetData" PageSize="3">
@@ -69,6 +73,15 @@
                     }
                 </Scrollable>
             </Panel>
+
+            <Panel Title="View Height scrollable">
+                <ViewHeightScrollable Scrollbar="new()" LinesToRender="3">
+                    <Panel Border="BoxBorder.Rounded" Title="Large text" Expand>
+                        <Markup
+                            Content="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."/>
+                    </Panel>
+                </ViewHeightScrollable>
+            </Panel>
         </Rows>
     </Rows>
 </Rows>
@@ -99,6 +112,7 @@
             (15, "O", Color.SkyBlue1)
         ];
     }
+
     private readonly string _scrollableMarkup = @"
 <Panel Title=""Embedded scrollbar"" Border=""BoxBorder.Rounded"" Expand>
     <Scrollable Items=""@AlphabetData"" PageSize=""3"">
