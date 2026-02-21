@@ -115,8 +115,32 @@ Focus a specific element by its key:
 @using RazorConsole.Core.Focus
 @inject FocusManager FocusManager
 
-<TextInput @key="username-input" Value="@username" />
-<TextInput @key="password-input" Value="@password" />
+<div @key="first-el">First</div>
+<div @key="second-el">Second</div>
+
+<TextButton Content="Focus Second Div"
+            OnClick="FocusSecond"/>
+
+@code {
+
+    private async Task FocusSecond()
+    {
+        await FocusManager.FocusAsync("second-el");
+    }
+}
+```
+
+> [!WARNING]
+> Directive `@key` works only on **elements** (like `div`, `p`, `ol` etc.) not on **components**
+
+In components (also in elements), focus key can be set using `data-focus-key` or `id` attributes.
+
+```razor
+@using RazorConsole.Core.Focus
+@inject FocusManager FocusManager
+
+<TextInput data-focus-key="username-input" Value="@username" />
+<TextInput id="password-input" Value="@password" />
 
 <TextButton Content="Focus Username"
             OnClick="FocusUsername" />
@@ -161,6 +185,54 @@ Move focus programmatically:
     {
         await FocusManager.FocusPreviousAsync();
     }
+}
+```
+
+#### Focus after render
+All methods above has its _AfterRender_ overload, that enables focus after render appears.
+It is useful when element, that has to be focused not rendered yet at the focus time.
+
+```razor
+@using RazorConsole.Core.Focus
+@inject FocusManager FocusManager
+
+<Rows>
+    @* First level of menu *@
+    <Select TItem="string"
+            Options="@_mainCategories"
+            ValueChanged="OnMainCategoryChanged"/>
+
+    @* Second level of menu that appears after selection *@
+     @if (_selectedCategory != null)
+    {
+        <Select TItem="string"
+                id="@SubCategoryMenuKey"
+                Options="@_subCategories"
+                ValueChanged="OnSubCategoryChanged"/>
+    }
+</Rows>
+
+@code {
+    private string[] _mainCategories = { "Settings", "Game", "Exit" };
+    private string[] _subCategories = { "Sound", "Video", "Keyboard" };
+    private string? _selectedCategory;
+    private const string SubCategoryMenuKey = "sub";
+
+    private Task OnMainCategoryChanged(string value)
+    {
+        _selectedCategory = value;
+
+        // Move focus to next element
+        FocusManager.FocusAfterRender(SubCategoryMenuKey);
+
+        return Task.CompletedTask;
+    }
+
+    private void OnSubCategoryChanged(string value)
+    {
+        // etc
+    }
+
 }
 ```
 
