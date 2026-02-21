@@ -203,7 +203,7 @@ It is useful when element, that has to be focused not rendered yet at the focus 
             ValueChanged="OnMainCategoryChanged"/>
 
     @* Second level of menu that appears after selection *@
-     @if (_selectedCategory != null)
+    @if (_selectedCategory != null)
     {
         <Select TItem="string"
                 id="@SubCategoryMenuKey"
@@ -222,7 +222,7 @@ It is useful when element, that has to be focused not rendered yet at the focus 
     {
         _selectedCategory = value;
 
-        // Move focus to next element
+        // Move focus to sub category menu after it is rendered
         FocusManager.FocusAfterRender(SubCategoryMenuKey);
 
         return Task.CompletedTask;
@@ -232,7 +232,6 @@ It is useful when element, that has to be focused not rendered yet at the focus 
     {
         // etc
     }
-
 }
 ```
 
