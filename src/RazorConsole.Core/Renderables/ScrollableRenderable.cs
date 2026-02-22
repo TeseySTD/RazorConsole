@@ -17,6 +17,8 @@ internal sealed class ScrollableRenderable : IRenderable
     private readonly ScrollbarSettings? _scrollbarSettings;
     private readonly bool _isEmbeddedScrollbarMode;
     private readonly bool _cropLines;
+    private readonly string _scrollId;
+    private readonly ScrollableLayoutCoordinator _scrollableLayoutCoordinator;
 
     public ScrollableRenderable(
         IEnumerable<IRenderable> items,
@@ -24,8 +26,10 @@ internal sealed class ScrollableRenderable : IRenderable
         int offset,
         int pageSize,
         bool enableEmbeddedScrollbar,
+        ScrollableLayoutCoordinator scrollableLayoutCoordinator,
         ScrollbarSettings? scrollbarSettings,
-        bool cropLines = false)
+        bool cropLines = false,
+        string scrollId = "")
     {
         _items = items.ToList();
         _compositeContent = new Rows(_items);
@@ -37,7 +41,9 @@ internal sealed class ScrollableRenderable : IRenderable
         var tables = _items.OfType<Table>();
         var panels = _items.OfType<Panel>();
         _isEmbeddedScrollbarMode = tables.Count() + panels.Count() == 1 && enableEmbeddedScrollbar;
+        _scrollableLayoutCoordinator = scrollableLayoutCoordinator;
         _cropLines = cropLines;
+        _scrollId = scrollId;
     }
 
     public Measurement Measure(RenderOptions options, int maxWidth)
@@ -129,7 +135,9 @@ internal sealed class ScrollableRenderable : IRenderable
 
         if (_cropLines && totalContentLines > 0)
         {
-            actualOffset = Math.Clamp(_offset, 0, Math.Max(0, totalContentLines - _pageSize));
+            var calculatedMaxOffset = Math.Max(0, totalContentLines - _pageSize);
+            actualOffset = Math.Clamp(_offset, 0, calculatedMaxOffset);
+            _scrollableLayoutCoordinator.ReportMaxOffset(_scrollId, calculatedMaxOffset);
 
             var headerLines = tempLines.Take(dataStart).ToList();
             var footerLines = tempLines.Skip(dataEnd).ToList();
@@ -220,7 +228,9 @@ internal sealed class ScrollableRenderable : IRenderable
 
         if (_cropLines && totalContentLines > 0)
         {
-            actualOffset = Math.Clamp(_offset, 0, Math.Max(0, totalContentLines - _pageSize));
+            var calculatedMaxOffset = Math.Max(0, totalContentLines - _pageSize);
+            actualOffset = Math.Clamp(_offset, 0, calculatedMaxOffset);
+            _scrollableLayoutCoordinator.ReportMaxOffset(_scrollId, calculatedMaxOffset);
 
             var headerLines = tempLines.Take(dataStart).ToList();
             var footerLines = tempLines.Skip(dataEnd).ToList();
@@ -304,7 +314,10 @@ internal sealed class ScrollableRenderable : IRenderable
 
         if (_cropLines)
         {
-            actualOffset = Math.Clamp(_offset, 0, Math.Max(0, totalContentLines - _pageSize));
+            var calculatedMaxOffset = Math.Max(0, totalContentLines - _pageSize);
+            actualOffset = Math.Clamp(_offset, 0, calculatedMaxOffset);
+            _scrollableLayoutCoordinator.ReportMaxOffset(_scrollId, calculatedMaxOffset);
+
             tempLines = tempLines.Skip(actualOffset).Take(_pageSize).ToList();
         }
 

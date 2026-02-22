@@ -2,10 +2,14 @@
 @using RazorConsole.Core.Rendering
 @using Spectre.Console
 
+@implements IDisposable
+@inject ScrollableLayoutCoordinator LayoutCoordinator;
+
 <view-height-scrollable
     data-offset="@ScrollOffset"
     data-lines-to-render="@LinesToRender"
-    data-enable-embedded="@IsScrollbarEmbedded.ToString()">
+    data-enable-embedded="@IsScrollbarEmbedded.ToString()"
+    data-scroll-id="@_scrollId">
 
     @if (Scrollbar != null)
     {
@@ -25,6 +29,7 @@
 </view-height-scrollable>
 
 @code {
+    private readonly string _scrollId = Guid.NewGuid().ToString("N");
 
     /// <summary>
     /// Number of lines visible at one time.
@@ -67,11 +72,11 @@
     [Parameter]
     public bool IsScrollbarEmbedded { get; set; } = true;
 
-    [Parameter]
-    public required RenderFragment<ScrollContext> ChildContent { get; set; }
+    [Parameter] public required RenderFragment<ScrollContext> ChildContent { get; set; }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
+        int maxOffset = LayoutCoordinator.GetMaxOffset(_scrollId);
         int newOffset = ScrollOffset;
         int page = Math.Max(1, LinesToRender);
 
@@ -86,6 +91,8 @@
             case "PageUp": newOffset = Math.Max(0, newOffset - page); break;
             case "Home": newOffset = 0; break;
         }
+
+        newOffset = Math.Clamp(newOffset, 0, maxOffset);
 
         if (newOffset != ScrollOffset)
         {
@@ -114,8 +121,11 @@
         Scrollbar?.OnFocusOutCallback?.Invoke(eventArgs);
     }
 
+    public void Dispose() => LayoutCoordinator.Remove(_scrollId);
 }
 
 @code{
+
     public sealed record ScrollContext(Func<KeyboardEventArgs, Task> KeyDownEventHandler, int CurrentOffset);
+
 }

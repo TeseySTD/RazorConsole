@@ -10,7 +10,8 @@ using Spectre.Console.Rendering;
 
 namespace RazorConsole.Core.Rendering.Translation.Translators;
 
-public class ViewHeightScrollableTranslator : ITranslationMiddleware
+public class ViewHeightScrollableTranslator(ScrollableLayoutCoordinator scrollableLayoutCoordinator)
+    : ITranslationMiddleware
 {
     public IRenderable Translate(TranslationContext context, TranslationDelegate next, VNode node)
     {
@@ -22,12 +23,12 @@ public class ViewHeightScrollableTranslator : ITranslationMiddleware
         var scrollbars = node.Children
             .Where(n => VdomSpectreTranslator.TryGetBoolAttribute(n, "data-scrollbar", out var value) && value)
             .ToList();
+
         // If there are many scrollbars - then component cannot be translated
         if (scrollbars.Count > 1)
         {
             return next(node);
         }
-
 
         if (!int.TryParse(VdomSpectreTranslator.GetAttribute(node, "data-offset"), out var offset))
         {
@@ -50,16 +51,24 @@ public class ViewHeightScrollableTranslator : ITranslationMiddleware
             return next(node);
         }
 
+        var scrollId = VdomSpectreTranslator.GetAttribute(node, "data-scroll-id");
+        if (string.IsNullOrEmpty(scrollId))
+        {
+            return next(node);
+        }
         if (scrollbars.Count == 0)
         {
             return new ScrollableRenderable(
                 contentRenderable, 0, offset, linesToRender, enableEmbedded,
+                scrollableLayoutCoordinator,
                 scrollbarSettings: null,
-                cropLines: true
+                cropLines: true,
+                scrollId: scrollId
             );
         }
 
         var scrollbarNode = scrollbars.Single();
+
         // Extracting styling parameters
         if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-track-char"), out var trackChar))
         {
@@ -94,8 +103,10 @@ public class ViewHeightScrollableTranslator : ITranslationMiddleware
         var scrollbarSettings = new ScrollbarSettings(trackChar, thumbChar, trackColor, thumbColor, minThumbHeight);
         return new ScrollableRenderable(
             contentRenderable, 0, offset, linesToRender, enableEmbedded,
+            scrollableLayoutCoordinator,
             scrollbarSettings,
-            cropLines: true
+            cropLines: true,
+            scrollId: scrollId
         );
     }
 }

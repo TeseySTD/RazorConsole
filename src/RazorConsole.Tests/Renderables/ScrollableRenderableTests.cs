@@ -31,6 +31,7 @@ public class ScrollableRenderableTests
             offset: 0,
             pageSize: 5,
             enableEmbeddedScrollbar: true,
+            new ScrollableLayoutCoordinator(),
             new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();
@@ -54,6 +55,7 @@ public class ScrollableRenderableTests
             offset: 0,
             pageSize: 5,
             enableEmbeddedScrollbar: true,
+            new ScrollableLayoutCoordinator(),
             new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();
@@ -76,6 +78,7 @@ public class ScrollableRenderableTests
             offset: 0,
             pageSize: 5,
             enableEmbeddedScrollbar: true,
+            new ScrollableLayoutCoordinator(),
             new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();
@@ -101,6 +104,7 @@ public class ScrollableRenderableTests
             offset: 0,
             pageSize: 5,
             enableEmbeddedScrollbar: true,
+            new ScrollableLayoutCoordinator(),
             new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();
@@ -123,6 +127,7 @@ public class ScrollableRenderableTests
             offset: 0,
             pageSize: 5,
             enableEmbeddedScrollbar: false,
+            new ScrollableLayoutCoordinator(),
             new ScrollbarSettings()); // Explicit side mode
 
         var options = CreateTestRenderOptions();
@@ -145,6 +150,7 @@ public class ScrollableRenderableTests
             offset: 0,
             pageSize: 5,
             enableEmbeddedScrollbar: true,
+            new ScrollableLayoutCoordinator(),
             new ScrollbarSettings());
 
         var options = CreateTestRenderOptions();

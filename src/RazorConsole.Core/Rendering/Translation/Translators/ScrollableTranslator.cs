@@ -10,7 +10,7 @@ using Spectre.Console.Rendering;
 
 namespace RazorConsole.Core.Rendering.Translation.Translators;
 
-public class ScrollableTranslator : ITranslationMiddleware
+public class ScrollableTranslator(ScrollableLayoutCoordinator scrollableLayoutCoordinator) : ITranslationMiddleware
 {
     public IRenderable Translate(TranslationContext context, TranslationDelegate next, VNode node)
     {
@@ -99,6 +99,7 @@ public class ScrollableTranslator : ITranslationMiddleware
         var scrollbarSettings = new ScrollbarSettings(trackChar, thumbChar, trackColor, thumbColor, minThumbHeight);
         return new ScrollableRenderable(
             contentRenderable, itemsCount, offset, pageSize, enableEmbedded,
+            scrollableLayoutCoordinator,
             scrollbarSettings
         );
     }

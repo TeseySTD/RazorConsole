@@ -56,6 +56,7 @@ public static class RazorConsoleServiceCollectionExtensions
         services.TryAddSingleton<MarkdownRenderingService>();
         services.TryAddSingleton<IConsoleInput, ConsoleInput>();
         services.TryAddSingleton<TerminalMonitor>();
+        services.TryAddSingleton<ScrollableLayoutCoordinator>();
 
         // Register translation middlewares in order of priority
         // Overlay catcher

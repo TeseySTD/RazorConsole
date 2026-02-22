@@ -1,6 +1,7 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
 using RazorConsole.Core.Abstractions.Rendering;
+using RazorConsole.Core.Rendering;
 using RazorConsole.Core.Rendering.Renderables;
 using RazorConsole.Core.Rendering.Translation.Contexts;
 using RazorConsole.Core.Rendering.Translation.Translators;
@@ -12,7 +13,7 @@ namespace RazorConsole.Tests.Rendering.Translation.Translators;
 
 public sealed class ScrollableTranslatorTests
 {
-    private readonly ScrollableTranslator _translator = new();
+    private readonly ScrollableTranslator _translator = new(new ScrollableLayoutCoordinator());
     private readonly TranslationContext _context;
     private readonly TranslationDelegate _next;
 
