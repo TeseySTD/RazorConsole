@@ -13,7 +13,7 @@
     <Newline/>
 
     <Rows>
-        <ViewHeightScrollable Scrollbar="new ()" LinesToRender="15">
+        <ViewHeightScrollable Scrollbar="new()" LinesToRender="10">
             <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
                 <SyntaxHighlighter Language="razor"
                                    Code="@_scrollableMarkup"
@@ -74,11 +74,10 @@
                 </Scrollable>
             </Panel>
 
-            <Panel Title="View Height scrollable">
-                <ViewHeightScrollable Scrollbar="new()" LinesToRender="3">
+            <Panel Title="View Height scrollable" Border="BoxBorder.Rounded">
+                <ViewHeightScrollable Scrollbar="new()" LinesToRender="2">
                     <Panel Border="BoxBorder.Rounded" Title="Large text" Expand>
-                        <Markup
-                            Content="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."/>
+                        <Markup Content="@_largeText"/>
                     </Panel>
                 </ViewHeightScrollable>
             </Panel>
@@ -89,6 +88,7 @@
 @code {
     private const string ScrollableDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/Scrollable.razor";
     private const string ScrollbarDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/Scrollbar.razor";
+    private readonly string _largeText = "Start of line\n" + string.Join(" ", Enumerable.Repeat("Lorem ipsum dolor sit amet", 50)) + "\nEnd of line";
     private IReadOnlyList<(int Number, string Letter, Color Color)> AlphabetData => GetAlphabetData();
 
     private IReadOnlyList<(int Number, string Letter, Color Color)> GetAlphabetData()
@@ -167,6 +167,15 @@
             }
         <Scrollbar ScrollContext=""context""/>
     </Scrollable>
-</Panel>";
+</Panel>
+
+<Panel Title=""View Height scrollable"" Border=""BoxBorder.Rounded"">
+    <ViewHeightScrollable Scrollbar=""new()"" LinesToRender=""2"">
+        <Panel Border=""BoxBorder.Rounded"" Title=""Large text"" Expand>
+            <Markup Content=""@_largeText""/>
+        </Panel>
+    </ViewHeightScrollable>
+</Panel>
+";
 
 }

@@ -6,11 +6,14 @@
     <Markup Content="Source Code: Grid.razor" Foreground="@Color.DeepSkyBlue1"
         Decoration="@Decoration.Underline" link="@DocumentationUrl" />
     <Newline />
-    <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
-        <SyntaxHighlighter Language="razor"
-                           Code="@_scheduleCode"
-                           ShowLineNumbers="true" />
-    </Panel>
+    <ViewHeightScrollable Scrollbar="new ()">
+        <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
+            <SyntaxHighlighter Language="razor"
+                               Code="@_scheduleCode"
+                               ShowLineNumbers="true" />
+        </Panel>
+    </ViewHeightScrollable>
+
     <Panel Title="Preview" Border="BoxBorder.Rounded" Expand="true">
         <Panel Title="Conference Schedule" Border="@BoxBorder.Rounded">
             <Grid Columns="3">
