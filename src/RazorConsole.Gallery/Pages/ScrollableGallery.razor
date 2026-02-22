@@ -74,13 +74,12 @@
                 </Scrollable>
             </Panel>
 
-            <Panel Title="View Height scrollable" Border="BoxBorder.Rounded">
-                <ViewHeightScrollable Scrollbar="new()" LinesToRender="2">
-                    <Panel Border="BoxBorder.Rounded" Title="Large text" Expand>
-                        <Markup Content="@_largeText"/>
-                    </Panel>
-                </ViewHeightScrollable>
-            </Panel>
+            <ViewHeightScrollable Scrollbar="new()" LinesToRender="3">
+                <Panel Title="View Height scrollable" Border="BoxBorder.Rounded">
+                    <Markup Content="@_largeText"/>
+                </Panel>
+            </ViewHeightScrollable>
+
         </Rows>
     </Rows>
 </Rows>
@@ -88,7 +87,21 @@
 @code {
     private const string ScrollableDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/Scrollable.razor";
     private const string ScrollbarDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/Scrollbar.razor";
-    private readonly string _largeText = "Start of line\n" + string.Join(" ", Enumerable.Repeat("Lorem ipsum dolor sit amet", 50)) + "\nEnd of line";
+    private readonly string _largeText = string.Join("\n", [
+        "Start of line",
+        "Some text",
+        "Another text",
+        "Loren ipsum",
+        "Dolor sit amet",
+        "Consectetur adipiscing elit",
+        "Mauris sed congue dolor",
+        "Nunc nisl metus, mollis eu condimentum in",
+        "Accumsan sit amet nibh",
+        "Aenean eleifend a ipsum eget hendrerit",
+        "Nam gravida nulla tortor, sed rhoncus arcu aliquet sed",
+        "End of line"
+    ]);
+
     private IReadOnlyList<(int Number, string Letter, Color Color)> AlphabetData => GetAlphabetData();
 
     private IReadOnlyList<(int Number, string Letter, Color Color)> GetAlphabetData()
@@ -169,13 +182,11 @@
     </Scrollable>
 </Panel>
 
-<Panel Title=""View Height scrollable"" Border=""BoxBorder.Rounded"">
-    <ViewHeightScrollable Scrollbar=""new()"" LinesToRender=""2"">
-        <Panel Border=""BoxBorder.Rounded"" Title=""Large text"" Expand>
-            <Markup Content=""@_largeText""/>
-        </Panel>
-    </ViewHeightScrollable>
-</Panel>
+<ViewHeightScrollable Scrollbar=""new()"" LinesToRender=""3"">
+    <Panel Title=""View Height scrollable"" Border=""BoxBorder.Rounded"">
+        <Markup Content=""@_largeText""/>
+    </Panel>
+</ViewHeightScrollable>
 ";
 
 }
