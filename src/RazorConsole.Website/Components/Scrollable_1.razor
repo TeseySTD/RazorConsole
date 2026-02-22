@@ -7,7 +7,8 @@
     <Scrollable Items="@GetAlphabetData()" PageSize="3">
         <Rows>
             <SpectreTable Title="Custom realization" Border="TableBorder.Rounded" BorderColor="@_tableColor"
-                          @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable" @onkeydown="context.KeyDownEventHandler">
+                          @onfocus="OnFocusTable" @onfocusout="OnFocusOutTable"
+                          @onkeydown="context.KeyDownEventHandler">
                 <SpectreTHead>
                     <SpectreTR>
                         <SpectreTH Align="Justify.Left">N</SpectreTH>
@@ -19,16 +20,16 @@
                     {
                         <SpectreTR>
                             <SpectreTD>
-                                <Markup Content="@item.Number.ToString()" Foreground="@item.Color" />
+                                <Markup Content="@item.Number.ToString()" Foreground="@item.Color"/>
                             </SpectreTD>
                             <SpectreTD>
-                                <Markup Content="@item.Letter" Foreground="@item.Color" />
+                                <Markup Content="@item.Letter" Foreground="@item.Color"/>
                             </SpectreTD>
                         </SpectreTR>
                     }
                 </SpectreTBody>
             </SpectreTable>
-            <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}") />
+            <Markup Content=@($"Page: {context.CurrentOffset + 1} / {context.PagesCount}")/>
         </Rows>
     </Scrollable>
 
@@ -79,6 +80,14 @@
 
     <Markup Content="   "/>
 
+    <ViewHeightScrollable Scrollbar="new()" LinesToRender="7">
+        <Panel Title="View Height scrollable" Border="BoxBorder.Rounded">
+            <Markup Content="@_largeText"/>
+        </Panel>
+    </ViewHeightScrollable>
+
+    <Markup Content="   "/>
+
     <Rows>
         <Markup Content="Not embedded"/>
         <Markup Content="(full container height)" Decoration="Decoration.Italic"/>
@@ -99,8 +108,23 @@
 
 @code {
     private Color _tableColor = Color.White;
+    private readonly string _largeText = string.Join("\n", [
+        "Start of line",
+        "Some text",
+        "Another text",
+        "Loren ipsum",
+        "Dolor sit amet",
+        "Consectetur adipiscing elit",
+        "Mauris sed congue dolor",
+        "Nunc nisl metus, mollis eu condimentum in",
+        "Accumsan sit amet nibh",
+        "Aenean eleifend a ipsum eget hendrerit",
+        "Nam gravida nulla tortor, sed rhoncus arcu aliquet sed",
+        "End of line"
+    ]);
 
     record Item(int Number, string Letter, Color Color);
+
     private IReadOnlyList<(int Number, string Letter, Color Color)> GetAlphabetData()
     {
         return
@@ -133,4 +157,5 @@
     {
         _tableColor = Color.White;
     }
+
 }
