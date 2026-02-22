@@ -1,4 +1,4 @@
-﻿// Copyright (c) RazorConsole. All rights reserved.
+// Copyright (c) RazorConsole. All rights reserved.
 
 using RazorConsole.Core.Abstractions.Rendering;
 using RazorConsole.Core.Rendering.Renderables;

@@ -90,6 +90,7 @@
             case " ": newOffset += page; break;
             case "PageUp": newOffset = Math.Max(0, newOffset - page); break;
             case "Home": newOffset = 0; break;
+            case "End": newOffset = maxOffset; break;
         }
 
         newOffset = Math.Clamp(newOffset, 0, maxOffset);
