@@ -80,14 +80,6 @@
 
     <Markup Content="   "/>
 
-    <ViewHeightScrollable Scrollbar="new()" LinesToRender="7">
-        <Panel Title="View Height scrollable" Border="BoxBorder.Rounded">
-            <Markup Content="@_largeText"/>
-        </Panel>
-    </ViewHeightScrollable>
-
-    <Markup Content="   "/>
-
     <Rows>
         <Markup Content="Not embedded"/>
         <Markup Content="(full container height)" Decoration="Decoration.Italic"/>
@@ -108,20 +100,6 @@
 
 @code {
     private Color _tableColor = Color.White;
-    private readonly string _largeText = string.Join("\n", [
-        "Start of line",
-        "Some text",
-        "Another text",
-        "Loren ipsum",
-        "Dolor sit amet",
-        "Consectetur adipiscing elit",
-        "Mauris sed congue dolor",
-        "Nunc nisl metus, mollis eu condimentum in",
-        "Accumsan sit amet nibh",
-        "Aenean eleifend a ipsum eget hendrerit",
-        "Nam gravida nulla tortor, sed rhoncus arcu aliquet sed",
-        "End of line"
-    ]);
 
     record Item(int Number, string Letter, Color Color);
 
