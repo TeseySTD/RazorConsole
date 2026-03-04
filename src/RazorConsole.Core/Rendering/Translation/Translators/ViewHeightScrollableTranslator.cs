@@ -10,11 +10,12 @@ using Spectre.Console.Rendering;
 
 namespace RazorConsole.Core.Rendering.Translation.Translators;
 
-public class ScrollableTranslator(ScrollableLayoutCoordinator scrollableLayoutCoordinator) : ITranslationMiddleware
+public class ViewHeightScrollableTranslator(ScrollableLayoutCoordinator scrollableLayoutCoordinator)
+    : ITranslationMiddleware
 {
     public IRenderable Translate(TranslationContext context, TranslationDelegate next, VNode node)
     {
-        if (!string.Equals(node.TagName, "scrollable", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(node.TagName, "view-height-scrollable", StringComparison.OrdinalIgnoreCase))
         {
             return next(node);
         }
@@ -22,34 +23,20 @@ public class ScrollableTranslator(ScrollableLayoutCoordinator scrollableLayoutCo
         var scrollbars = node.Children
             .Where(n => VdomSpectreTranslator.TryGetBoolAttribute(n, "data-scrollbar", out var value) && value)
             .ToList();
+
         // If there are many scrollbars - then component cannot be translated
         if (scrollbars.Count > 1)
         {
             return next(node);
         }
 
-        // If there is not any scrollbar - render just rows layout
-        if (scrollbars.Count == 0)
-        {
-            if (!TranslationHelpers.TryConvertChildrenToRenderables(node.Children, context, out var simpleContent))
-            {
-                return next(node);
-            }
-
-            return new Rows(simpleContent);
-        }
-
-        var scrollbarNode = scrollbars.Single();
-
-        var itemsCount = VdomSpectreTranslator.TryGetIntAttribute(node, "data-items-count", 0);
-
         if (!int.TryParse(VdomSpectreTranslator.GetAttribute(node, "data-offset"), out var offset))
         {
             return next(node);
         }
 
-        if (!VdomSpectreTranslator.TryParsePositiveInt(VdomSpectreTranslator.GetAttribute(node, "data-page-size"),
-                out var pageSize))
+        if (!VdomSpectreTranslator.TryParsePositiveInt(VdomSpectreTranslator.GetAttribute(node, "data-lines-to-render"),
+                out var linesToRender))
         {
             return next(node);
         }
@@ -58,6 +45,29 @@ public class ScrollableTranslator(ScrollableLayoutCoordinator scrollableLayoutCo
         {
             return next(node);
         }
+
+        if (!TranslationHelpers.TryConvertChildrenToRenderables(node.Children, context, out var contentRenderable))
+        {
+            return next(node);
+        }
+
+        var scrollId = VdomSpectreTranslator.GetAttribute(node, "data-scroll-id");
+        if (string.IsNullOrEmpty(scrollId))
+        {
+            return next(node);
+        }
+        if (scrollbars.Count == 0)
+        {
+            return new ScrollableRenderable(
+                contentRenderable, 0, offset, linesToRender, enableEmbedded,
+                scrollableLayoutCoordinator,
+                scrollbarSettings: null,
+                cropLines: true,
+                scrollId: scrollId
+            );
+        }
+
+        var scrollbarNode = scrollbars.Single();
 
         // Extracting styling parameters
         if (!char.TryParse(VdomSpectreTranslator.GetAttribute(scrollbarNode, "data-track-char"), out var trackChar))
@@ -90,17 +100,13 @@ public class ScrollableTranslator(ScrollableLayoutCoordinator scrollableLayoutCo
             return next(node);
         }
 
-        // Converting children
-        if (!TranslationHelpers.TryConvertChildrenToRenderables(node.Children, context, out var contentRenderable))
-        {
-            return next(node);
-        }
-
         var scrollbarSettings = new ScrollbarSettings(trackChar, thumbChar, trackColor, thumbColor, minThumbHeight);
         return new ScrollableRenderable(
-            contentRenderable, itemsCount, offset, pageSize, enableEmbedded,
+            contentRenderable, 0, offset, linesToRender, enableEmbedded,
             scrollableLayoutCoordinator,
-            scrollbarSettings
+            scrollbarSettings,
+            cropLines: true,
+            scrollId: scrollId
         );
     }
 }

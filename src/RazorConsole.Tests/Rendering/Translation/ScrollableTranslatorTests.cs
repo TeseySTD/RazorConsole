@@ -1,6 +1,7 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
 using RazorConsole.Core.Abstractions.Rendering;
+using RazorConsole.Core.Rendering;
 using RazorConsole.Core.Rendering.Renderables;
 using RazorConsole.Core.Rendering.Translation.Contexts;
 using RazorConsole.Core.Rendering.Translation.Translators;
@@ -12,7 +13,7 @@ namespace RazorConsole.Tests.Rendering.Translation.Translators;
 
 public sealed class ScrollableTranslatorTests
 {
-    private readonly ScrollableTranslator _translator = new();
+    private readonly ScrollableTranslator _translator = new(new ScrollableLayoutCoordinator());
     private readonly TranslationContext _context;
     private readonly TranslationDelegate _next;
 
@@ -91,7 +92,7 @@ public sealed class ScrollableTranslatorTests
         var result = _translator.Translate(_context, _next, node);
 
         // Assert
-        result.ShouldBeOfType<ScrollableWithBarRenderable>();
+        result.ShouldBeOfType<ScrollableRenderable>();
         _next.DidNotReceive().Invoke(Arg.Any<VNode>());
     }
 

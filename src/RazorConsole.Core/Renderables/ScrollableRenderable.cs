@@ -7,64 +7,64 @@ using Spectre.Console.Rendering;
 
 namespace RazorConsole.Core.Rendering.Renderables;
 
-internal sealed class ScrollableWithBarRenderable : IRenderable
+internal sealed class ScrollableRenderable : IRenderable
 {
     private readonly List<IRenderable> _items;
     private readonly IRenderable _compositeContent;
     private readonly int _totalItems;
     private readonly int _offset;
     private readonly int _pageSize;
-    private readonly Color _trackColor;
-    private readonly Color _thumbColor;
-    private readonly char _trackChar;
-    private readonly char _thumbChar;
-    private readonly int _minThumbHeight;
+    private readonly ScrollbarSettings? _scrollbarSettings;
     private readonly bool _isEmbeddedScrollbarMode;
+    private readonly bool _cropLines;
+    private readonly string _scrollId;
+    private readonly ScrollableLayoutCoordinator _scrollableLayoutCoordinator;
 
-    public ScrollableWithBarRenderable(
+    public ScrollableRenderable(
         IEnumerable<IRenderable> items,
         int totalItems,
         int offset,
         int pageSize,
         bool enableEmbeddedScrollbar,
-        Color? trackColor = null,
-        Color? thumbColor = null,
-        char? trackChar = null,
-        char? thumbChar = null,
-        int minThumbHeight = 1)
+        ScrollableLayoutCoordinator scrollableLayoutCoordinator,
+        ScrollbarSettings? scrollbarSettings,
+        bool cropLines = false,
+        string scrollId = "")
     {
         _items = items.ToList();
         _compositeContent = new Rows(_items);
         _totalItems = totalItems;
         _offset = offset;
         _pageSize = pageSize;
-        _trackColor = trackColor ?? Color.Grey;
-        _thumbColor = thumbColor ?? Color.White;
-        _trackChar = trackChar ?? '│';
-        _thumbChar = thumbChar ?? '█';
-        _minThumbHeight = minThumbHeight;
+        _scrollbarSettings = scrollbarSettings;
 
         var tables = _items.OfType<Table>();
         var panels = _items.OfType<Panel>();
         _isEmbeddedScrollbarMode = tables.Count() + panels.Count() == 1 && enableEmbeddedScrollbar;
+        _scrollableLayoutCoordinator = scrollableLayoutCoordinator;
+        _cropLines = cropLines;
+        _scrollId = scrollId;
     }
 
     public Measurement Measure(RenderOptions options, int maxWidth)
     {
+        var hasScrollbar = _scrollbarSettings != null;
+
         if (_isEmbeddedScrollbarMode)
         {
-            var contentMeasure = _compositeContent.Measure(options, maxWidth - 1); // For scrollbar
+            var reserve = hasScrollbar ? 1 : 0; // For scrollbar
+            var contentMeasure = _compositeContent.Measure(options, maxWidth - reserve);
 
-            return new Measurement(contentMeasure.Min + 1, contentMeasure.Max + 1);
+            return new Measurement(contentMeasure.Min + reserve, contentMeasure.Max + reserve);
         }
         else
         {
-            var contentMeasure = _compositeContent.Measure(options, maxWidth - 2); // For scrollbar and space before
+            var reserve = hasScrollbar ? 2 : 0; // For scrollbar and space before
+            var contentMeasure = _compositeContent.Measure(options, maxWidth - reserve);
 
-            return new Measurement(contentMeasure.Min + 2, contentMeasure.Max + 2);
+            return new Measurement(contentMeasure.Min + reserve, contentMeasure.Max + reserve);
         }
     }
-
 
     public IEnumerable<Segment> Render(RenderOptions options, int maxWidth)
     {
@@ -82,6 +82,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
                 {
                     yield return Segment.LineBreak;
                 }
+
                 isFirst = false;
 
                 if (targetTable != null && ReferenceEquals(item, targetTable))
@@ -118,7 +119,8 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
 
     private IEnumerable<Segment> RenderPanelWithScrollBar(Panel originalPanel, RenderOptions options, int maxWidth)
     {
-        var tempLines = GetRenderedLines(originalPanel, options, maxWidth - 1);
+        var reserve = _scrollbarSettings != null ? 1 : 0;
+        var tempLines = GetRenderedLines(originalPanel, options, maxWidth - reserve);
         if (tempLines.Count == 0)
         {
             yield break;
@@ -129,57 +131,25 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         var dataStart = hasTitle || hasBorder ? 1 : 0;
         var dataEnd = hasBorder ? tempLines.Count - 1 : tempLines.Count;
 
-        // Check if there are any items
-        if (dataStart >= dataEnd || _totalItems == 0)
+        // Insert bottom border of Panel
+        foreach (var line in tempLines)
         {
-            foreach (var segment in RenderRawLines(tempLines))
+            var lineSegments = line.ToList();
+            if (hasBorder && lineSegments.Count > 0)
             {
-                yield return segment;
+                lineSegments.Insert(lineSegments.Count - 1,
+                    new Segment(originalPanel.Border.GetPart(BoxBorderPart.Bottom)));
+                line.Clear();
+                line.AddRange(lineSegments);
             }
-            yield break;
         }
 
-        var scrollBarHeight = Math.Max(1, dataEnd - dataStart);
-        var scrollBarLines = CreateScrollBarLines(options, scrollBarHeight);
-
-        for (var i = 0; i < tempLines.Count; i++)
+        foreach (var segment in ProcessAndRenderEmbedded(tempLines, dataStart, dataEnd, options, hasBorder))
         {
-            var lineSegments = tempLines[i].ToList();
-
-            // Insert bottom border part to ensure proper spacing for the scrollbar
-            var borderIndex = lineSegments.Count - 1;
-            if (borderIndex >= 0)
-            {
-                lineSegments.Insert(borderIndex, new Segment(originalPanel.Border.GetPart(BoxBorderPart.Bottom)));
-            }
-
-            if (i < dataStart || i >= dataEnd)
-            {
-                foreach (var seg in lineSegments)
-                {
-                    yield return seg;
-                }
-                if (i < tempLines.Count - 1)
-                {
-                    yield return Segment.LineBreak;
-                }
-                continue;
-            }
-
-            var scrollBarIndex = i - dataStart;
-            var scrollBarSeg = GetScrollBarSegment(scrollBarLines, scrollBarIndex);
-
-            foreach (var s in InjectScrollBar(lineSegments, scrollBarSeg, hasBorder))
-            {
-                yield return s;
-            }
-
-            if (i < tempLines.Count - 1)
-            {
-                yield return Segment.LineBreak;
-            }
+            yield return segment;
         }
     }
+
 
     private IEnumerable<Segment> RenderTableWithScrollBar(Table originalTable, RenderOptions options, int maxWidth)
     {
@@ -190,61 +160,47 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         }
 
         var (dataStart, dataEnd) = FindTableContentRange(tempLines, originalTable);
-        // Check if there are any items
-        if (dataStart >= dataEnd || _totalItems == 0)
+
+        foreach (var segment in ProcessAndRenderEmbedded(tempLines, dataStart, dataEnd, options, hasBorder: true))
         {
-            foreach (var segment in RenderRawLines(tempLines))
-            {
-                yield return segment;
-            }
-            yield break;
-        }
-
-        var scrollBarHeight = Math.Max(1, dataEnd - dataStart);
-        var scrollBarLines = CreateScrollBarLines(options, scrollBarHeight);
-
-        for (var i = 0; i < tempLines.Count; i++)
-        {
-            var lineSegments = tempLines[i].ToList();
-
-            if (i < dataStart || i >= dataEnd)
-            {
-                foreach (var seg in lineSegments)
-                {
-                    yield return seg;
-                }
-                if (i < tempLines.Count - 1)
-                {
-                    yield return Segment.LineBreak;
-                }
-                continue;
-            }
-
-            var scrollBarIndex = i - dataStart;
-            var scrollBarSeg = GetScrollBarSegment(scrollBarLines, scrollBarIndex);
-
-            foreach (var s in InjectScrollBar(lineSegments, scrollBarSeg, hasBorder: true))
-            {
-                yield return s;
-            }
-
-            if (i < tempLines.Count - 1)
-            {
-                yield return Segment.LineBreak;
-            }
+            yield return segment;
         }
     }
 
     private IEnumerable<Segment> RenderSideScrollBar(RenderOptions options, int maxWidth)
     {
-        var tempLines = GetRenderedLines(_compositeContent, options, maxWidth - 2); // 2 because reserving place for bar and space before
+        var reserve = _scrollbarSettings != null ? 2 : 0;
+        var tempLines = GetRenderedLines(_compositeContent, options, maxWidth - reserve);
         if (tempLines.Count == 0)
         {
             yield break;
         }
 
+        var totalContentLines = tempLines.Count;
+        var actualOffset = _offset;
+
+        if (_cropLines)
+        {
+            var calculatedMaxOffset = Math.Max(0, totalContentLines - _pageSize);
+            actualOffset = Math.Clamp(_offset, 0, calculatedMaxOffset);
+            _scrollableLayoutCoordinator.ReportMaxOffset(_scrollId, calculatedMaxOffset);
+
+            tempLines = tempLines.Skip(actualOffset).Take(_pageSize).ToList();
+        }
+
+        if (_scrollbarSettings == null)
+        {
+            foreach (var segment in RenderRawLines(tempLines))
+            {
+                yield return segment;
+            }
+
+            yield break;
+        }
+
+        var totalItemsForScrollbar = _cropLines ? totalContentLines : _totalItems;
         var maxContentLineWidth = tempLines.Max(line => line.Sum(s => s.CellCount()));
-        var scrollBarLines = CreateScrollBarLines(options, tempLines.Count);
+        var scrollBarLines = CreateScrollBarLines(options, tempLines.Count, totalItemsForScrollbar, actualOffset, _pageSize);
 
         for (var i = 0; i < tempLines.Count; i++)
         {
@@ -278,7 +234,88 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         }
     }
 
-    private static IEnumerable<Segment> InjectScrollBar(List<Segment> lineSegments, Segment? scrollBarSeg, bool hasBorder)
+    private IEnumerable<Segment> ProcessAndRenderEmbedded(
+        List<SegmentLine> tempLines,
+        int dataStart,
+        int dataEnd,
+        RenderOptions options,
+        bool hasBorder)
+    {
+        var totalContentLines = dataEnd - dataStart;
+        var actualOffset = _offset;
+
+        if (_cropLines && totalContentLines > 0)
+        {
+            var calculatedMaxOffset = Math.Max(0, totalContentLines - _pageSize);
+            actualOffset = Math.Clamp(_offset, 0, calculatedMaxOffset);
+            _scrollableLayoutCoordinator.ReportMaxOffset(_scrollId, calculatedMaxOffset);
+
+            var headerLines = tempLines.Take(dataStart).ToList();
+            var footerLines = tempLines.Skip(dataEnd).ToList();
+
+            var linesToTake = Math.Min(_pageSize, totalContentLines - actualOffset);
+            var visibleContent = tempLines.Skip(dataStart + actualOffset).Take(linesToTake).ToList();
+
+            tempLines = headerLines.Concat(visibleContent).Concat(footerLines).ToList();
+            dataEnd = dataStart + visibleContent.Count;
+        }
+
+        if (_scrollbarSettings == null)
+        {
+            return RenderRawLines(tempLines);
+        }
+
+        var totalItemsForScrollbar = _cropLines ? totalContentLines : _totalItems;
+
+        if (dataStart >= dataEnd || totalItemsForScrollbar == 0)
+        {
+            return RenderRawLines(tempLines);
+        }
+
+        var scrollBarHeight = Math.Max(1, dataEnd - dataStart);
+        var scrollBarLines = CreateScrollBarLines(options, scrollBarHeight, totalItemsForScrollbar, actualOffset, _pageSize);
+
+        return InjectScrollBarIntoLines(tempLines, scrollBarLines, dataStart, dataEnd, hasBorder);
+    }
+
+    private static IEnumerable<Segment> InjectScrollBarIntoLines(
+        List<SegmentLine> tempLines,
+        List<SegmentLine> scrollBarLines,
+        int dataStart,
+        int dataEnd,
+        bool hasBorder)
+    {
+        for (var i = 0; i < tempLines.Count; i++)
+        {
+            var lineSegments = tempLines[i].ToList();
+
+            if (i < dataStart || i >= dataEnd)
+            {
+                foreach (var seg in lineSegments)
+                {
+                    yield return seg;
+                }
+            }
+            else
+            {
+                var scrollBarIndex = i - dataStart;
+                var scrollBarSeg = GetScrollBarSegment(scrollBarLines, scrollBarIndex);
+
+                foreach (var s in InjectScrollBar(lineSegments, scrollBarSeg, hasBorder))
+                {
+                    yield return s;
+                }
+            }
+
+            if (i < tempLines.Count - 1)
+            {
+                yield return Segment.LineBreak;
+            }
+        }
+    }
+
+    private static IEnumerable<Segment> InjectScrollBar(List<Segment> lineSegments, Segment? scrollBarSeg,
+        bool hasBorder)
     {
         var targetIndex = hasBorder ? lineSegments.Count - 2 : lineSegments.Count - 1;
         targetIndex = Math.Clamp(targetIndex, 0, lineSegments.Count - 1);
@@ -320,6 +357,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         {
             return scrollBarLines[index][0];
         }
+
         return null;
     }
 
@@ -382,7 +420,6 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
             }
         }
 
-
         var bottom = table.Border != TableBorder.None ? lines.Count - 1 : lines.Count;
         return top >= bottom ? (0, 0) : (top, bottom);
     }
@@ -420,6 +457,7 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
             {
                 yield return segment;
             }
+
             if (i < lines.Count - 1)
             {
                 yield return Segment.LineBreak;
@@ -427,20 +465,17 @@ internal sealed class ScrollableWithBarRenderable : IRenderable
         }
     }
 
-    private List<SegmentLine> CreateScrollBarLines(RenderOptions options, int height)
+    private List<SegmentLine> CreateScrollBarLines(RenderOptions options, int height, int totalItems, int offset,
+        int pageSize)
     {
         var scrollBar = new ScrollBarRenderable(
-            _totalItems,
-            _offset,
-            _pageSize,
-            height,
-            _trackChar,
-            _thumbChar,
-            _trackColor,
-            _thumbColor,
-            minThumbHeight: _minThumbHeight
+            totalItems, offset, pageSize, height,
+            _scrollbarSettings!.TrackChar,
+            _scrollbarSettings.ThumbChar,
+            _scrollbarSettings.TrackColor,
+            _scrollbarSettings.ThumbColor,
+            _scrollbarSettings.MinThumbHeight
         );
-
         return Segment.SplitLines(scrollBar.Render(options, 1).ToList());
     }
 }

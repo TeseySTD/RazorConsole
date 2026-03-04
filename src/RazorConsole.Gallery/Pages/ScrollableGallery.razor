@@ -1,22 +1,30 @@
 @page "/scrollable"
 
 <Rows>
-    <Markup Content="Scrollable component that adds ability to scroll through items and render limited count. Has scrollbar support using special component. Also, scrollbar has ability to be embedded in table and panel/border components."
-            Foreground="@Color.Grey70"/>
+    <Markup
+        Content="Scrollable component that adds ability to scroll through items and render limited count. Has scrollbar support using special component. Also, scrollbar has ability to be embedded in table and panel/border components."
+        Foreground="@Color.Grey70"/>
+    <Newline/>
+    <Markup
+        Content="ViewHeightScrollable component adds ability to scroll through physical lines of any content and render limited count. Has all functionalities of default Scrollable."
+        Foreground="@Color.Grey70"/>
     <Markup Content="Source Code: Scrollable.razor"
             Foreground="@Color.DeepSkyBlue1" Decoration="@Decoration.Underline"
             link="@ScrollableDocumentationUrl"/>
-    <Markup Content="Source Code: Scrollbar.razor"
+    <Markup Content="Source Code: ViewHeightScrollable.razor"
             Foreground="@Color.DeepSkyBlue1" Decoration="@Decoration.Underline"
-            link="@ScrollbarDocumentationUrl"/>
+            link="@ViewHeightScrollableDocumentationUrl"/>
     <Newline/>
 
     <Rows>
-        <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
-            <SyntaxHighlighter Language="razor"
-                               Code="@_scrollableMarkup"
-                               ShowLineNumbers="true"/>
-        </Panel>
+        <ViewHeightScrollable Scrollbar="new()" LinesToRender="10">
+            <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
+                <SyntaxHighlighter Language="razor"
+                                   Code="@_scrollableMarkup"
+                                   ShowLineNumbers="true"/>
+            </Panel>
+        </ViewHeightScrollable>
+
         <Rows>
             <Panel Title="Embedded scrollbar" Border="BoxBorder.Rounded" Expand>
                 <Scrollable Scrollbar="new()" Items="@AlphabetData" PageSize="3">
@@ -69,13 +77,35 @@
                     }
                 </Scrollable>
             </Panel>
+
+            <ViewHeightScrollable Scrollbar="new()" LinesToRender="3">
+                <Panel Title="View Height scrollable" Border="BoxBorder.Rounded">
+                    <Markup Content="@_largeText"/>
+                </Panel>
+            </ViewHeightScrollable>
+
         </Rows>
     </Rows>
 </Rows>
 
 @code {
     private const string ScrollableDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/Scrollable.razor";
-    private const string ScrollbarDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/Scrollbar.razor";
+    private const string ViewHeightScrollableDocumentationUrl = "https://github.com/LittleLittleCloud/RazorConsole/blob/main/src/RazorConsole.Core/Components/ViewHeightScrollable.razor";
+    private readonly string _largeText = string.Join("\n", [
+        "Start of line",
+        "Some text",
+        "Another text",
+        "Loren ipsum",
+        "Dolor sit amet",
+        "Consectetur adipiscing elit",
+        "Mauris sed congue dolor",
+        "Nunc nisl metus, mollis eu condimentum in",
+        "Accumsan sit amet nibh",
+        "Aenean eleifend a ipsum eget hendrerit",
+        "Nam gravida nulla tortor, sed rhoncus arcu aliquet sed",
+        "End of line"
+    ]);
+
     private IReadOnlyList<(int Number, string Letter, Color Color)> AlphabetData => GetAlphabetData();
 
     private IReadOnlyList<(int Number, string Letter, Color Color)> GetAlphabetData()
@@ -99,6 +129,7 @@
             (15, "O", Color.SkyBlue1)
         ];
     }
+
     private readonly string _scrollableMarkup = @"
 <Panel Title=""Embedded scrollbar"" Border=""BoxBorder.Rounded"" Expand>
     <Scrollable Items=""@AlphabetData"" PageSize=""3"">
@@ -153,6 +184,13 @@
             }
         <Scrollbar ScrollContext=""context""/>
     </Scrollable>
-</Panel>";
+</Panel>
+
+<ViewHeightScrollable Scrollbar=""new()"" LinesToRender=""3"">
+    <Panel Title=""View Height scrollable"" Border=""BoxBorder.Rounded"">
+        <Markup Content=""@_largeText""/>
+    </Panel>
+</ViewHeightScrollable>
+";
 
 }

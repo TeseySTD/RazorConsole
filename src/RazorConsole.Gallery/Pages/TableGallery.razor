@@ -5,11 +5,14 @@
     <Markup Content="Table renders semantic HTML table markup via the Spectre.Console table translator." Foreground="@Color.Grey70" />
     <Markup Content="Documentation: Table component" Foreground="@Color.DeepSkyBlue1" Decoration="@Decoration.Underline" link="https://github.com/LittleLittleCloud/RazorConsole/blob/main/design-doc/builtin-components.md#table" />
     <Newline />
-    <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
-        <SyntaxHighlighter Language="razor"
-                           Code="@_tableMarkup"
-                           ShowLineNumbers="true" />
-    </Panel>
+    <ViewHeightScrollable Scrollbar="new()">
+        <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
+            <SyntaxHighlighter Language="razor"
+                               Code="@_tableMarkup"
+                               ShowLineNumbers="true" />
+        </Panel>
+    </ViewHeightScrollable>
+
     <Panel Title="Preview" Border="BoxBorder.Rounded" Expand="true">
         <SpectreTable Expand="true" Title="Sprint Dashboard" Border="TableBorder.Rounded">
             <SpectreTHead>

@@ -8,11 +8,14 @@
             Decoration="@Decoration.Underline"
             link="@DocumentationUrl"/>
     <Newline/>
-    <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
-        <SyntaxHighlighter Language="razor"
-                           Code="@ExampleCode"
-                           ShowLineNumbers="true"/>
-    </Panel>
+    <ViewHeightScrollable Scrollbar="new ()" LinesToRender="20">
+        <Panel Title="Code" Border="BoxBorder.Rounded" Expand="true">
+            <SyntaxHighlighter Language="razor"
+                               Code="@ExampleCode"
+                               ShowLineNumbers="true"/>
+        </Panel>
+    </ViewHeightScrollable>
+
     <Panel Border="BoxBorder.Double" Title="Overlays operating menu:" TitleColor="Color.Orange1"
            BorderColor="Color.Grey">
         <Rows>

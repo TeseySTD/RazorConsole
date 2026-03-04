@@ -56,6 +56,7 @@ public static class RazorConsoleServiceCollectionExtensions
         services.TryAddSingleton<MarkdownRenderingService>();
         services.TryAddSingleton<IConsoleInput, ConsoleInput>();
         services.TryAddSingleton<TerminalMonitor>();
+        services.TryAddSingleton<ScrollableLayoutCoordinator>();
 
         // Register translation middlewares in order of priority
         // Overlay catcher
@@ -96,6 +97,7 @@ public static class RazorConsoleServiceCollectionExtensions
         services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.PadderElementTranslator>();
         services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.AlignElementTranslator>();
         services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.ScrollableTranslator>();
+        services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.ViewHeightScrollableTranslator>();
 
         // Special elements (must be before generic HTML elements)
         services.AddSingleton<ITranslationMiddleware, Rendering.Translation.Translators.FigletElementTranslator>();
