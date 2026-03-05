@@ -13,13 +13,11 @@ namespace RazorConsole.Core.Focus;
 public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 {
     private readonly IFocusEventDispatcher? _eventDispatcher;
-#if NET9_0_OR_GREATER
-    private readonly Lock _sync = new();
-#else
     private readonly object _sync = new();
-#endif
     private List<FocusTarget> _focusTargets = new();
     private int _currentIndex = -1;
+    private string? _pendingFocusKey;
+    private bool _hasPendingFocusRetry;
     private ConsoleLiveDisplayContext? _context;
     private CancellationTokenSource? _sessionCts;
 
@@ -50,11 +48,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
     {
         get
         {
-#if NET9_0_OR_GREATER
-            using (_sync.EnterScope())
-#else
             lock (_sync)
-#endif
             {
                 return _focusTargets.Count > 0;
             }
@@ -76,11 +70,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
     /// <returns><see langword="true"/> when a focus target is active; otherwise <see langword="false"/>.</returns>
     internal bool TryGetFocusedTarget(out FocusTarget? snapshot)
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             if (_currentIndex < 0 || _currentIndex >= _focusTargets.Count)
             {
@@ -116,11 +106,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
         FocusTarget? initialFocus = null;
 
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             ResetState_NoLock();
 
@@ -182,11 +168,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         previousTarget = null;
         nextTarget = null;
 
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             if (_focusTargets.Count == 0)
             {
@@ -217,10 +199,15 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
     /// <summary>
     /// Attempts to focus the target that matches the supplied key.
+    /// If the target does not exist in the current snapshot, the request is stored and retried
+    /// on the next snapshot update only.
     /// </summary>
     /// <param name="key">Focus key to activate.</param>
     /// <param name="token">Cancellation token.</param>
-    /// <returns><see langword="true"/> when focus changed; otherwise <see langword="false"/>.</returns>
+    /// <returns>
+    /// <see langword="true"/> when focus changes immediately; otherwise <see langword="false"/>.
+    /// A <see langword="false"/> result can indicate the key was queued for a one-shot deferred focus retry.
+    /// </returns>
     public async Task<bool> FocusAsync(string key, CancellationToken token = default)
     {
         if (string.IsNullOrWhiteSpace(key))
@@ -231,25 +218,27 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         FocusTarget? previousTarget = null;
         FocusTarget? target;
 
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             if (_focusTargets.Count == 0)
             {
+                _pendingFocusKey = key;
+                _hasPendingFocusRetry = true;
                 return false;
             }
 
             var index = _focusTargets.FindIndex(t => string.Equals(t.Key, key, StringComparison.Ordinal));
             if (index < 0)
             {
+                _pendingFocusKey = key;
+                _hasPendingFocusRetry = true;
                 return false;
             }
 
             if (_currentIndex == index)
             {
+                _pendingFocusKey = null;
+                _hasPendingFocusRetry = false;
                 return false;
             }
 
@@ -260,6 +249,8 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
             _currentIndex = index;
             CurrentFocusKey = _focusTargets[index].Key;
+            _pendingFocusKey = null;
+            _hasPendingFocusRetry = false;
             target = _focusTargets[index];
         }
 
@@ -269,11 +260,7 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
     internal void EndSession(ConsoleLiveDisplayContext context)
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             if (!ReferenceEquals(_context, context))
             {
@@ -339,16 +326,14 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
         _sessionCts = null;
         _focusTargets = new List<FocusTarget>();
         _currentIndex = -1;
+        _pendingFocusKey = null;
+        _hasPendingFocusRetry = false;
         CurrentFocusKey = null;
     }
 
     private FocusTarget? UpdateFocusTargets(ConsoleRenderer.RenderSnapshot view)
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
         lock (_sync)
-#endif
         {
             return UpdateFocusTargets_NoLock(view);
         }
@@ -492,27 +477,71 @@ public sealed class FocusManager : IObserver<ConsoleRenderer.RenderSnapshot>
 
     void IObserver<ConsoleRenderer.RenderSnapshot>.OnNext(ConsoleRenderer.RenderSnapshot value)
     {
-#if NET9_0_OR_GREATER
-        using (_sync.EnterScope())
-#else
+        FocusTarget? previousFocusTarget;
+        FocusTarget? newFocus;
+        FocusTarget? pendingFocusTarget = null;
+        CancellationToken sessionToken;
+
         lock (_sync)
-#endif
         {
-            FocusTarget? previousFocusTarget = _currentIndex >= 0 ? _focusTargets[_currentIndex] : null;
+            previousFocusTarget = _currentIndex >= 0 ? _focusTargets[_currentIndex] : null;
+            sessionToken = _sessionCts?.Token ?? CancellationToken.None;
 
-            if (UpdateFocusTargets_NoLock(value) is not { } newFocus)
+            newFocus = UpdateFocusTargets_NoLock(value);
+            if (_hasPendingFocusRetry && !string.IsNullOrWhiteSpace(_pendingFocusKey))
             {
-                return;
+                var pendingKey = _pendingFocusKey;
+                var pendingIndex = _focusTargets.FindIndex(t => string.Equals(t.Key, pendingKey, StringComparison.Ordinal));
+                if (pendingIndex >= 0 && pendingIndex != _currentIndex)
+                {
+                    previousFocusTarget = _currentIndex >= 0 && _currentIndex < _focusTargets.Count
+                        ? _focusTargets[_currentIndex]
+                        : null;
+                    _currentIndex = pendingIndex;
+                    CurrentFocusKey = _focusTargets[pendingIndex].Key;
+                    pendingFocusTarget = _focusTargets[pendingIndex];
+                    _pendingFocusKey = null;
+                    _hasPendingFocusRetry = false;
+                }
+                else if (pendingIndex >= 0)
+                {
+                    _pendingFocusKey = null;
+                    _hasPendingFocusRetry = false;
+                }
+                else
+                {
+                    _pendingFocusKey = null;
+                    _hasPendingFocusRetry = false;
+                }
             }
+        }
 
-            if (previousFocusTarget?.Key != newFocus.Key)
+        if (pendingFocusTarget is not null)
+        {
+            if (previousFocusTarget?.Key != pendingFocusTarget.Key)
             {
-                TriggerFocusChangedAsync(previousFocusTarget, newFocus, _sessionCts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+                TriggerFocusChangedAsync(previousFocusTarget, pendingFocusTarget, sessionToken).ConfigureAwait(false);
             }
             else
             {
-                TriggerFocusChangedAsync(null, newFocus, _sessionCts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+                TriggerFocusChangedAsync(null, pendingFocusTarget, sessionToken).ConfigureAwait(false);
             }
+
+            return;
+        }
+
+        if (newFocus is null)
+        {
+            return;
+        }
+
+        if (previousFocusTarget?.Key != newFocus.Key)
+        {
+            TriggerFocusChangedAsync(previousFocusTarget, newFocus, sessionToken).ConfigureAwait(false);
+        }
+        else
+        {
+            TriggerFocusChangedAsync(null, newFocus, sessionToken).ConfigureAwait(false);
         }
     }
 
