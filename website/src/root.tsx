@@ -45,6 +45,7 @@ export default function Root() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://api.github.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.github.com" />
+        <link rel="llms" href="llms.txt" title="AI Documentation"/>
         <Meta />
         <Links />
       </head>

@@ -1,5 +1,8 @@
 import { Link, useLocation } from "react-router-dom"
-import { Github, Package, MessageCircle, Heart, Bug, BookOpen, Code, Gem } from "lucide-react"
+import { 
+  Github, Package, MessageCircle, Heart, Bug, 
+  BookOpen, Code, Gem, Bot, Sparkles 
+} from "lucide-react"
 
 export function Footer() {
   const location = useLocation()
@@ -110,6 +113,25 @@ export function Footer() {
                   ariaLabel="Browse API reference"
                 >
                   API Reference
+                </FooterLink>
+              </li>
+              {/* AI Optimized Docs */}
+              <li>
+                <FooterLink 
+                  href="/llms.txt" 
+                  icon={Bot}
+                  ariaLabel="AI-optimized documentation (llms.txt)"
+                >
+                  AI Documentation
+                </FooterLink>
+              </li>
+              <li>
+                <FooterLink 
+                  href="/llms-full.txt" 
+                  icon={Sparkles}
+                  ariaLabel="Full AI-optimized documentation (llms-full.txt)"
+                >
+                  Full AI Docs
                 </FooterLink>
               </li>
               <li>
