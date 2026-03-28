@@ -17,6 +17,7 @@ export async function loader() {
 }
 export default function Root() {
   useThemeEffect();
+  const baseUrl = import.meta.env.BASE_URL;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -45,6 +46,16 @@ export default function Root() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://api.github.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.github.com" />
+        <link
+          rel="llms"
+          href={`${baseUrl}llms.txt`}
+          title="AI Documentation"
+        />
+        <link
+          rel="llms-full"
+          href={`${baseUrl}llms-full.txt`}
+          title="Full AI Documentation"
+        />
         <Meta />
         <Links />
       </head>
