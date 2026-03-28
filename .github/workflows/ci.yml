@@ -111,6 +111,10 @@ jobs:
           VITE_BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '/RazorConsole/' || '/' }}
         working-directory: website
 
+      - name: Create 404 fallback
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: cp website/build/client/RazorConsole/index.html website/build/client/RazorConsole/404.html
+
       - name: Upload preview artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
@@ -127,7 +131,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: website/build/client
+          path: website/build/client/RazorConsole
 
   deploy-pages:
     name: Deploy to GitHub Pages
