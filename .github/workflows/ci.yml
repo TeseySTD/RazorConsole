@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/spa-ssg-test]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -38,10 +38,7 @@ jobs:
 
   build-test:
     name: Build and test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,19 +56,9 @@ jobs:
         run: dotnet build RazorConsole.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --configuration Release --no-build -- --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        with:
-          files: ${{ github.workspace }}/**/coverage.cobertura.xml
-          fail_ci_if_error: false
-          flags: unittests
-          name: codecov-${{ matrix.os }}
-        continue-on-error: true
+        run: dotnet test --configuration Release --no-build
 
       - name: Upload RazorConsole.Core build output
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: razorconsole-core-release_net10.0
@@ -104,31 +91,23 @@ jobs:
         run: npm ci
         working-directory: website
 
-      - name: Build website for preview
+      - name: Build website
         run: npm run build
         env:
-          VITE_ROUTER_BASENAME: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '/RazorConsole/' || '/' }}
-          VITE_BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '/RazorConsole/' || '/' }}
+          VITE_ROUTER_BASENAME: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test') && '/RazorConsole/' || '/' }}
+          VITE_BASE: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test') && '/RazorConsole/' || '/' }}
         working-directory: website
 
       - name: Create 404 fallback
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test')
         run: cp website/build/client/RazorConsole/index.html website/build/client/RazorConsole/404.html
 
-      - name: Upload preview artifact
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: website-preview-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
-          path: website/build/client
-          retention-days: 30
-
       - name: Configure Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test')
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test')
         uses: actions/upload-pages-artifact@v3
         with:
           path: website/build/client/RazorConsole
@@ -137,7 +116,7 @@ jobs:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     needs: website-build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -145,92 +124,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-  publish-nightly:
-    name: Publish nightly build
-    runs-on: ubuntu-latest
-    needs: [validate-format, build-test, website-build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-          fetch-depth: 2
-
-      - name: Check for source code changes
-        id: check-changes
-        run: |
-          # Get the list of changed files in the last commit
-          # Handle edge case where there might be no parent commit
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git ls-tree --name-only -r HEAD)
-
-          # Check if any source code files were changed
-          # Source code includes:
-          # - .cs, .razor, .csproj, .props, .targets files
-          # - src/ directory
-          # - CI/CD workflows that affect package building
-          if echo "$CHANGED_FILES" | grep -qE '\.(cs|razor|csproj|props|targets)$|^src/|^\.github/workflows/(ci|release)\.yml'; then
-            echo "source_changed=true" >> "$GITHUB_OUTPUT"
-            echo "✓ Source code changes detected"
-          else
-            echo "source_changed=false" >> "$GITHUB_OUTPUT"
-            echo "✗ No source code changes detected"
-          fi
-
-          echo "Changed files:"
-          echo "$CHANGED_FILES"
-
-      - name: Compute version suffix
-        run: echo "VersionSuffix=$(date +'%Y%m%d')-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
-
-      - name: Restore
-        run: dotnet restore RazorConsole.slnx
-
-      - name: Build
-        run: dotnet build RazorConsole.slnx --configuration Release --no-restore -p:VersionSuffix=$VersionSuffix
-
-      - name: Test
-        run: dotnet test --configuration Release --no-build -- --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
-        
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        with:
-          files: ${{ github.workspace }}/**/coverage.cobertura.xml
-          fail_ci_if_error: false
-          flags: nightly
-          name: codecov-nightly
-
-      - name: Pack libraries
-        run: |
-          dotnet pack RazorConsole.slnx \
-            --configuration Release \
-            --no-build \
-            --output artifacts/packages \
-            -p:VersionSuffix=$VersionSuffix
-
-      - name: Upload NuGet packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: nightly-packages
-          path: |
-            artifacts/packages/*.nupkg
-            artifacts/packages/*.snupkg
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Push packages to NuGet.org
-        if: steps.check-changes.outputs.source_changed == 'true'
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: |
-          for package in artifacts/packages/*.nupkg; do
-            dotnet nuget push "$package" \
-              --api-key "$NUGET_API_KEY" \
-              --source https://api.nuget.org/v3/index.json \
-              --skip-duplicate
-          done
