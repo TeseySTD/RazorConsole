@@ -50,34 +50,8 @@ export default function Root() {
       </head>
       <body id="root">
         <Outlet />
-
         <ScrollRestoration />
         <Scripts />
-
-        {/* GitHub Pages SPA redirect script */}
-        <script
-          type="text/javascript"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function (l) {
-                if (l.search[1] === "/") {
-                  var decoded = l.search
-                    .slice(1)
-                    .split("&")
-                    .map(function (s) { return s.replace(/~and~/g, "&"); })
-                    .join("?");
-                  var finalUrl = l.pathname.slice(0, -1) + decoded + l.hash;
-                  console.log("Final replaced location:", {
-                    original: l.href,
-                    decoded: decoded,
-                    finalUrl: finalUrl,
-                  });
-                  window.history.replaceState(null, null, finalUrl);
-                }
-              })(window.location);
-            `,
-          }}
-        />
       </body>
     </html>
   );

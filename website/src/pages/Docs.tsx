@@ -46,9 +46,9 @@ function extractHeadings(markdown: string): Heading[] {
       const level = match[1].length
       const rawTitle = match[2].trim()
       const cleanTitle = rawTitle
-        .replace(/`([^`]+)`/g, "$1")
-        .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
-        .replace(/[*_]{1,2}([^*_]+)[*_]{1,2}/g, "$1")
+        .replace(/`([^`]+)`/g, "$1") // Unwrap `code` to code
+        .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1") // Unwrap [link](url) to link
+        .replace(/[*_]{1,2}([^*_]+)[*_]{1,2}/g, "$1") // Unwrap **bold** to bold
 
       headings.push({ level, title: rawTitle, id: slugger.slug(cleanTitle) })
     }
