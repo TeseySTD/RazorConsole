@@ -94,8 +94,8 @@ jobs:
       - name: Build website
         run: npm run build
         env:
-          VITE_ROUTER_BASENAME: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test') && '/RazorConsole/' || '/' }}
-          VITE_BASE: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test') && '/RazorConsole/' || '/' }}
+          VITE_ROUTER_BASENAME: ${{ github.event_name == 'push' && github.ref == 'refs/heads/fix/spa-ssg-test' && format('/{0}/', github.event.repository.name) || '/' }}
+          VITE_BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/fix/spa-ssg-test' && format('/{0}/', github.event.repository.name) || '/' }}
         working-directory: website
 
       - name: Prepare artifact
