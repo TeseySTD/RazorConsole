@@ -4,7 +4,10 @@ import * as path from 'node:path';
 
 async function generate() {
     const config = await resolveConfig({}, 'build');
-    const SITE_URL = config.env.VITE_SITE_URL || '';
+    const SITE_URL = (config.env.VITE_SITE_URL || '').replace(/\/$/, '');
+    const BASE_PATH = config.base.replace(/\/$/, '');
+    const FULL_BASE_URL = `${SITE_URL}${BASE_PATH}`;
+
     const DIST_DIR = path.resolve(config.root, config.build.outDir || 'dist');
 
     console.log(`🤖 Start to generate llms docs...`);
@@ -25,7 +28,7 @@ async function generate() {
         indexContent += `## Documentation Guides\n\n`;
         for (const doc of docTopicIds) {
             const route = `/docs/${doc.id}`;
-            indexContent += `- [${doc.title}](${SITE_URL}${route})\n`;
+            indexContent += `- [${doc.title}](${FULL_BASE_URL}${route})\n`;
 
             const relativePath = doc.filePath.replace(/^website\//, '');
             const absolutePath = path.resolve(config.root, relativePath);
@@ -39,8 +42,11 @@ async function generate() {
         indexContent += `\n## Components API\n\n`;
         for (const comp of components) {
             const route = `/components/${comp.name.toLowerCase()}`;
-            indexContent += `- [${comp.name}](${SITE_URL}${route}): ${comp.description}\n`;
+            indexContent += `- [${comp.name}](${FULL_BASE_URL}${route}): ${comp.description}\n`;
             fullContent += `\n---\n\n# Component: ${comp.name}\n\n${comp.description}\n\n`;
+            if (comp.examples) {
+                fullContent += `### Usage Example:\n\n\`\`\`razor\n${comp.examples}\n\`\`\`\n`;
+            }
         }
 
         if (fs.existsSync(DIST_DIR)) {
@@ -48,7 +54,7 @@ async function generate() {
             fs.writeFileSync(path.join(DIST_DIR, 'llms-full.txt'), fullContent);
         }
 
-        console.log('✅ llms.txt generated successfully via Vite SSR Bridge.');
+        console.log(`✅ AI Assets ready at ${FULL_BASE_URL}/llms.txt`);
 
     } catch (e) {
         console.error('❌ Failed to generate documentation:', e);

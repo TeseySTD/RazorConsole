@@ -118,7 +118,7 @@ export function Footer() {
               {/* AI Optimized Docs */}
               <li>
                 <FooterLink 
-                  href="/llms.txt" 
+                  href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/llms.txt`} 
                   icon={Bot}
                   ariaLabel="AI-optimized documentation (llms.txt)"
                 >
@@ -127,7 +127,7 @@ export function Footer() {
               </li>
               <li>
                 <FooterLink 
-                  href="/llms-full.txt" 
+                  href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/llms-full.txt`} 
                   icon={Sparkles}
                   ariaLabel="Full AI-optimized documentation (llms-full.txt)"
                 >
