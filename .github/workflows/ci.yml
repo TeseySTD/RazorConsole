@@ -98,9 +98,16 @@ jobs:
           VITE_BASE: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test') && '/RazorConsole/' || '/' }}
         working-directory: website
 
-      - name: Create 404 fallback
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test')
-        run: cp website/build/client/RazorConsole/index.html website/build/client/RazorConsole/404.html
+      - name: Prepare artifact
+        run: |
+          cp -r website/build/client/${{ github.event.repository.name }}/* website/build/client/ || true
+          
+          # 404.html for SPA-routing
+          cp website/build/client/index.html website/build/client/404.html
+          
+          rm -rf website/build/client/${{ github.event.repository.name }}
+          
+          touch website/build/client/.nojekyll
 
       - name: Configure Pages
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test')
@@ -110,7 +117,7 @@ jobs:
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/spa-ssg-test')
         uses: actions/upload-pages-artifact@v3
         with:
-          path: website/build/client/RazorConsole
+          path: website/build/client
 
   deploy-pages:
     name: Deploy to GitHub Pages
