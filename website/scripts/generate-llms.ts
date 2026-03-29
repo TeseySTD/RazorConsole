@@ -45,8 +45,6 @@ async function generate() {
         indexContent += `\n## Components API\n\n`;
         for (const comp of components) {
             const route = `/components/${comp.name.toLowerCase()}`;
-            indexContent += `- [${comp.name}](${FULL_BASE_URL}${route}): ${comp.description}\n`;
-            fullContent += `\n---\n\n# Component: ${comp.name}\n\n${comp.description}\n\n`;
             const cleanXref = (text: string) => {
                 return text.replace(/<xref href=".*?" data-throw-if-not-resolved="false"><\/xref>/g, (match) => {
                     const parts = match.match(/href="(.*?)"/);
@@ -54,53 +52,50 @@ async function generate() {
                 }).replace(/<code>(.*?)<\/code>/g, '`$1`');
             };
 
-            for (const comp of components) {
-                const route = `/components/${comp.name.toLowerCase()}`;
-                indexContent += `- [${comp.name}](${FULL_BASE_URL}${route}): ${comp.description}\n`;
-                fullContent += `\n---\n\n# Component: ${comp.name}\n\n${cleanXref(comp.description)}\n\n`;
+            indexContent += `- [${comp.name}](${FULL_BASE_URL}${route}): ${comp.description}\n`;
+            fullContent += `\n---\n\n# Component: ${comp.name}\n\n${cleanXref(comp.description)}\n\n`;
 
-                if (comp.parameters && comp.parameters.length > 0) {
-                    const headers = ['Name', 'Type', 'Default', 'Description'];
+            if (comp.parameters && comp.parameters.length > 0) {
+                const headers = ['Name', 'Type', 'Default', 'Description'];
 
-                    const rows = comp.parameters.map(p => [
-                        p.name || '',
-                        p.type || '',
-                        p.default || '-',
-                        cleanXref(p.description) || ''
-                    ]);
+                const rows = comp.parameters.map(p => [
+                    p.name || '',
+                    p.type || '',
+                    p.default || '-',
+                    cleanXref(p.description) || ''
+                ]);
 
-                    const widths = headers.map((h, i) =>
-                        Math.max(h.length, ...rows.map(row => row[i].length))
+                const widths = headers.map((h, i) =>
+                    Math.max(h.length, ...rows.map(row => row[i].length))
+                );
+
+                const formatRow = (data: string[]) =>
+                    `| ${data.map((val, i) => val.padEnd(widths[i])).join(' | ')} |\n`;
+
+                fullContent += `### Parameters:\n\n`;
+                fullContent += formatRow(headers);
+                fullContent += `| ${widths.map(w => '-'.repeat(w)).join(' | ')} |\n`;
+
+                for (const row of rows) {
+                    fullContent += formatRow(row);
+                }
+            }
+            if (comp.examples) {
+                const examplesArray = Array.isArray(comp.examples) ? comp.examples : [comp.examples];
+
+                for (const exampleFilename of examplesArray) {
+                    const examplePath = path.resolve(
+                        config.root,
+                        '../src/RazorConsole.Website/Components', // TODO: fix long relative path
+                        exampleFilename
                     );
 
-                    const formatRow = (data: string[]) =>
-                        `| ${data.map((val, i) => val.padEnd(widths[i])).join(' | ')} |\n`;
+                    if (fs.existsSync(examplePath)) {
+                        const exampleCode = fs.readFileSync(examplePath, 'utf8');
 
-                    fullContent += `### Parameters:\n\n`;
-                    fullContent += formatRow(headers); 
-                    fullContent += `| ${widths.map(w => '-'.repeat(w)).join(' | ')} |\n`; 
-
-                    for (const row of rows) {
-                        fullContent += formatRow(row); 
-                    }
-                }
-                if (comp.examples) {
-                    const examplesArray = Array.isArray(comp.examples) ? comp.examples : [comp.examples];
-
-                    for (const exampleFilename of examplesArray) {
-                        const examplePath = path.resolve(
-                            config.root,
-                            '../src/RazorConsole.Website/Components', // TODO: fix long relative path
-                            exampleFilename
-                        );
-
-                        if (fs.existsSync(examplePath)) {
-                            const exampleCode = fs.readFileSync(examplePath, 'utf8');
-
-                            fullContent += `### Usage Example (${exampleFilename}):\n\n\`\`\`razor\n${exampleCode}\n\`\`\`\n`;
-                        } else {
-                            console.warn(`Example not found at: ${examplePath}`);
-                        }
+                        fullContent += `### Usage Example (${exampleFilename}):\n\n\`\`\`razor\n${exampleCode}\n\`\`\`\n`;
+                    } else {
+                        console.warn(`Example not found at: ${examplePath}`);
                     }
                 }
             }
