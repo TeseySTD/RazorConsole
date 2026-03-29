@@ -99,9 +99,6 @@ async function generate() {
                     }
                 }
             }
-            if (comp.examples) {
-                fullContent += `### Usage Example:\n\n\`\`\`razor\n${comp.examples}\n\`\`\`\n`;
-            }
         }
 
         if (fs.existsSync(DIST_DIR)) {
