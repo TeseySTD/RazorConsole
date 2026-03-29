@@ -1,6 +1,6 @@
 ﻿import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki"
 import { CopyButton } from "@/components/ui/CopyButton"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 let globalHighlighter: Highlighter | null = null
 
@@ -33,21 +33,24 @@ interface CodeBlockProps {
 }
 
 function CodeBlock({ code, language = "csharp", showCopy = false, className = "" }: CodeBlockProps) {
-  let staticHtml = ""
-  if (globalHighlighter) {
-    staticHtml = generateHtml(code.trim(), language)  
-  }
+  const html = useMemo(() => {
+    if (globalHighlighter) {
+      return generateHtml(code.trim(), language);
+    }
+    return "";
+  }, [code, language]);
 
-  const [html, setHtml] = useState(staticHtml);
+  const [asyncHtml, setAsyncHtml] = useState("");
 
   useEffect(() => {
     if (!globalHighlighter) {
       initHighlighter().then(() => {
-        const newHtml = generateHtml(code.trim(), language);
-        setHtml(newHtml);
-      })
+        setAsyncHtml(generateHtml(code.trim(), language));
+      });
     }
-  }, [code, language])
+  }, [code, language]);
+
+  const finalHtml = html || asyncHtml;
 
   return (
     <div
@@ -61,7 +64,7 @@ function CodeBlock({ code, language = "csharp", showCopy = false, className = ""
 
       <div
         className="text-sm leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: html || `<pre><code>${code}</code></pre>` }}
+        dangerouslySetInnerHTML={{ __html: finalHtml || `<pre><code>${code}</code></pre>` }}
       />
     </div>
   )
