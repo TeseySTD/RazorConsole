@@ -1,7 +1,7 @@
 import { Code2, ExternalLink } from "lucide-react"
 import { Link } from "react-router-dom"
 
-export default function ApiSection({ componentName }: { componentName: string }) {
+export default function ApiSection({ apiId, componentName }: { apiId: string, componentName: string }) {
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
@@ -12,7 +12,7 @@ export default function ApiSection({ componentName }: { componentName: string })
       </div>
       <div className="flex items-center gap-3">
         <Link
-          to={`/api/RazorConsole.Components.${componentName}`}
+          to={`/api/RazorConsole.Components.${apiId}`}
           className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20"
         >
           <code className="font-mono text-sm font-medium text-slate-900 dark:text-slate-100">

@@ -38,7 +38,7 @@ export const componentMetadata: Record<string, Partial<ComponentInfo>> = {
     description: "Arranges children in a grid layout.",
     examples: ["Grid_1.razor"],
   },
-  ModalWindow:{
+  ModalWindow: {
     category: "Display",
     description: "Renders a modal in a dialog.",
     examples: ["ModalWindow_1.razor"],
@@ -75,7 +75,7 @@ export const componentMetadata: Record<string, Partial<ComponentInfo>> = {
   },
   ViewHeightScrollable: {
     category: "Layout",
-    description: "Provides scrollable content area that scrolls throught physical lines of any content. Has all functionalities of default Scrollable.",
+    description: "Provides scrollable content area that scrolls through physical lines of any content. Has all functionalities of default Scrollable.",
     examples: ["ViewHeightScrollable_1.razor"],
   },
   Select: {
@@ -202,87 +202,63 @@ const docfxNameOverrides: Record<string, string> = {
   Table: "SpectreTable",
 }
 
-function resolveDocfxItemName(componentName: string): string[] {
-  const overrideName = docfxNameOverrides[componentName] ?? componentName
-  const base = `RazorConsole.Components.${overrideName}`
-  return [base, `${base}\`1`, `${base}\`2`]
+function findDocfxItem(componentName: string): DocfxApiItem | undefined {
+  const target = docfxNameOverrides[componentName] ?? componentName;
+  const fullName = `RazorConsole.Components.${target}`;
+
+  const directMatch = apiItems[`${fullName}-1`] || apiItems[`${fullName}-2`] || apiItems[fullName]; // Check generics first
+  if (directMatch) return directMatch;
+
+  // Fallback to find the generic item
+  return Object.values(apiItems).find(item => {
+    if (!item.uid) return false;
+    const cleanUid = item.uid.replace(/-\d+$/, "");
+    return cleanUid === fullName || cleanUid.endsWith(`.${target}`);
+  });
 }
 
 function isParameterMember(member: Pick<DocfxApiMember, "type" | "attributes">): boolean {
-  if (member.type !== "Property") {
-    return false
-  }
-
-  const attributes = member.attributes ?? []
-  return attributes.some((attr) => {
-    if (!attr.type) {
-      return false
-    }
-    return (
-      attr.type.endsWith(".ParameterAttribute") ||
-      attr.type.endsWith(".CascadingParameterAttribute")
-    )
-  })
+  if (member.type !== "Property") return false;
+  return (member.attributes ?? []).some(attr => 
+    attr.type?.endsWith(".ParameterAttribute") || 
+    attr.type?.endsWith(".CascadingParameterAttribute")
+  );
 }
 
 function extractParameters(componentName: string, docfxItem: DocfxApiItem | undefined) {
-  if (!docfxItem?.members) {
-    return undefined
-  }
+  if (!docfxItem?.members) return undefined;
 
   const parameters = docfxItem.members
     .filter(isParameterMember)
-    .map((member) => {
-      const paramName = member.name
-      const overrideType = typeOverrides[componentName]?.[paramName]
-      const inferredType = member.syntax?.return?.type ?? member.syntax?.content ?? "object"
-
+    .map(member => {
+      const overrideType = typeOverrides[componentName]?.[member.name];
+      const inferredType = member.syntax?.return?.type ?? member.syntax?.content ?? "object";
       return {
-        name: paramName,
+        name: member.name,
         type: overrideType ?? inferredType,
         description: member.summary ?? "",
-      }
+      };
     })
-    .filter((param) => param.name)
+    .filter(p => p.name);
 
-  return parameters.length > 0 ? parameters : undefined
+  return parameters.length > 0 ? parameters : undefined;
 }
 
 export function generateComponents(): ComponentInfo[] {
-  const components: ComponentInfo[] = []
+  return Object.keys(componentMetadata).map(componentName => {
+    const metadata = componentMetadata[componentName];
+    const docfxItem = findDocfxItem(componentName);
+    
+    const apiId = docfxItem?.uid?.replace("RazorConsole.Components.", "") ?? componentName;
 
-  // Iterate through components that have metadata
-  Object.keys(componentMetadata).forEach((componentName) => {
-    const metadata = componentMetadata[componentName]
-
-    const candidateItem = resolveDocfxItemName(componentName)
-      .map((candidate) => apiItems[candidate])
-      .find((item) => item != null)
-
-    const overrideName = docfxNameOverrides[componentName] ?? componentName
-
-    const docfxItem =
-      candidateItem ??
-      Object.values(apiItems).find((item) => {
-        if (!item.namespace?.startsWith("RazorConsole.Components")) {
-          return false
-        }
-
-        const simpleName = item.name.replace(/`\d+$/, "")
-        return simpleName === overrideName
-      })
-
-    const parameters = extractParameters(componentName, docfxItem)
-
-    components.push({
+    return {
       name: componentName,
+      apiId: apiId,
       description: metadata.description || docfxItem?.summary || `${componentName} component`,
       category: metadata.category || "Utilities",
       examples: metadata.examples || [],
-      parameters,
+      parameters: extractParameters(componentName, docfxItem),
       previewHeight: metadata.previewHeight,
-    })
-  })
-
-  return components
+    }
+  });
 }
