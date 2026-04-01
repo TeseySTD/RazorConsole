@@ -107,9 +107,22 @@ jobs:
       - name: Build website for preview
         run: npm run build
         env:
-          VITE_ROUTER_BASENAME: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '/RazorConsole/' || '/' }}
-          VITE_BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '/RazorConsole/' || '/' }}
+          VITE_ROUTER_BASENAME: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('/{0}/', github.event.repository.name) || '/' }}
+          VITE_BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('/{0}/', github.event.repository.name) || '/' }}
         working-directory: website
+
+      - name: Prepare artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # Move all prerendered pages to build/client
+          cp -r website/build/client/${{ github.event.repository.name }}/* website/build/client/ || true
+          
+          # Create 404 page 
+          cp website/build/client/index.html website/build/client/404.html
+          
+          rm -rf website/build/client/${{ github.event.repository.name }}
+          
+          touch website/build/client/.nojekyll
 
       - name: Upload preview artifact
         if: github.event_name == 'pull_request'

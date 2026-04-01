@@ -59,7 +59,7 @@ export default function ComponentDetail() {
       )}
 
       {/* API */}
-      <ApiSection componentName={component.name} />
+      <ApiSection apiId={component.apiId} componentName={component.name} />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import type { Category } from "./category"
 
 export interface ComponentInfo {
+  apiId: string
   name: string
   description: string
   category: Category
