@@ -1,30 +1,28 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
-using Spectre.Console;
 using Spectre.Console.Rendering;
 using static RazorConsole.Core.Utilities.AnsiSequences;
 
 namespace RazorConsole.Core.Renderables;
 
-internal class DiffRenderable : Renderable
+internal class DiffRenderable
+    : Renderable
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
-    private readonly IAnsiConsole _console;
     private IRenderable _renderable;
+    private readonly bool _hideCursor;
     private SegmentShape _shape = new(0, 0);
     private List<SegmentLine> _previousLines = new();
     private int _lastMaxWidth = -1;
-
-    public bool DidOverflow { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the DiffRenderable class to display the differences between two renderable objects
     /// using the specified console.
     /// </summary>
-    public DiffRenderable(IAnsiConsole console, IRenderable renderable)
+    public DiffRenderable(IRenderable renderable, bool hideCursor)
     {
         _renderable = renderable;
-        _console = console;
+        _hideCursor = hideCursor;
     }
 
     public void UpdateRenderable(IRenderable renderable)
@@ -46,7 +44,6 @@ internal class DiffRenderable : Renderable
         try
         {
             yield return Segment.Control(RM(DECTCEM));
-            DidOverflow = false;
 
             bool widthChanged = _lastMaxWidth != -1 && _lastMaxWidth != maxWidth;
             _lastMaxWidth = maxWidth;
@@ -55,15 +52,10 @@ internal class DiffRenderable : Renderable
             var segmentLines = Segment.SplitLines(segments);
             var shape = SegmentShape.Calculate(options, segmentLines);
 
-            // Check for overflow
-            if (shape.Height > options.ConsoleSize.Height || shape.Width > options.ConsoleSize.Width)
-            {
-                DidOverflow = true;
-            }
-
-            var previousLines = _previousLines ?? EmptyLines;
+            var previousLines = _previousLines;
             var totalLines = segmentLines.Count;
-            var renderFromLine = 0;
+
+            int renderFromLine;
             for (renderFromLine = 0; renderFromLine < totalLines; renderFromLine++)
             {
                 var line = segmentLines[renderFromLine];
@@ -142,7 +134,11 @@ internal class DiffRenderable : Renderable
             // Update the previous lines for next comparison
             _previousLines = CloneLines(segmentLines);
             _shape = shape;
-            yield return Segment.Control(SM(DECTCEM));
+
+            if (!_hideCursor)
+            {
+                yield return Segment.Control(SM(DECTCEM));
+            }
         }
         finally
         {
