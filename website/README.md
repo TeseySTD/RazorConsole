@@ -66,7 +66,9 @@ npm run preview
 ```
 website/
 ├── scripts/                # Build orchestration scripts
-│   └── build-wasm.js       # Compiles RazorConsole.Website (.NET) to WASM for browser previews
+│   ├── build-wasm.js       # Compiles RazorConsole.Website (.NET) to WASM for browser previews
+│   ├── generate-llms.ts    # Generates AI-friendly documentation (llms.txt, llms-full.txt)
+│   └── generate-sitemap.ts # Generates SEO sitemap.xml with hierarchical priorities
 ├── src/
 │   ├── assets/             # Static assets (images, global icons)
 │   ├── components/         # Reusable React components
@@ -93,7 +95,7 @@ website/
 │   ├── root.tsx            # Root Layout: Meta tags, Global Scripts, Theme initialization
 │   ├── routes.ts           # Unified route definitions for React Router v7
 │   └── index.css           # Global styles and Tailwind directives
-├── public/                 # Static files (favicons, robots.txt, 404.html)
+├── public/                 # Static files 
 ├── react-router.config.ts  # SSG Configuration (Routes to pre-render)
 └── vite.config.ts          # Build tool config (Path aliases, plugins)
 ```
@@ -104,8 +106,22 @@ website/
 
 1.  **Extraction**: `docfx` scans the `RazorConsole.Core` project and outputs YAML files to `src/.docfx/`.
 2.  **Indexing**: `api-docs.ts` uses Vite's `import.meta.glob` to eager-load these YAML files.
-3.  **Sanitization**: During parsing, member UIDs (like `Scrollable`1` ) are converted to URL-friendly slugs (like  `Scrollable-1\`).
+3.  **Sanitization**: During parsing, member UIDs (like `Scrollable`1` ) are converted to URL-friendly slugs (like `Scrollable-1\`).
 4.  **Rendering**: `ApiDocs.tsx` uses route loaders to find and display the correct metadata based on the URL.
+
+### Metadata & SEO Generation (`build:metadata`)
+
+This stage is executed automatically after the main build (`postbuild`) to prepare the project for publication:
+
+1.  **AI Discovery (`llms.txt`)**: The script collects all guides and API components into a single, comprehensive plain text format. This allows AI tools (Cursor, GPT-4) to immediately obtain the context of the entire library.
+2.  **SEO Automation (`sitemap.xml`)**: Dynamically generates a website map using the same data sources as React Router. The script automatically sets scan priorities:
+    * **Home** — highest priority.
+    * **Components** — main functionality.
+    * **Docs** — tutorial guides.
+    * **API** — low-level technical details.
+3.  **Vite SSR Integration**: The scripts use `vite.ssrLoadModule` to guarantee a full response to generated requests without manual list updates.
+
+---
 
 ### Theming Strategy
 
@@ -118,7 +134,6 @@ Code previews are rendered at build-time using `Shiki`. It sets two theme color 
 The website is automatically deployed to GitHub Pages via **GitHub Actions**.
 
   - The build process injects the repository name as a `basename` (e.g., `/RazorConsole/`).
-  - A `404.html` fallback is generated to support SPA routing on static hosts.
 
 ## License
 
