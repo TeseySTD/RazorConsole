@@ -8,8 +8,9 @@
     "build": "npm run build:docfx && npm run build:wasm && tsc -b && react-router build && npm run build:metadata",
     "build:docfx": "dotnet tool restore && dotnet docfx metadata ../docfx/docfx.json",
     "build:wasm": "node scripts/build-wasm.js",
-    "build:metadata": "npm run gen:llms",
+    "build:metadata": "npm run gen:llms && npm run gen:sitemap",
     "gen:llms": "tsx scripts/generate-llms.ts",
+    "gen:sitemap": "tsx scripts/generate-sitemap.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write \"./src/**/*.{ts,tsx,js,jsx,json,css,md}\""
