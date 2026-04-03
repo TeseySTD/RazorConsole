@@ -109,6 +109,7 @@ jobs:
         env:
           VITE_ROUTER_BASENAME: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('/{0}/', github.event.repository.name) || '/' }}
           VITE_BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('/{0}/', github.event.repository.name) || '/' }}
+          VITE_SITE_URL: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('https://{0}.github.io', github.repository_owner) || 'https://razorconsole.github.io' }}
         working-directory: website
 
       - name: Prepare artifact
