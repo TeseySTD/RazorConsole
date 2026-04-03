@@ -43,6 +43,7 @@ export default function Root() {
         />
         <link rel="icon" type="image/svg+xml" href={`${baseUrl}razorconsole-icon.svg`} />
         <meta charSet="UTF-8" />
+        <meta name="google-site-verification" content="jF1dcSGbDQJm6UY_MriNs2wHdnEGr_M1wZKiVciIdf8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://api.github.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.github.com" />
