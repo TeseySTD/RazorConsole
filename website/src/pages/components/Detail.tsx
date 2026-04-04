@@ -9,12 +9,33 @@ import { useLoaderData } from "react-router";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data) return [{ title: "Component Not Found | RazorConsole" }];
-  
+
   const { component } = data;
+
+  const siteUrl = (import.meta.env.VITE_SITE_URL || '').replace(/\/$/, '');
+  const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const fullBaseUrl = `${siteUrl}${baseUrl}`;
+
+  const title = `${component.name} Component | RazorConsole`;
+  const description = component.description;
+  const ogImage = `${fullBaseUrl}/og/${component.name.toLowerCase()}.png`;
+
   return [
-    { title: `${component.name} Component | RazorConsole` },
-    { name: "description", content: component.description },
-    { property: "og:title", content: `${component.name} - RazorConsole Component` },
+    { title },
+    { name: "description", content: description },
+
+    // Open Graph / Facebook
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: `${fullBaseUrl}/components/${component.name.toLowerCase()}` },
+    { property: "og:title", content: component.name },
+    { property: "og:description", content: description },
+    { property: "og:image", content: ogImage },
+
+    // Twitter
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: component.name },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: ogImage },
   ];
 };
 
