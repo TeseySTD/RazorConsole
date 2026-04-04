@@ -95,7 +95,7 @@ async function generateOgImages() {
         const { createRuntimeAndGetExports } = await vite.ssrLoadModule('razor-console');
         const runtime = await createRuntimeAndGetExports({
             config: {
-                globalizationInvariant: true
+                globalizationInvariant: 'invariant'
             }
         });
 
