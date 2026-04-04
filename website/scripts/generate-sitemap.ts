@@ -1,6 +1,7 @@
 import { createServer, resolveConfig } from 'vite';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import pc from 'picocolors';
 import type { ComponentInfo } from '@/types/components/componentInfo';
 import type { TopicItem } from '@/types/docs/topicItem';
 
@@ -18,7 +19,7 @@ async function generateSitemap() {
     const apiPriority = '0.5';
     const apiFreq = 'monthly';
 
-    console.log(`[SITEMAP] Starting sitemap generation...`);
+    console.log(pc.cyan(`[SITEMAP] Initializing sitemap generation for ${FULL_BASE_URL}`));
 
     const vite = await createServer({
         server: { middlewareMode: true },
@@ -32,18 +33,24 @@ async function generateSitemap() {
 
         const lastMod = new Date().toISOString().split('T')[0];
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+        let urlCount = 0;
 
         const addUrl = (route: string, priority: string, freq: string) => {
             const url = `${FULL_BASE_URL}${route}`.replace(/([^:]\/)\/+/g, "$1");
             xml += `  <url>\n    <loc>${url}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>${freq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
+            console.log(pc.dim(`[SITEMAP] Added URL [Priority:${priority}]: ${route}`));
+            urlCount++;
         };
 
+        // Root
         addUrl('/', '1.0', 'daily');
 
+        // Components
         components.forEach(c => {
             addUrl(`/components/${c.name.toLowerCase()}`, componentPriority, componentFreq);
         });
 
+        // Documentation
         addUrl('/docs', docsPriority, docsFreq);
         docTopicIds.forEach(d => {
             addUrl(`/docs/${d.id}`, docsPriority, docsFreq);
@@ -52,6 +59,7 @@ async function generateSitemap() {
             addUrl(`/docs/${r.id}`, docsPriority, docsFreq);
         });
 
+        // API Reference
         addUrl('/api', apiPriority, apiFreq);
         Object.keys(apiItems).forEach(uid => {
             addUrl(`/api/${encodeURIComponent(uid)}`, apiPriority, apiFreq);
@@ -60,9 +68,14 @@ async function generateSitemap() {
         xml += `</urlset>`;
 
         if (!fs.existsSync(DIST_DIR)) fs.mkdirSync(DIST_DIR, { recursive: true });
+        
         fs.writeFileSync(path.join(DIST_DIR, 'sitemap.xml'), xml);
-        console.log(`[SITEMAP] Sitemap is generated in ${DIST_DIR}`);
-    } finally {
+        console.log(pc.green(`[SITEMAP] Successfully generated sitemap.xml with ${urlCount} URLs`));
+    }
+    catch(e){
+        console.error(pc.red(`[SITEMAP] Generation failed: ${e}`));
+    }
+    finally {
         await vite.close();
     }
 }

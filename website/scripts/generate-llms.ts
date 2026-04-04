@@ -1,9 +1,9 @@
 import { createServer, resolveConfig } from 'vite';
 import type { ComponentInfo } from '../src/types/components/componentInfo.ts';
 import type { TopicItem } from '../src/types/docs/topicItem.ts';
-
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import pc from 'picocolors';
 
 async function generate() {
     const config = await resolveConfig({}, 'build');
@@ -16,7 +16,7 @@ async function generate() {
     const RAW_DOCS_DIR = path.join(RAW_DIR, 'docs');
     const RAW_COMPS_DIR = path.join(RAW_DIR, 'components');
 
-    console.log(`[LLMS] Starting LLMS generation...`);
+    console.log(pc.cyan(`[LLMS] Starting documentation generation...`));
 
     const vite = await createServer({
         server: { middlewareMode: true },
@@ -28,7 +28,10 @@ async function generate() {
         const { docTopicIds } = await vite.ssrLoadModule('./src/data/docs-ids.ts') as { docTopicIds: TopicItem[] };
 
         [RAW_DOCS_DIR, RAW_COMPS_DIR].forEach(dir => {
-            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+                console.log(pc.dim(`[LLMS] Created directory: ${path.relative(config.root, dir)}`));
+            }
         });
 
         const cleanXref = (text: string) => {
@@ -48,6 +51,7 @@ async function generate() {
             const absolutePath = path.resolve(config.root, relativePath);
 
             if (fs.existsSync(absolutePath)) {
+                console.log(pc.dim(`[LLMS] Processing guide: ${doc.title}`));
                 const text = fs.readFileSync(absolutePath, 'utf8');
                 
                 const fileName = `${doc.id}.md`;
@@ -61,6 +65,7 @@ async function generate() {
         // Components generation
         indexContent += `\n## Components API\n\n`;
         for (const comp of components) {
+            console.log(pc.dim(`[LLMS] Processing component: ${comp.name}`));
             let compMd = `# Component: ${comp.name}\n\n${cleanXref(comp.description || '')}\n\n`;
 
             // Params
@@ -90,7 +95,7 @@ async function generate() {
                     const examplePath = path.resolve(config.root, '../src/RazorConsole.Website/Components', exampleFilename);
                     if (fs.existsSync(examplePath)) {
                         const exampleCode = fs.readFileSync(examplePath, 'utf8');
-                        compMd += `### Usage Example (${exampleFilename}):\n\n\`\`\`razor\n${exampleCode}\n\`\`\`\n\n`;
+                        compMd += `### Usage Example (${exampleFilename}):\n\n\`\`\`\`razor\n${exampleCode}\n\`\`\`\`\n\n`;
                     }
                 }
             }
@@ -107,10 +112,10 @@ async function generate() {
             fs.writeFileSync(path.join(DIST_DIR, 'llms-full.txt'), fullContent);
         }
 
-        console.log(`[LLMS] Metadata & Raw files generated at ${DIST_DIR}/raw/`);
+        console.log(pc.green(`[LLMS] Generation finished.`));
 
     } catch (e) {
-        console.error('[LLMS] Failed to generate documentation:', e);
+        console.error(pc.red(`[LLMS] Generation failed: ${e}`));
     } finally {
         await vite.close();
     }
