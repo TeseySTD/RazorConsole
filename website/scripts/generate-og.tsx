@@ -9,7 +9,7 @@ import xtermPkg from '@xterm/headless';
 const { Terminal } = xtermPkg;
 
 import type { ComponentInfo } from '../src/types/components/componentInfo.ts';
-
+process.env.DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = '1'; // For .net ICU Globalization
 const ANSI_HEX: Record<number, string> = {
     0: "#000000", 1: "#cd3131", 2: "#0dbc79", 3: "#e5e510",
     4: "#2472c8", 5: "#bc3fbc", 6: "#11a8cd", 7: "#e5e5e5",
@@ -98,7 +98,7 @@ async function generateOgImages() {
                 globalizationInvariant: true
             }
         });
-        
+
         const wasmExports = runtime;
         const { components } = await vite.ssrLoadModule('./src/data/components.ts') as { components: ComponentInfo[] };
 
