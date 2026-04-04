@@ -51,12 +51,12 @@ async function generateOgImages() {
     const config = await resolveConfig({}, 'build');
     const DIST_DIR = path.resolve(config.root, config.build.outDir || 'dist');
     const OG_DIR = path.join(DIST_DIR, 'og');
-    
+
     const FONT_PATH = path.resolve(config.root, 'src/assets/fonts/CascadiaCode.ttf');
 
     if (!fs.existsSync(OG_DIR)) fs.mkdirSync(OG_DIR, { recursive: true });
     if (!fs.existsSync(FONT_PATH)) throw new Error(`Font not found at ${FONT_PATH}`);
-    
+
     const fontData = fs.readFileSync(FONT_PATH);
 
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: "http://localhost" });
@@ -65,6 +65,8 @@ async function generateOgImages() {
     global.self = global.window;
     global.TextEncoder = TextEncoder;
     global.TextDecoder = TextDecoder as any;
+    global.addEventListener = window.addEventListener.bind(window);
+    global.removeEventListener = window.removeEventListener.bind(window);
 
     const nativeFetch = global.fetch;
     global.fetch = async (input: any, init?: any) => {
@@ -82,8 +84,8 @@ async function generateOgImages() {
         return nativeFetch(input, init);
     };
 
-    const vite = await createServer({ 
-        server: { middlewareMode: true }, 
+    const vite = await createServer({
+        server: { middlewareMode: true },
         logLevel: 'error',
         ssr: { external: ['razor-console'] },
         appType: 'custom'
@@ -91,7 +93,13 @@ async function generateOgImages() {
 
     try {
         const { createRuntimeAndGetExports } = await vite.ssrLoadModule('razor-console');
-        const wasmExports = await createRuntimeAndGetExports();
+        const runtime = await createRuntimeAndGetExports({
+            config: {
+                globalizationInvariant: true
+            }
+        });
+        
+        const wasmExports = runtime;
         const { components } = await vite.ssrLoadModule('./src/data/components.ts') as { components: ComponentInfo[] };
 
         const capturedAnsi: Record<string, string> = {};
@@ -156,17 +164,17 @@ async function generateOgImages() {
                         </div>
                     </div>
                 </div>,
-                { 
-                    width: 1200, 
-                    height: 630, 
-                    fonts: [{ name: 'Cascadia Code', data: fontData, weight: 400 }] 
+                {
+                    width: 1200,
+                    height: 630,
+                    fonts: [{ name: 'Cascadia Code', data: fontData, weight: 400 }]
                 }
             );
 
             const resvg = new Resvg(svg, { background: '#0f172a' });
             fs.writeFileSync(path.join(OG_DIR, `${comp.name.toLowerCase()}.png`), resvg.render().asPng());
         }
-        
+
         console.log(pc.green(`[OG] All snapshots saved to dist/og/ using Cascadia Code.`));
 
     } catch (e) {
