@@ -18,6 +18,8 @@ async function generateSitemap() {
     const apiPriority = '0.5';
     const apiFreq = 'monthly';
 
+    console.log(`[SITEMAP] Starting sitemap generation...`);
+
     const vite = await createServer({
         server: { middlewareMode: true },
         appType: 'custom'
@@ -59,7 +61,7 @@ async function generateSitemap() {
 
         if (!fs.existsSync(DIST_DIR)) fs.mkdirSync(DIST_DIR, { recursive: true });
         fs.writeFileSync(path.join(DIST_DIR, 'sitemap.xml'), xml);
-        console.log(`✅ Sitemap generated in ${DIST_DIR}`);
+        console.log(`[SITEMAP] Sitemap is generated in ${DIST_DIR}`);
     } finally {
         await vite.close();
     }
