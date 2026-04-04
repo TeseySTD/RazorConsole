@@ -183,6 +183,7 @@ async function generateOgImages() {
         }
 
         console.log(pc.green(`[OG] All snapshots saved to dist/og/ using Cascadia Code.`));
+        process.exit(0);
 
     } catch (e) {
         console.error(pc.red(`[OG] Error: ${e}`));
