@@ -1,12 +1,13 @@
-
 import { createServer, resolveConfig } from 'vite';
 import { JSDOM } from 'jsdom';
+import { registerFont, createCanvas } from 'canvas';
 import fs from 'node:fs';
 import path from 'node:path';
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import pc from 'picocolors';
 import xtermPkg from '@xterm/headless';
+import { prepareWithSegments, layoutWithLines } from '@chenglou/pretext';
 const { Terminal } = xtermPkg;
 
 import type { ComponentInfo } from '../src/types/components/componentInfo.ts';
@@ -53,6 +54,8 @@ async function generateOgImages() {
     const OG_DIR = path.join(DIST_DIR, 'og');
 
     const FONT_PATH = path.resolve(config.root, 'src/assets/fonts/CascadiaCode.ttf');
+    registerFont(FONT_PATH, { family: 'Cascadia Code' });
+
     const termCols = 80;
     const termRows = 24;
 
@@ -61,8 +64,23 @@ async function generateOgImages() {
 
     const fontData = fs.readFileSync(FONT_PATH);
 
-    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: "http://localhost" });
+    const dom = new JSDOM(
+        '<!DOCTYPE html><html><body></body></html>',
+        {
+            url: "http://localhost",
+            pretendToBeVisual: true 
+        }
+    );
+
     global.window = dom.window as any;
+    if (typeof global.OffscreenCanvas === 'undefined') {
+        // @ts-ignore
+        global.OffscreenCanvas = class {
+            constructor(width: number, height: number) {
+                return createCanvas(width, height);
+            }
+        };
+    }
 
     const nativeFetch = global.fetch;
     global.fetch = async (input: any, init?: any) => {
@@ -128,7 +146,7 @@ async function generateOgImages() {
                     height: '100%', width: '100%', display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a',
                     padding: '40px',
-                    backgroundImage: 'linear-gradient(to bottom right, #020618, #592595 )',
+                    backgroundImage: 'linear-gradient(to bottom right, #020618, #170E37)',
                 }}>
                     <div style={{
                         display: 'flex', flexDirection: 'column', width: '1000px', height: '540px',
@@ -180,6 +198,8 @@ async function generateOgImages() {
     }
 }
 
+const FONT_SPEC = '20px "Cascadia Code"';
+
 function renderTerminalToJSX(term: any) {
     const rows = [];
     const buffer = term.buffer.active;
@@ -228,15 +248,16 @@ function renderTerminalToJSX(term: any) {
             <div key={y} style={{
                 display: 'flex',
                 flexDirection: 'row',
-                alignItems: 'flex-start',
                 height: '22px',
-                width: '100%',
+                width: 'auto',
                 backgroundColor: '#1e1e1e',
-                overflow: 'hidden',
                 margin: 0,
-                padding: 0
+                padding: 0,
+                alignItems: 'stretch',
+                justifyContent: 'flex-start',
+                overflow: 'hidden'
             }}>
-                {rowSpans.length > 0 ? rowSpans : <span style={{ opacity: 0 }}> </span>}
+                {rowSpans}
             </div>
         );
     }
@@ -248,21 +269,29 @@ function createSpan(text: string, fg: number, bg: number, y: number, x: number) 
     const fgColor = resolveColor(fg, true);
     const bgColor = resolveColor(bg, false);
 
+    const prepared = prepareWithSegments(text, FONT_SPEC, { whiteSpace: 'pre-wrap' });
+    const { lines } = layoutWithLines(prepared, 2000, 22);
+
+    const exactWidth = (lines[0]?.width > 0) ? lines[0].width : text.length * 12;
+
     return (
         <span key={`${y}-${x}`} style={{
             color: fgColor,
             backgroundColor: bgColor,
-            display: 'flex',
-            alignItems: 'flex-start',
+            display: 'block',
+            width: `${exactWidth}px`,
             height: '22px',
-            lineHeight: '22px', 
+            lineHeight: '22px',
             fontFamily: 'Cascadia Code',
-            fontVariantLigatures: 'none',
-            fontKerning: 'none',
+            fontSize: '20px',
             whiteSpace: 'pre',
-            letterSpacing: '0.00416667px',
             margin: 0,
-            padding: 0
+            padding: 0,
+            flexShrink: 0,
+            flexGrow: 0,
+            fontVariantLigatures: 'none',
+            fontFeatureSettings: '"liga" 0, "calt" 0',
+            textAlign: 'left'
         }}>
             {text}
         </span>
