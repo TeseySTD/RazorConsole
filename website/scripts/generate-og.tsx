@@ -1,5 +1,4 @@
 
-process.env.DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = '1'; // For .net ICU Globalization
 import { createServer, resolveConfig } from 'vite';
 import { JSDOM } from 'jsdom';
 import fs from 'node:fs';
@@ -54,6 +53,8 @@ async function generateOgImages() {
     const OG_DIR = path.join(DIST_DIR, 'og');
 
     const FONT_PATH = path.resolve(config.root, 'src/assets/fonts/CascadiaCode.ttf');
+    const termCols = 80;
+    const termRows = 24;
 
     if (!fs.existsSync(OG_DIR)) fs.mkdirSync(OG_DIR, { recursive: true });
     if (!fs.existsSync(FONT_PATH)) throw new Error(`Font not found at ${FONT_PATH}`);
@@ -62,12 +63,6 @@ async function generateOgImages() {
 
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: "http://localhost" });
     global.window = dom.window as any;
-    global.document = dom.window.document;
-    global.self = global.window;
-    global.TextEncoder = TextEncoder;
-    global.TextDecoder = TextDecoder as any;
-    global.addEventListener = window.addEventListener.bind(window);
-    global.removeEventListener = window.removeEventListener.bind(window);
 
     const nativeFetch = global.fetch;
     global.fetch = async (input: any, init?: any) => {
@@ -94,19 +89,7 @@ async function generateOgImages() {
 
     try {
         const { createRuntimeAndGetExports } = await vite.ssrLoadModule('razor-console');
-        const runtime = await createRuntimeAndGetExports({
-            config: {
-                globalizationMode: 'invariant',
-                globalizationInvariant: true,
-                System: {
-                    Globalization: {
-                        Invariant: true
-                    }
-                }
-            }
-        });
-
-        const wasmExports = runtime;
+        const wasmExports = await createRuntimeAndGetExports();
         const { components } = await vite.ssrLoadModule('./src/data/components.ts') as { components: ComponentInfo[] };
 
         const capturedAnsi: Record<string, string> = {};
@@ -119,16 +102,16 @@ async function generateOgImages() {
             console.log(pc.cyan(`[OG] Processing: ${comp.name}`));
 
             const term = new Terminal({
-                cols: 80,
-                rows: 24,
+                cols: termCols,
+                rows: termRows,
                 allowProposedApi: true,
                 convertEol: true
             });
 
             capturedAnsi[comp.name] = '';
-            await wasmExports.Registry.RegisterComponent(comp.name, 80, 24);
+            await wasmExports.Registry.RegisterComponent(comp.name, termCols, termRows);
             if (wasmExports.Registry.HandleResize) {
-                await wasmExports.Registry.HandleResize(comp.name, 80, 24);
+                await wasmExports.Registry.HandleResize(comp.name, termCols, termRows);
             }
 
             await new Promise(resolve => setTimeout(resolve, 600));
@@ -143,11 +126,13 @@ async function generateOgImages() {
             const svg = await satori(
                 <div style={{
                     height: '100%', width: '100%', display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a', padding: '40px'
+                    alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a',
+                    padding: '40px',
+                    backgroundImage: 'linear-gradient(to bottom right, #020618, #592595 )',
                 }}>
                     <div style={{
                         display: 'flex', flexDirection: 'column', width: '1000px', height: '540px',
-                        backgroundColor: '#1e1e1e', borderRadius: '16px', border: '1px solid #334155', overflow: 'hidden',
+                        backgroundColor: '#1e1e1e', borderRadius: '16px', overflow: 'hidden',
                         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                     }}>
                         <div style={{ display: 'flex', height: '44px', backgroundColor: '#2d2d2d', alignItems: 'center', padding: '0 18px' }}>
@@ -179,16 +164,19 @@ async function generateOgImages() {
             );
 
             const resvg = new Resvg(svg, { background: '#0f172a' });
-            fs.writeFileSync(path.join(OG_DIR, `${comp.name.toLowerCase()}.png`), resvg.render().asPng());
+            const componentOgPath = path.join(OG_DIR, `${comp.name.toLowerCase()}.png`);
+            console.log(pc.cyan(`[OG] Saving snapshot of ${comp.name}...`));
+            fs.writeFileSync(componentOgPath, resvg.render().asPng());
+            console.log(pc.green(`[OG] Saved snapshot of ${comp.name} at ${componentOgPath}`));
         }
 
-        console.log(pc.green(`[OG] All snapshots saved to dist/og/ using Cascadia Code.`));
-        process.exit(0);
+        console.log(pc.green(`[OG] All snapshots saved to ${OG_DIR}.`));
 
     } catch (e) {
         console.error(pc.red(`[OG] Error: ${e}`));
     } finally {
         await vite.close();
+        process.exit(0); // Save exit after all snapshots are rendered
     }
 }
 
@@ -239,11 +227,14 @@ function renderTerminalToJSX(term: any) {
         rows.push(
             <div key={y} style={{
                 display: 'flex',
-                alignItems: 'stretch',
-                height: '24px',
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                height: '22px',
                 width: '100%',
                 backgroundColor: '#1e1e1e',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                margin: 0,
+                padding: 0
             }}>
                 {rowSpans.length > 0 ? rowSpans : <span style={{ opacity: 0 }}> </span>}
             </div>
@@ -262,11 +253,14 @@ function createSpan(text: string, fg: number, bg: number, y: number, x: number) 
             color: fgColor,
             backgroundColor: bgColor,
             display: 'flex',
-            height: '24px',
-            lineHeight: '24px',
-            fontSize: '20px',
+            alignItems: 'flex-start',
+            height: '22px',
+            lineHeight: '22px', 
             fontFamily: 'Cascadia Code',
+            fontVariantLigatures: 'none',
+            fontKerning: 'none',
             whiteSpace: 'pre',
+            letterSpacing: '0.00416667px',
             margin: 0,
             padding: 0
         }}>
