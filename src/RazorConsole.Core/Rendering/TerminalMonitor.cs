@@ -5,7 +5,7 @@ using Spectre.Console;
 
 namespace RazorConsole.Core.Rendering;
 
-internal sealed class TerminalMonitor : IDisposable
+internal sealed class TerminalMonitor : ITerminalViewport, IDisposable
 {
     public static readonly TimeSpan CheckInterval = TimeSpan.FromMilliseconds(250);
     public static readonly TimeSpan CheckDebounce = TimeSpan.FromMilliseconds(100);
@@ -19,6 +19,10 @@ internal sealed class TerminalMonitor : IDisposable
 
     public event Action? OnResized;
 
+    public int Width => _width;
+
+    public int Height => _height;
+
     public TerminalMonitor()
     {
         if (!OperatingSystem.IsBrowser())
@@ -31,6 +35,44 @@ internal sealed class TerminalMonitor : IDisposable
             _width = 0;
             _height = 0;
         }
+    }
+
+    internal TerminalMonitor(int width, int height)
+    {
+        if (width <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width), "Terminal width must be positive.");
+        }
+
+        if (height <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(height), "Terminal height must be positive.");
+        }
+
+        _width = width;
+        _height = height;
+    }
+
+    internal void Resize(int width, int height)
+    {
+        if (width <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width), "Terminal width must be positive.");
+        }
+
+        if (height <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(height), "Terminal height must be positive.");
+        }
+
+        if (_width == width && _height == height)
+        {
+            return;
+        }
+
+        _width = width;
+        _height = height;
+        OnResized?.Invoke();
     }
 
     public void Start(CancellationToken cancellationToken)
@@ -78,6 +120,7 @@ internal sealed class TerminalMonitor : IDisposable
             {
                 if (t.IsCompletedSuccessfully)
                 {
+                    UpdateCurrentSize();
                     OnResized?.Invoke();
                 }
             }, token);
@@ -91,11 +134,23 @@ internal sealed class TerminalMonitor : IDisposable
         {
             if (AnsiConsole.Console.Profile.Width != _width || AnsiConsole.Console.Profile.Height != _height)
             {
-                _width = AnsiConsole.Console.Profile.Width;
-                _height = AnsiConsole.Console.Profile.Height;
+                UpdateCurrentSize();
                 OnResized?.Invoke();
             }
         }
+    }
+
+    private void UpdateCurrentSize()
+    {
+        if (OperatingSystem.IsBrowser())
+        {
+            _width = 0;
+            _height = 0;
+            return;
+        }
+
+        _width = AnsiConsole.Console.Profile.Width;
+        _height = AnsiConsole.Console.Profile.Height;
     }
 
     public void Dispose()

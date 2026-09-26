@@ -29,6 +29,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Restore
         run: dotnet restore RazorConsole.slnx
@@ -51,6 +55,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Restore
         run: dotnet restore RazorConsole.slnx
@@ -60,6 +68,23 @@ jobs:
 
       - name: Test
         run: dotnet test --configuration Release --no-build -- --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+
+      - name: Terminal wheel regression (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          python3 -m venv "$RUNNER_TEMP/razorconsole-pty"
+          "$RUNNER_TEMP/razorconsole-pty/bin/pip" install pyte==0.8.2
+          "$RUNNER_TEMP/razorconsole-pty/bin/python" tests/e2e/gallery-scroll-pty.py --dotnet "$(command -v dotnet)" --framework net11.0
+
+      - name: Upload test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-diagnostics-${{ matrix.os }}
+          path: artifacts/bin/RazorConsole.Tests/**/TestResults/*.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
@@ -93,6 +118,15 @@ jobs:
           name: razorconsole-core-release_net10.0
           path: artifacts/bin/RazorConsole.Core/release_net10.0
 
+      - name: Setup .NET for documentation and WASM
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -105,7 +139,8 @@ jobs:
         working-directory: website
 
       - name: Build website for preview
-        run: npm run build
+        # Terminal transport checks run independently of the documentation build.
+        run: npm run test:terminal-input && npm run build
         env:
           VITE_ROUTER_BASENAME: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('/{0}/', github.event.repository.name) || '/' }}
           VITE_BASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && format('/{0}/', github.event.repository.name) || '/' }}
@@ -202,6 +237,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Restore
         run: dotnet restore RazorConsole.slnx
