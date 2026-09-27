@@ -261,7 +261,7 @@ curl -fsSL https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scri
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scripts/install-gallery.ps1 | iex
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scripts/install-razor-console-app.ps1))) -App Gallery
 ```
 
 To test the latest successful Native AOT build from `main`, install the nightly channel:
@@ -271,7 +271,7 @@ curl -fsSL https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scri
 ```
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scripts/install-gallery.ps1))) -Channel Nightly
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scripts/install-razor-console-app.ps1))) -App Gallery -Channel Nightly
 ```
 
 After installation, run `razorconsole-gallery` to browse component examples rendered in the console. See the [Component Gallery installation guide](https://razorconsole.com/docs/component-gallery) for manual downloads, checksum verification, and supported platforms.
@@ -300,7 +300,7 @@ A Native AOT terminal game that demonstrates:
 - Adaptive WidgetLayout rendering and mouse controls
 - A self-contained, zero-JIT native executable
 
-See [`examples/SnakeGame/`](examples/SnakeGame/) for controls and Native AOT publish commands.
+See [`gallery/RazorConsole.Snake/`](gallery/RazorConsole.Snake/) for controls and Native AOT publish commands.
 
 ### LLM Agent TUI
 

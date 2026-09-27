@@ -20,7 +20,7 @@ curl -fsSL https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scri
 On Windows PowerShell:
 
 ```shell
-irm https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scripts/install-gallery.ps1 | iex
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scripts/install-razor-console-app.ps1))) -App Gallery
 ```
 
 Both installers resolve the latest GitHub Release, select the correct archive, and verify it against the published SHA-256 checksum before installing it. Manual archives and `checksums-sha256.txt` are available from the [latest release](https://github.com/RazorConsole/RazorConsole/releases/latest).
@@ -32,7 +32,7 @@ curl -fsSL https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scri
 ```
 
 ```shell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scripts/install-gallery.ps1))) -Channel Nightly
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scripts/install-razor-console-app.ps1))) -App Gallery -Channel Nightly
 ```
 
 Every nightly uses a unique `nightly-<timestamp>-<commit>` prerelease. CI creates it as a draft, uploads all six platform archives and `checksums-sha256.txt`, then publishes it. Formal releases use the same draft-first sequence. This workflow is compatible with GitHub immutable releases and prevents installers from selecting an incomplete build.
@@ -82,7 +82,7 @@ The resulting binary will be located in `bin/Release/net8.0/{rid}/publish/`.
 To build the Gallery itself for the current macOS Apple Silicon host:
 
 ```bash
-dotnet publish src/RazorConsole.Gallery/RazorConsole.Gallery.csproj \
+dotnet publish gallery/RazorConsole.Gallery/RazorConsole.Gallery.csproj \
   --configuration Release \
   --framework net10.0 \
   --runtime osx-arm64 \
@@ -211,4 +211,4 @@ If your app uses third-party libraries that rely heavily on reflection (e.g., JS
 
 ## 6. Examples
 
-You can see a working AOT setup in the [RazorConsole.Gallery](https://github.com/RazorConsole/RazorConsole/blob/main/src/RazorConsole.Gallery) project.
+You can see a working AOT setup in the [RazorConsole.Gallery](https://github.com/RazorConsole/RazorConsole/blob/main/gallery/RazorConsole.Gallery) project.

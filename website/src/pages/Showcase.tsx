@@ -9,15 +9,13 @@ import type { MetaFunction } from "react-router"
 
 export const meta: MetaFunction = ({ matches, location }) => {
   const rootMeta = matches.find((m) => m.id === "root")?.meta || []
-  const pageUrl = `${getFullSitePath()}${location.pathname}`
-
   return [
     ...rootMeta,
-    { property: "og:url", content: pageUrl },
+    { property: "og:url", content: `${getFullSitePath()}${location.pathname}` },
     { title: "Showcase | RazorConsole" },
     {
       name: "description",
-      content: "Discover amazing projects and terminal interfaces built by the community using RazorConsole.",
+      content: "Discover projects and terminal interfaces built by the RazorConsole community.",
     },
   ]
 }
@@ -98,7 +96,7 @@ export default function Showcase() {
             Showcase
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-300">
-            Discover projects built with RazorConsole
+            Projects built by the RazorConsole community
           </p>
         </div>
 
