@@ -2,6 +2,7 @@ import type { Config } from "@react-router/dev/config"
 import { components } from "./src/data/components"
 import { apiItems } from "./src/data/api-docs"
 import { docTopicIds, releaseNoteIds } from "./src/data/docs-ids"
+import { pagePath } from "./src/lib/site-paths"
 
 export default {
   appDirectory: "src",
@@ -9,7 +10,7 @@ export default {
   basename: process.env.VITE_ROUTER_BASENAME || "/",
   async prerender({ getStaticPaths }) {
     // For dynamic routes, that have indexes
-    const dynamicPathIndexes = ["/docs", "/blog", "/api"]
+    const dynamicPathIndexes = ["/docs", "/docs/tutorial", "/blog", "/api"]
 
     const componentPaths = components.map((comp) => `/components/${comp.name.toLowerCase()}`)
 
@@ -36,7 +37,7 @@ export default {
     const legacyTutorialPaths = tutorialSlugs.map((slug) => `/tutorial/${slug}`)
     const releasePaths = releaseNoteIds.map((item) => `/release-notes/${item.id}`)
 
-    return [
+    return [...new Set([
       ...getStaticPaths(),
       ...dynamicPathIndexes,
       ...componentPaths,
@@ -46,6 +47,6 @@ export default {
       ...tutorialPaths,
       ...legacyTutorialPaths,
       ...releasePaths,
-    ]
+    ].map(pagePath))]
   },
 } satisfies Config
