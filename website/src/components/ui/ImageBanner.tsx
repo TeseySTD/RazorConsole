@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useState } from "react"
-import { Image } from "../ui/Image";
+import { Image } from "./Image";
 interface ImageBannerProps {
   imageUrls: string[]
   alt: string

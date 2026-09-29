@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
-import ImageBanner from "@/components/showcase/ImageBanner"
-import VideoBanner from "@/components/showcase/VideoBanner"
+import ImageBanner from "@/components/ui/ImageBanner"
+import VideoBanner from "@/components/ui/VideoBanner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card"
 import { showcaseProjects } from "@/data/showcase"
-import { getFullSitePath } from "@/lib/utils"
+import { getPageUrl } from "@/lib/utils"
 import { Rocket, X, ChevronLeft, ChevronRight } from "lucide-react"
 import type { MetaFunction } from "react-router"
 
