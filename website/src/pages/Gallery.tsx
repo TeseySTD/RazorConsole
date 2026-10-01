@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import ProjectGrid from "@/components/showcase/ProjectGrid"
+import ProjectGrid from "@/components/gallery/ProjectGrid"
 import { officialApps } from "@/data/official-apps"
 import { getPageUrl } from "@/lib/utils"
 import type { MetaFunction } from "react-router"
