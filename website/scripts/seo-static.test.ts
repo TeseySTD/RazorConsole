@@ -7,6 +7,7 @@ import { readStaticPages } from "./static-pages"
 import { sitemapXml } from "./sitemap"
 import { pagePath } from "../src/lib/site-paths"
 import { releaseNoteIds } from "../src/data/docs-ids"
+import { officialApps } from "../src/data/official-apps"
 
 const output = resolve("build/client")
 const pages = readStaticPages(output)
@@ -49,7 +50,7 @@ test("home positioning and representative routes exist before JavaScript", () =>
   }
   assert.doesNotMatch(html, /Ink for \.NET/)
   assert.ok(html.includes("jF1dcSGbDQJm6UY_MriNs2wHdnEGr_M1wZKiVciIdf8"), "Preserve the existing verification token")
-  for (const route of ["/components", "/gallery", "/showcase", "/collaborators", "/components/table", "/docs/tutorial/hello-world", "/blog/hot-reload", "/blog/choosing-dotnet-tui", "/api", "/api/RazorConsole.Components.SpectreTable", ...releaseNoteIds.map((note) => `/release-notes/${note.id}`)]) {
+  for (const route of ["/components", "/gallery", "/showcase", "/collaborators", "/components/table", "/docs/tutorial/hello-world", "/blog/hot-reload", "/blog/choosing-dotnet-tui", "/api", "/api/RazorConsole.Components.SpectreTable", ...officialApps.map((app) => `/gallery/${app.slug}`), ...releaseNoteIds.map((note) => `/release-notes/${note.id}`)]) {
     assert.ok(find(route), `Missing canonical route: ${route}`)
   }
   assert.equal(find("/guides"), undefined, "TUI Guides route was removed")
