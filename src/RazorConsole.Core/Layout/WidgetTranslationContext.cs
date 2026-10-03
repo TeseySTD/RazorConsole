@@ -464,37 +464,31 @@ public sealed class WidgetTranslationContext
             .ToArray();
 
         var rows = items
-            .Select((item, index) => CreateHtmlListItemWidget(item, isOrdered ? $"{start + index}. " : "• ", zIndex))
+            .Select((item, index) => CreateHtmlListItemWidget(item, isOrdered, start + index, zIndex))
+            .Cast<Widget>()
             .ToArray();
 
         return new StackWidget(node.ID, rows, attributes: node.Attributes, zIndex: zIndex);
     }
 
-    private Widget CreateHtmlListItemWidget(VNode item, string prefix, int zIndex)
+    private HtmlListItemWidget CreateHtmlListItemWidget(VNode item, bool isOrdered, int ordinal, int zIndex)
     {
-        var nestedLists = item.Children
-            .Where(child => child.Kind == VNodeKind.Element
-                && (string.Equals(child.TagName, "ul", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(child.TagName, "ol", StringComparison.OrdinalIgnoreCase)))
-            .ToArray();
+        var marker = new TextWidget(item.ID + "-marker", isOrdered ? $"{ordinal}. " : "• ");
 
-        var leafChildren = item.Children.Where(child => !nestedLists.Any(nested => ReferenceEquals(nested, child)));
-        var leafText = string.Concat(leafChildren.Select(GetPlainText)).Trim();
-        var leafWidget = new TextWidget(item.ID, prefix + leafText, key: item.Key, attributes: item.Attributes, zIndex: zIndex);
+        // Translate the item's children through the normal translation pipeline (instead of
+        // flattening to plain text) so styled/nested content (e.g. Markup, nested lists,
+        // multi-line text) renders correctly rather than being silently dropped or losing
+        // styling.
+        var contentChildren = TranslateChildren(item);
+        var content = ComposeChildren(item, contentChildren);
 
-        if (nestedLists.Length == 0)
-        {
-            return leafWidget;
-        }
-
-        var itemRows = new List<Widget> { leafWidget };
-        foreach (var nested in nestedLists)
-        {
-            var nestedWidget = CreateHtmlListWidget(nested, zIndex);
-            itemRows.Add(new BoxWidget(nested.ID + "-indent", nestedWidget, paddingLeft: 2, zIndex: zIndex));
-        }
-
-        return new StackWidget(item.ID + "-stack", itemRows, zIndex: zIndex);
+        return new HtmlListItemWidget(
+            item.ID,
+            marker,
+            content,
+            key: item.Key,
+            attributes: item.Attributes,
+            zIndex: zIndex);
     }
 
     private Widget CreateHeadingWidget(VNode node, int zIndex)
