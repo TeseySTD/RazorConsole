@@ -1,5 +1,7 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
+using Microsoft.Extensions.DependencyInjection;
+using RazorConsole.Core;
 using RazorConsole.Core.Layout;
 using RazorConsole.Core.Vdom;
 using Spectre.Console;
@@ -41,6 +43,41 @@ public sealed class MarkdownWidgetTranslationTests
 
         RenderToText(result.PaintToRenderable(), 80).ShouldBe("### Section");
         canvas[0, 0].Style?.Foreground.ShouldBe(Color.Green);
+    }
+
+    [Fact]
+    public void CodeBlock_TranslatesToSyntaxHighlightedSpectreWidget()
+    {
+        var pre = VNode.CreateElement("pre");
+        var code = VNode.CreateElement("code");
+        code.SetAttribute("class", "language-csharp");
+        code.AddChild(VNode.CreateText("Console.WriteLine(\"hi\");"));
+        pre.AddChild(code);
+
+        using var serviceProvider = new ServiceCollection().AddRazorConsoleServices().BuildServiceProvider();
+        var context = serviceProvider.GetRequiredService<WidgetTranslationContext>();
+
+        var widget = context.Translate(pre);
+        var result = new LayoutEngine().Layout(widget, new BoxConstraints(0, 80, 0, 5));
+
+        widget.ShouldBeOfType<SpectreWidget>();
+        RenderToText(result.PaintToRenderable(), 80).ShouldContain("Console.WriteLine");
+    }
+
+    [Fact]
+    public void CodeBlock_WithoutSyntaxService_FallsBackToPlainText()
+    {
+        var pre = VNode.CreateElement("pre");
+        var code = VNode.CreateElement("code");
+        code.SetAttribute("class", "language-csharp");
+        code.AddChild(VNode.CreateText("plain"));
+        pre.AddChild(code);
+        var context = new WidgetTranslationContext();
+
+        var widget = context.Translate(pre);
+
+        widget.ShouldBeOfType<TextWidget>();
+        ((TextWidget)widget).Text.ShouldBe("plain");
     }
 
     private static string RenderToText(IRenderable renderable, int maxWidth)

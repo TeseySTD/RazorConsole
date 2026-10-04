@@ -5,10 +5,12 @@ using RazorConsole.Core.Abstractions.Rendering;
 using RazorConsole.Core.Renderables;
 using RazorConsole.Core.Rendering;
 using RazorConsole.Core.Rendering.ComponentMarkup;
+using RazorConsole.Core.Rendering.Syntax;
 using RazorConsole.Core.Rendering.Translation.Contexts;
 using RazorConsole.Core.Utilities;
 using RazorConsole.Core.Vdom;
 using Spectre.Console;
+using Spectre.Console.Rendering;
 
 namespace RazorConsole.Core.Layout;
 
@@ -16,14 +18,17 @@ public sealed class WidgetTranslationContext
 {
     private readonly IReadOnlyList<ITranslationMiddleware> _spectreFallbackMiddlewares;
     private readonly ScrollableLayoutCoordinator? _scrollableLayoutCoordinator;
+    private readonly SyntaxHighlightingService? _syntaxHighlightingService;
     private readonly HashSet<IAnimatedConsoleRenderable> _animatedRenderables = [];
 
     public WidgetTranslationContext(
         IEnumerable<ITranslationMiddleware>? spectreFallbackMiddlewares = null,
-        ScrollableLayoutCoordinator? scrollableLayoutCoordinator = null)
+        ScrollableLayoutCoordinator? scrollableLayoutCoordinator = null,
+        SyntaxHighlightingService? syntaxHighlightingService = null)
     {
         _spectreFallbackMiddlewares = spectreFallbackMiddlewares?.ToArray() ?? [];
         _scrollableLayoutCoordinator = scrollableLayoutCoordinator;
+        _syntaxHighlightingService = syntaxHighlightingService;
     }
 
     public IReadOnlyCollection<IAnimatedConsoleRenderable> AnimatedRenderables => _animatedRenderables;
@@ -86,6 +91,11 @@ public sealed class WidgetTranslationContext
         if (IsHeadingTag(node.TagName))
         {
             return CreateHeadingWidget(node, zIndex);
+        }
+
+        if (string.Equals(node.TagName, "pre", StringComparison.OrdinalIgnoreCase))
+        {
+            return CreateCodeBlockWidget(node, zIndex);
         }
 
         if (TryCreateSpectreFallbackWidget(node, zIndex) is { } fallbackWidget)
@@ -490,6 +500,52 @@ public sealed class WidgetTranslationContext
             "h6" => new Style(Color.Grey, decoration: Decoration.Bold),
             _ => new Style(Color.White, decoration: Decoration.Bold),
         };
+
+    private Widget CreateCodeBlockWidget(VNode node, int zIndex)
+    {
+        var codeNode = node.Children.FirstOrDefault(c =>
+            c.Kind == VNodeKind.Element && string.Equals(c.TagName, "code", StringComparison.OrdinalIgnoreCase));
+
+        if (codeNode is null)
+        {
+            return new TextWidget(node.ID, GetPlainText(node), key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
+
+        var code = GetPlainText(codeNode);
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return new TextWidget(node.ID, string.Empty, key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
+
+        string? language = null;
+        if (codeNode.Attributes.TryGetValue("class", out var classAttr) && !string.IsNullOrEmpty(classAttr))
+        {
+            var classes = classAttr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var langClass = classes.FirstOrDefault(c => c.StartsWith("language-", StringComparison.OrdinalIgnoreCase));
+            if (langClass is not null)
+            {
+                language = langClass["language-".Length..];
+            }
+        }
+
+        if (_syntaxHighlightingService is null)
+        {
+            return new TextWidget(node.ID, code, key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
+
+        try
+        {
+            var request = new SyntaxHighlightRequest(code, language, null, true, SyntaxOptions.Default);
+            var model = _syntaxHighlightingService.Highlight(request);
+            var body = new SyntaxRenderable(model);
+            var renderable = new Rows(new IRenderable[] { new Markup(" "), body, new Markup(" ") });
+            return new SpectreWidget(node.ID, renderable, node.Key, node.Attributes, zIndex);
+        }
+        catch (Exception)
+        {
+            return new TextWidget(node.ID, code, key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
+    }
 
     private static string GetPlainText(VNode node)
     {
