@@ -135,6 +135,22 @@ public sealed class MarkdownWidgetTranslationTests
         RenderToText(result.PaintToRenderable(), 80).TrimEnd().ShouldBe("    nested");
     }
 
+    [Fact]
+    public void HorizontalRule_FillsWidthWithRuleCharacter()
+    {
+        var hr = VNode.CreateElement("hr");
+        var context = new WidgetTranslationContext();
+
+        var widget = context.Translate(hr);
+        var result = new LayoutEngine().Layout(widget, new BoxConstraints(0, 10, 0, 5));
+        var canvas = new TerminalCanvas(result.Size.Width, result.Size.Height);
+        result.Root.Paint(new PaintContext(canvas));
+
+        widget.ShouldBeOfType<RuleWidget>();
+        RenderToText(result.PaintToRenderable(), 10).ShouldBe(new string('─', 10));
+        canvas[0, 0].Style?.Foreground.ShouldBe(Color.Grey);
+    }
+
     private static string RenderToText(IRenderable renderable, int maxWidth)
     {
         var options = CreateRenderOptions(maxWidth, 25);

@@ -110,6 +110,11 @@ public sealed class WidgetTranslationContext
                 zIndex: zIndex);
         }
 
+        if (string.Equals(node.TagName, "hr", StringComparison.OrdinalIgnoreCase))
+        {
+            return new RuleWidget(node.ID, new Style(Color.Grey), node.Key, node.Attributes, zIndex);
+        }
+
         if (TryCreateSpectreFallbackWidget(node, zIndex) is { } fallbackWidget)
         {
             return fallbackWidget;
