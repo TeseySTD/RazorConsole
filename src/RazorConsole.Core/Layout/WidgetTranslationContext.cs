@@ -83,6 +83,11 @@ public sealed class WidgetTranslationContext
             return CreateHtmlListWidget(node, zIndex);
         }
 
+        if (IsHeadingTag(node.TagName))
+        {
+            return CreateHeadingWidget(node, zIndex);
+        }
+
         if (TryCreateSpectreFallbackWidget(node, zIndex) is { } fallbackWidget)
         {
             return fallbackWidget;
@@ -440,6 +445,51 @@ public sealed class WidgetTranslationContext
 
         return new StackWidget(node.ID, rows, attributes: node.Attributes, zIndex: zIndex);
     }
+
+    private Widget CreateHeadingWidget(VNode node, int zIndex)
+    {
+        var tagName = node.TagName?.ToLowerInvariant();
+        var innerText = GetPlainText(node).Trim();
+        if (string.IsNullOrWhiteSpace(innerText))
+        {
+            return new TextWidget(node.ID, string.Empty, key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
+
+        var prefix = GetHeadingPrefix(tagName);
+        var style = GetHeadingStyle(tagName);
+        return new TextWidget(node.ID, prefix + innerText, style, node.Key, node.Attributes, zIndex);
+    }
+
+    private static bool IsHeadingTag(string? tagName)
+        => tagName?.ToLowerInvariant() switch
+        {
+            "h1" or "h2" or "h3" or "h4" or "h5" or "h6" => true,
+            _ => false,
+        };
+
+    private static string GetHeadingPrefix(string? tagName)
+        => tagName switch
+        {
+            "h1" => "# ",
+            "h2" => "## ",
+            "h3" => "### ",
+            "h4" => "#### ",
+            "h5" => "##### ",
+            "h6" => "###### ",
+            _ => string.Empty,
+        };
+
+    private static Style GetHeadingStyle(string? tagName)
+        => tagName switch
+        {
+            "h1" => new Style(Color.Yellow, decoration: Decoration.Bold),
+            "h2" => new Style(Color.Cyan1, decoration: Decoration.Bold),
+            "h3" => new Style(Color.Green, decoration: Decoration.Bold),
+            "h4" => new Style(Color.Blue, decoration: Decoration.Bold),
+            "h5" => new Style(Color.Magenta1, decoration: Decoration.Bold),
+            "h6" => new Style(Color.Grey, decoration: Decoration.Bold),
+            _ => new Style(Color.White, decoration: Decoration.Bold),
+        };
 
     private static string GetPlainText(VNode node)
     {
