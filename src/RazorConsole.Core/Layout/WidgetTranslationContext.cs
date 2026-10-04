@@ -98,6 +98,18 @@ public sealed class WidgetTranslationContext
             return CreateCodeBlockWidget(node, zIndex);
         }
 
+        if (string.Equals(node.TagName, "blockquote", StringComparison.OrdinalIgnoreCase))
+        {
+            var quoteChild = ComposeChildren(node, TranslateChildren(node));
+            return new BoxWidget(
+                node.ID,
+                quoteChild,
+                paddingLeft: 2,
+                key: node.Key,
+                attributes: node.Attributes,
+                zIndex: zIndex);
+        }
+
         if (TryCreateSpectreFallbackWidget(node, zIndex) is { } fallbackWidget)
         {
             return fallbackWidget;

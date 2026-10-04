@@ -80,6 +80,61 @@ public sealed class MarkdownWidgetTranslationTests
         ((TextWidget)widget).Text.ShouldBe("plain");
     }
 
+    [Fact]
+    public void Blockquote_IndentsSingleParagraphWithoutBorder()
+    {
+        var blockquote = VNode.CreateElement("blockquote");
+        var paragraph = VNode.CreateElement("p");
+        paragraph.AddChild(VNode.CreateText("quoted text"));
+        blockquote.AddChild(paragraph);
+        var context = new WidgetTranslationContext();
+
+        var widget = context.Translate(blockquote);
+        var result = new LayoutEngine().Layout(widget, new BoxConstraints(0, 80, 0, 5));
+
+        widget.ShouldBeOfType<BoxWidget>();
+        ((BoxWidget)widget).PaddingLeft.ShouldBe(2);
+        ((BoxWidget)widget).Border.Left.ShouldBe(BoxBorderStyle.None);
+        RenderToText(result.PaintToRenderable(), 80).TrimEnd().ShouldBe("  quoted text");
+    }
+
+    [Fact]
+    public void Blockquote_StacksMultipleParagraphsVertically()
+    {
+        var blockquote = VNode.CreateElement("blockquote");
+        var first = VNode.CreateElement("p");
+        first.AddChild(VNode.CreateText("first"));
+        var second = VNode.CreateElement("p");
+        second.AddChild(VNode.CreateText("second"));
+        blockquote.AddChild(first);
+        blockquote.AddChild(second);
+        var context = new WidgetTranslationContext();
+
+        var widget = context.Translate(blockquote);
+        var result = new LayoutEngine().Layout(widget, new BoxConstraints(0, 80, 0, 5));
+        var lines = RenderToText(result.PaintToRenderable(), 80).Split('\n').Select(l => l.TrimEnd()).ToArray();
+
+        lines.ShouldContain("  first");
+        lines.ShouldContain("  second");
+    }
+
+    [Fact]
+    public void Blockquote_NestedQuote_DoublesIndent()
+    {
+        var outer = VNode.CreateElement("blockquote");
+        var inner = VNode.CreateElement("blockquote");
+        var paragraph = VNode.CreateElement("p");
+        paragraph.AddChild(VNode.CreateText("nested"));
+        inner.AddChild(paragraph);
+        outer.AddChild(inner);
+        var context = new WidgetTranslationContext();
+
+        var widget = context.Translate(outer);
+        var result = new LayoutEngine().Layout(widget, new BoxConstraints(0, 80, 0, 5));
+
+        RenderToText(result.PaintToRenderable(), 80).TrimEnd().ShouldBe("    nested");
+    }
+
     private static string RenderToText(IRenderable renderable, int maxWidth)
     {
         var options = CreateRenderOptions(maxWidth, 25);
