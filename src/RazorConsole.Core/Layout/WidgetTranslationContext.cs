@@ -459,18 +459,42 @@ public sealed class WidgetTranslationContext
     {
         var isOrdered = string.Equals(node.TagName, "ol", StringComparison.OrdinalIgnoreCase);
         var start = TryGetIntAttribute(node, "start", 1);
-        var rows = node.Children
+        var items = node.Children
             .Where(child => child.Kind == VNodeKind.Element && string.Equals(child.TagName, "li", StringComparison.OrdinalIgnoreCase))
-            .Select((child, index) => new TextWidget(
-                child.ID,
-                $"{(isOrdered ? $"{start + index}. " : "• ")}{GetPlainText(child)}",
-                key: child.Key,
-                attributes: child.Attributes,
-                zIndex: zIndex))
-            .Cast<Widget>()
+            .ToArray();
+
+        var rows = items
+            .Select((item, index) => CreateHtmlListItemWidget(item, isOrdered ? $"{start + index}. " : "• ", zIndex))
             .ToArray();
 
         return new StackWidget(node.ID, rows, attributes: node.Attributes, zIndex: zIndex);
+    }
+
+    private Widget CreateHtmlListItemWidget(VNode item, string prefix, int zIndex)
+    {
+        var nestedLists = item.Children
+            .Where(child => child.Kind == VNodeKind.Element
+                && (string.Equals(child.TagName, "ul", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(child.TagName, "ol", StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+
+        var leafChildren = item.Children.Where(child => !nestedLists.Any(nested => ReferenceEquals(nested, child)));
+        var leafText = string.Concat(leafChildren.Select(GetPlainText)).Trim();
+        var leafWidget = new TextWidget(item.ID, prefix + leafText, key: item.Key, attributes: item.Attributes, zIndex: zIndex);
+
+        if (nestedLists.Length == 0)
+        {
+            return leafWidget;
+        }
+
+        var itemRows = new List<Widget> { leafWidget };
+        foreach (var nested in nestedLists)
+        {
+            var nestedWidget = CreateHtmlListWidget(nested, zIndex);
+            itemRows.Add(new BoxWidget(nested.ID + "-indent", nestedWidget, paddingLeft: 2, zIndex: zIndex));
+        }
+
+        return new StackWidget(item.ID + "-stack", itemRows, zIndex: zIndex);
     }
 
     private Widget CreateHeadingWidget(VNode node, int zIndex)

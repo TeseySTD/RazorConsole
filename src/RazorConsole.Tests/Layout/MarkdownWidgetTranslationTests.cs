@@ -151,6 +151,94 @@ public sealed class MarkdownWidgetTranslationTests
         canvas[0, 0].Style?.Foreground.ShouldBe(Color.Grey);
     }
 
+    [Fact]
+    public void NestedList_UnorderedInUnordered_IndentsAndKeepsBullets()
+    {
+        var ul = VNode.CreateElement("ul");
+        var liA = CreateListItem("a");
+        var nested = VNode.CreateElement("ul");
+        nested.AddChild(CreateListItem("a1"));
+        nested.AddChild(CreateListItem("a2"));
+        liA.AddChild(nested);
+        ul.AddChild(liA);
+        ul.AddChild(CreateListItem("b"));
+
+        var context = new WidgetTranslationContext();
+        var widget = context.Translate(ul);
+        var result = new LayoutEngine().Layout(widget, new BoxConstraints(0, 80, 0, 10));
+        var lines = RenderToText(result.PaintToRenderable(), 80).Split('\n').Select(l => l.TrimEnd()).ToArray();
+
+        lines.ShouldBe(new[] { "• a", "  • a1", "  • a2", "• b" });
+    }
+
+    [Fact]
+    public void NestedList_OrderedInUnordered_UsesOrderedPrefixForNestedList()
+    {
+        var ul = VNode.CreateElement("ul");
+        var liA = CreateListItem("a");
+        var nestedOl = VNode.CreateElement("ol");
+        nestedOl.AddChild(CreateListItem("one"));
+        nestedOl.AddChild(CreateListItem("two"));
+        liA.AddChild(nestedOl);
+        ul.AddChild(liA);
+
+        var context = new WidgetTranslationContext();
+        var widget = context.Translate(ul);
+        var result = new LayoutEngine().Layout(widget, new BoxConstraints(0, 80, 0, 10));
+        var lines = RenderToText(result.PaintToRenderable(), 80).Split('\n').Select(l => l.TrimEnd()).ToArray();
+
+        lines.ShouldBe(new[] { "• a", "  1. one", "  2. two" });
+    }
+
+    [Fact]
+    public void NestedList_UnorderedInOrdered_UsesUnorderedPrefixForNestedList()
+    {
+        var ol = VNode.CreateElement("ol");
+        var liA = CreateListItem("a");
+        var nestedUl = VNode.CreateElement("ul");
+        nestedUl.AddChild(CreateListItem("x"));
+        liA.AddChild(nestedUl);
+        ol.AddChild(liA);
+
+        var context = new WidgetTranslationContext();
+        var widget = context.Translate(ol);
+        var result = new LayoutEngine().Layout(widget, new BoxConstraints(0, 80, 0, 10));
+        var lines = RenderToText(result.PaintToRenderable(), 80).Split('\n').Select(l => l.TrimEnd()).ToArray();
+
+        lines.ShouldBe(new[] { "1. a", "  • x" });
+    }
+
+    [Fact]
+    public void NestedList_ThreeLevelsDeep_IndentsEachLevel()
+    {
+        var level3 = VNode.CreateElement("ul");
+        level3.AddChild(CreateListItem("leaf"));
+
+        var level2Item = CreateListItem("mid");
+        level2Item.AddChild(level3);
+        var level2 = VNode.CreateElement("ul");
+        level2.AddChild(level2Item);
+
+        var level1Item = CreateListItem("top");
+        level1Item.AddChild(level2);
+        var level1 = VNode.CreateElement("ul");
+        level1.AddChild(level1Item);
+
+        var context = new WidgetTranslationContext();
+        var widget = context.Translate(level1);
+        var result = new LayoutEngine().Layout(widget, new BoxConstraints(0, 80, 0, 10));
+        var lines = RenderToText(result.PaintToRenderable(), 80).Split('\n').Select(l => l.TrimEnd()).ToArray();
+
+        lines.ShouldBe(new[] { "• top", "  • mid", "    • leaf" });
+    }
+
+    private static VNode CreateListItem(string text)
+    {
+        var li = VNode.CreateElement("li");
+        li.AddChild(VNode.CreateText(text));
+        return li;
+    }
+
     private static string RenderToText(IRenderable renderable, int maxWidth)
     {
         var options = CreateRenderOptions(maxWidth, 25);
