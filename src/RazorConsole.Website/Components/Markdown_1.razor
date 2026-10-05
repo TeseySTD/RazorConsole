@@ -1,10 +1,12 @@
 @using Spectre.Console
 @using RazorConsole.Components
 
-<Markdown Content="@markdownText" />
+<ViewHeightScrollable>
+    <Markdown Content="@markdownText" />
+</ViewHeightScrollable>
 
 @code {
-    
+
     private static string markdownText => @"# Welcome to Markdown
 
 This is a **bold** statement and this is *italic*. You can also have `inline code`.

@@ -5,10 +5,12 @@ using RazorConsole.Core.Abstractions.Rendering;
 using RazorConsole.Core.Renderables;
 using RazorConsole.Core.Rendering;
 using RazorConsole.Core.Rendering.ComponentMarkup;
+using RazorConsole.Core.Rendering.Syntax;
 using RazorConsole.Core.Rendering.Translation.Contexts;
 using RazorConsole.Core.Utilities;
 using RazorConsole.Core.Vdom;
 using Spectre.Console;
+using Spectre.Console.Rendering;
 
 namespace RazorConsole.Core.Layout;
 
@@ -16,14 +18,17 @@ public sealed class WidgetTranslationContext
 {
     private readonly IReadOnlyList<ITranslationMiddleware> _spectreFallbackMiddlewares;
     private readonly ScrollableLayoutCoordinator? _scrollableLayoutCoordinator;
+    private readonly SyntaxHighlightingService? _syntaxHighlightingService;
     private readonly HashSet<IAnimatedConsoleRenderable> _animatedRenderables = [];
 
     public WidgetTranslationContext(
         IEnumerable<ITranslationMiddleware>? spectreFallbackMiddlewares = null,
-        ScrollableLayoutCoordinator? scrollableLayoutCoordinator = null)
+        ScrollableLayoutCoordinator? scrollableLayoutCoordinator = null,
+        SyntaxHighlightingService? syntaxHighlightingService = null)
     {
         _spectreFallbackMiddlewares = spectreFallbackMiddlewares?.ToArray() ?? [];
         _scrollableLayoutCoordinator = scrollableLayoutCoordinator;
+        _syntaxHighlightingService = syntaxHighlightingService;
     }
 
     public IReadOnlyCollection<IAnimatedConsoleRenderable> AnimatedRenderables => _animatedRenderables;
@@ -81,6 +86,33 @@ public sealed class WidgetTranslationContext
             || string.Equals(node.TagName, "ol", StringComparison.OrdinalIgnoreCase))
         {
             return CreateHtmlListWidget(node, zIndex);
+        }
+
+        if (IsHeadingTag(node.TagName))
+        {
+            return CreateHeadingWidget(node, zIndex);
+        }
+
+        if (string.Equals(node.TagName, "pre", StringComparison.OrdinalIgnoreCase))
+        {
+            return CreateCodeBlockWidget(node, zIndex);
+        }
+
+        if (string.Equals(node.TagName, "blockquote", StringComparison.OrdinalIgnoreCase))
+        {
+            var quoteChild = ComposeChildren(node, TranslateChildren(node));
+            return new BoxWidget(
+                node.ID,
+                quoteChild,
+                paddingLeft: 2,
+                key: node.Key,
+                attributes: node.Attributes,
+                zIndex: zIndex);
+        }
+
+        if (string.Equals(node.TagName, "hr", StringComparison.OrdinalIgnoreCase))
+        {
+            return new RuleWidget(node.ID, new Style(Color.Grey), node.Key, node.Attributes, zIndex);
         }
 
         if (TryCreateSpectreFallbackWidget(node, zIndex) is { } fallbackWidget)
@@ -427,18 +459,133 @@ public sealed class WidgetTranslationContext
     {
         var isOrdered = string.Equals(node.TagName, "ol", StringComparison.OrdinalIgnoreCase);
         var start = TryGetIntAttribute(node, "start", 1);
-        var rows = node.Children
+        var items = node.Children
             .Where(child => child.Kind == VNodeKind.Element && string.Equals(child.TagName, "li", StringComparison.OrdinalIgnoreCase))
-            .Select((child, index) => new TextWidget(
-                child.ID,
-                $"{(isOrdered ? $"{start + index}. " : "• ")}{GetPlainText(child)}",
-                key: child.Key,
-                attributes: child.Attributes,
-                zIndex: zIndex))
-            .Cast<Widget>()
+            .ToArray();
+
+        var rows = items
+            .Select((item, index) => CreateHtmlListItemWidget(item, isOrdered ? $"{start + index}. " : "• ", zIndex))
             .ToArray();
 
         return new StackWidget(node.ID, rows, attributes: node.Attributes, zIndex: zIndex);
+    }
+
+    private Widget CreateHtmlListItemWidget(VNode item, string prefix, int zIndex)
+    {
+        var nestedLists = item.Children
+            .Where(child => child.Kind == VNodeKind.Element
+                && (string.Equals(child.TagName, "ul", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(child.TagName, "ol", StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+
+        var leafChildren = item.Children.Where(child => !nestedLists.Any(nested => ReferenceEquals(nested, child)));
+        var leafText = string.Concat(leafChildren.Select(GetPlainText)).Trim();
+        var leafWidget = new TextWidget(item.ID, prefix + leafText, key: item.Key, attributes: item.Attributes, zIndex: zIndex);
+
+        if (nestedLists.Length == 0)
+        {
+            return leafWidget;
+        }
+
+        var itemRows = new List<Widget> { leafWidget };
+        foreach (var nested in nestedLists)
+        {
+            var nestedWidget = CreateHtmlListWidget(nested, zIndex);
+            itemRows.Add(new BoxWidget(nested.ID + "-indent", nestedWidget, paddingLeft: 2, zIndex: zIndex));
+        }
+
+        return new StackWidget(item.ID + "-stack", itemRows, zIndex: zIndex);
+    }
+
+    private Widget CreateHeadingWidget(VNode node, int zIndex)
+    {
+        var tagName = node.TagName?.ToLowerInvariant();
+        var innerText = GetPlainText(node).Trim();
+        if (string.IsNullOrWhiteSpace(innerText))
+        {
+            return new TextWidget(node.ID, string.Empty, key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
+
+        var prefix = GetHeadingPrefix(tagName);
+        var style = GetHeadingStyle(tagName);
+        return new TextWidget(node.ID, prefix + innerText, style, node.Key, node.Attributes, zIndex);
+    }
+
+    private static bool IsHeadingTag(string? tagName)
+        => tagName?.ToLowerInvariant() switch
+        {
+            "h1" or "h2" or "h3" or "h4" or "h5" or "h6" => true,
+            _ => false,
+        };
+
+    private static string GetHeadingPrefix(string? tagName)
+        => tagName switch
+        {
+            "h1" => "# ",
+            "h2" => "## ",
+            "h3" => "### ",
+            "h4" => "#### ",
+            "h5" => "##### ",
+            "h6" => "###### ",
+            _ => string.Empty,
+        };
+
+    private static Style GetHeadingStyle(string? tagName)
+        => tagName switch
+        {
+            "h1" => new Style(Color.Yellow, decoration: Decoration.Bold),
+            "h2" => new Style(Color.Cyan1, decoration: Decoration.Bold),
+            "h3" => new Style(Color.Green, decoration: Decoration.Bold),
+            "h4" => new Style(Color.Blue, decoration: Decoration.Bold),
+            "h5" => new Style(Color.Magenta1, decoration: Decoration.Bold),
+            "h6" => new Style(Color.Grey, decoration: Decoration.Bold),
+            _ => new Style(Color.White, decoration: Decoration.Bold),
+        };
+
+    private Widget CreateCodeBlockWidget(VNode node, int zIndex)
+    {
+        var codeNode = node.Children.FirstOrDefault(c =>
+            c.Kind == VNodeKind.Element && string.Equals(c.TagName, "code", StringComparison.OrdinalIgnoreCase));
+
+        if (codeNode is null)
+        {
+            return new TextWidget(node.ID, GetPlainText(node), key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
+
+        var code = GetPlainText(codeNode);
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return new TextWidget(node.ID, string.Empty, key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
+
+        string? language = null;
+        if (codeNode.Attributes.TryGetValue("class", out var classAttr) && !string.IsNullOrEmpty(classAttr))
+        {
+            var classes = classAttr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var langClass = classes.FirstOrDefault(c => c.StartsWith("language-", StringComparison.OrdinalIgnoreCase));
+            if (langClass is not null)
+            {
+                language = langClass["language-".Length..];
+            }
+        }
+
+        if (_syntaxHighlightingService is null)
+        {
+            return new TextWidget(node.ID, code, key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
+
+        try
+        {
+            var request = new SyntaxHighlightRequest(code, language, null, true, SyntaxOptions.Default);
+            var model = _syntaxHighlightingService.Highlight(request);
+            var body = new SyntaxRenderable(model);
+            var renderable = new Rows(new IRenderable[] { new Markup(" "), body, new Markup(" ") });
+            return new SpectreWidget(node.ID, renderable, node.Key, node.Attributes, zIndex);
+        }
+        catch (Exception)
+        {
+            return new TextWidget(node.ID, code, key: node.Key, attributes: node.Attributes, zIndex: zIndex);
+        }
     }
 
     private static string GetPlainText(VNode node)
