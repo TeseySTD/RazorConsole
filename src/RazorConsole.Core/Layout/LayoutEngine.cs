@@ -13,13 +13,45 @@ public sealed class LayoutEngine
             throw new ArgumentNullException(nameof(root));
         }
 
-        var context = new LayoutContext(renderVersion);
+        var context = new LayoutContext(renderVersion)
+        {
+            DocumentSize = new LayoutSize(constraints.MaxWidth, constraints.MaxHeight),
+        };
         var desiredSize = root.Measure(context, constraints);
         var finalSize = constraints.Constrain(desiredSize);
         var rootBounds = new LayoutRect(0, 0, finalSize.Width, finalSize.Height);
+
+        // bottom/right of absolute elements are relative to the document, which is as tall as the flow content.
+        context.DocumentSize = new LayoutSize(constraints.MaxWidth, finalSize.Height);
         root.Arrange(context, rootBounds);
 
+        finalSize = ExpandToAbsoluteChildren(root, finalSize, constraints.MaxWidth);
+
         return new LayoutResult(root, root.CreateLayoutBox(), finalSize, renderVersion);
+    }
+
+    private static LayoutSize ExpandToAbsoluteChildren(Widget root, LayoutSize size, int maxWidth)
+    {
+        var width = size.Width;
+        var height = size.Height;
+        var pending = new Stack<Widget>();
+        pending.Push(root);
+        while (pending.Count > 0)
+        {
+            var widget = pending.Pop();
+            if (widget.IsAbsolutePositioned)
+            {
+                width = Math.Max(width, Math.Min(widget.Bounds.Right, maxWidth));
+                height = Math.Max(height, widget.Bounds.Bottom);
+            }
+
+            foreach (var child in widget.Children)
+            {
+                pending.Push(child);
+            }
+        }
+
+        return new LayoutSize(width, height);
     }
 }
 

@@ -26,7 +26,11 @@
         <Markup Content="@($"Last action: {_lastAction}")" Foreground="Color.Grey58" />
         @if (_notification)
         {
-            <Markup Content="Notification received" Foreground="Color.Chartreuse1" />
+            <div position="absolute" top="1" right="2" z-index="2000">
+                <Panel Border="BoxBorder.Rounded" BorderColor="Color.Chartreuse1">
+                    <Markup Content="Notification received" Foreground="Color.Chartreuse1" />
+                </Panel>
+            </div>
         }
         <ModalWindow IsOpened="@_modal">
             <Panel Title="Centered modal" BorderColor="Color.DeepSkyBlue1">
