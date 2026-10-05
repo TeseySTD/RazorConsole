@@ -97,34 +97,40 @@
         catch (OperationCanceledException) { }
     }
     public void Dispose() { _shutdown.Cancel(); _shutdown.Dispose(); }
-    private string SampleCode => $@"
-        <Flex Width=""44"" Height=""14"" position=""relative"">
-            <div position=""absolute"" top=""{_top}"" left=""{_left}"" z-index=""{_firstZ}"">
-                <Panel Width=""24"" Height=""5"" Title=""Layer A"" BorderColor=""Color.Red"">
-                    <Markup Content=""Movable · z={_firstZ}"" />
-                </Panel>
+    private string SampleCode => $@"<Flex Width=""44"" Height=""14"" position=""relative"">
+    <div position=""absolute"" top=""{_top}"" left=""{_left}"" z-index=""{_firstZ}"">
+        <Panel Width=""24"" Height=""5"" Title=""Layer A"" BorderColor=""Color.Red"">
+            <Markup Content=""Movable · z={_firstZ}"" />
+        </Panel>
+    </div>
+    <div position=""absolute"" top=""3"" left=""12"" z-index=""{_secondZ}"">
+        <Panel Width=""26"" Height=""5"" Title=""Layer B"" BorderColor=""Color.Green"">
+            <Markup Content=""Overlap · z={_secondZ}"" />
+        </Panel>
+    </div>
+    <div position=""absolute"" top=""9"" left=""0"" z-index=""1"">
+        <Panel Width=""40"" Height=""5"" Title=""Layer C"" BorderColor=""Color.DeepSkyBlue1"">
+            <Markup Content=""Nested positioning"" />
+            <div position=""absolute"" top=""1"" left=""19"" z-index=""2"">
+                <Panel Width=""18"" Title=""Layer E""><Markup Content=""Relative to C"" /></Panel>
             </div>
-            <div position=""absolute"" top=""3"" left=""12"" z-index=""{_secondZ}"">
-                <Panel Width=""26"" Height=""5"" Title=""Layer B"" BorderColor=""Color.Green"">
-                    <Markup Content=""Overlap · z={_secondZ}"" />
-                </Panel>
-            </div>
-            <div position=""absolute"" top=""9"" left=""0"" z-index=""1"">
-                <Panel Width=""40"" Height=""5"" Title=""Layer C"" BorderColor=""Color.DeepSkyBlue1"">
-                    <Markup Content=""Nested positioning"" />
-                    <div position=""absolute"" top=""1"" left=""19"" z-index=""2"">
-                        <Panel Width=""18"" Title=""Layer E""><Markup Content=""Relative to C"" /></Panel>
-                    </div>
-                </Panel>
-            </div>
-        </Flex>
-        <ModalWindow IsOpened=""@_modal"">
-            <Panel Title=""Centered modal"" BorderColor=""Color.DeepSkyBlue1"">
-                <Rows>
-                    <Markup Content=""Above the other layers"" />
-                    <GalleryButton Id=""zindex-close"" Text=""Close modal"" OnClick=""() => _modal = false"" />
-                </Rows>
-            </Panel>
-        </ModalWindow>
+        </Panel>
+    </div>
+</Flex>
+<div position=""absolute"" top=""1"" right=""2"" z-index=""2000"">
+    <Rows>
+        <Panel Border=""BoxBorder.Rounded"" BorderColor=""Color.Chartreuse1"">
+            <Markup Content=""Notification #{{toast.Id}}"" Foreground=""Color.Chartreuse1"" />
+        </Panel>
+    </Rows>
+</div>
+<ModalWindow IsOpened=""@_modal"">
+    <Panel Title=""Centered modal"" BorderColor=""Color.DeepSkyBlue1"">
+        <Rows>
+            <Markup Content=""Above the other layers"" />
+            <GalleryButton Id=""zindex-close"" Text=""Close modal"" OnClick=""() => _modal = false"" />
+        </Rows>
+    </Panel>
+</ModalWindow>
 ".Trim();
 }
