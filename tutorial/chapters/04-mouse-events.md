@@ -86,24 +86,23 @@ up directly with Widget Layout's integer `left` and `top` positions.
 
 ## 4. Build a draggable component
 
-Place a card in a relatively positioned `Flex`, then subscribe to down, move, and up on the card:
+Place a card in a fixed-size `Box`, and offset it with a `Padder` whose padding tracks the card's position. `position="relative"` and `position="absolute"` are not used here — `Padder` moves the card in normal flow instead:
 
 ```razor
-<Flex Width="54" Height="8" position="relative">
-    <div position="absolute"
-         left="@_cardX"
-         top="@_cardY"
-         data-focus-key="mouse-drag-card"
-         data-focusable="true"
-         @onmousedown="HandleMouseDown"
-         @onmousemove="HandleMouseMove"
-         @onmouseup="HandleMouseUp"
-         @onkeydown="HandleKeyDown">
-        <Panel Width="18" Height="3" BorderColor="Color.DeepSkyBlue1">
-            <Markup Content="@(_dragging ? "Dragging…" : "Drag me")" />
-        </Panel>
-    </div>
-</Flex>
+<Box Width="54" Height="8">
+    <Padder Padding="@(new Padding(_cardX, _cardY, 0, 0))">
+        <div data-focus-key="mouse-drag-card"
+             data-focusable="true"
+             @onmousedown="HandleMouseDown"
+             @onmousemove="HandleMouseMove"
+             @onmouseup="HandleMouseUp"
+             @onkeydown="HandleKeyDown">
+            <Panel Width="18" Height="3" BorderColor="Color.DeepSkyBlue1">
+                <Markup Content="@(_dragging ? "Dragging…" : "Drag me")" />
+            </Panel>
+        </div>
+    </Padder>
+</Box>
 
 @code {
     private int _cardX = 2;

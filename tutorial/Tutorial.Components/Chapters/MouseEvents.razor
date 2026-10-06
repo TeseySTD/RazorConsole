@@ -19,23 +19,22 @@
 
         <div data-vnode-hook="mouse-surface" @onwheel="HandleWheel">
             <Border BorderColor="Color.Grey58">
-                <Flex Width="54" Height="8" position="relative">
-                    <div @key='"mouse-drag-card"'
-                         position="absolute"
-                         left="@_cardX"
-                         top="@_cardY"
-                         data-vnode-hook="mouse-drag-card"
-                         data-focus-key="mouse-drag-card"
-                         data-focusable="true"
-                         @onmousedown="HandleMouseDown"
-                         @onmousemove="HandleMouseMove"
-                         @onmouseup="HandleMouseUp"
-                         @onkeydown="HandleKeyDown">
-                        <Panel Width="18" Height="3" BorderColor="@(_dragging ? Color.Yellow : Color.DeepSkyBlue1)">
-                            <Markup Content="@DragLabel" Foreground="@Color.DeepSkyBlue1" />
-                        </Panel>
-                    </div>
-                </Flex>
+                <Box Width="54" Height="8">
+                    <Padder Padding="@(new Padding(_cardX, _cardY, 0, 0))">
+                        <div @key='"mouse-drag-card"'
+                             data-vnode-hook="mouse-drag-card"
+                             data-focus-key="mouse-drag-card"
+                             data-focusable="true"
+                             @onmousedown="HandleMouseDown"
+                             @onmousemove="HandleMouseMove"
+                             @onmouseup="HandleMouseUp"
+                             @onkeydown="HandleKeyDown">
+                            <Panel Width="18" Height="3" BorderColor="@(_dragging ? Color.Yellow : Color.DeepSkyBlue1)">
+                                <Markup Content="@DragLabel" Foreground="@Color.DeepSkyBlue1" />
+                            </Panel>
+                        </div>
+                    </Padder>
+                </Box>
             </Border>
         </div>
 

@@ -3,7 +3,7 @@
 
 <GalleryWorkbench Id="zindex" Title="Z-Index" Description="Move overlapping layers, swap their order and open a real modal." Code="@SampleCode" OnReset="Reset">
     <Preview>
-        <Flex Width="44" Height="14" position="relative">
+        <Flex Width="44" Height="14">
             <div position="absolute" top="@_top" left="@_left" z-index="@_firstZ">
                 <Panel Width="24" Height="5" Title="Layer A" BorderColor="Color.Red">
                     <Markup Content="@($"Movable · z={_firstZ}")" />
@@ -97,7 +97,7 @@
         catch (OperationCanceledException) { }
     }
     public void Dispose() { _shutdown.Cancel(); _shutdown.Dispose(); }
-    private string SampleCode => $@"<Flex Width=""44"" Height=""14"" position=""relative"">
+    private string SampleCode => $@"<Flex Width=""44"" Height=""14"">
     <div position=""absolute"" top=""{_top}"" left=""{_left}"" z-index=""{_firstZ}"">
         <Panel Width=""24"" Height=""5"" Title=""Layer A"" BorderColor=""Color.Red"">
             <Markup Content=""Movable · z={_firstZ}"" />

@@ -3,16 +3,18 @@
 <GalleryWorkbench Id="drag" Title="Drag" Description="Drag the blue card. Focus it and use arrow keys for precise movement." Code="@SampleCode" OnReset="Reset">
     <Preview>
         <Border BorderColor="Color.Grey58">
-            <Flex Width="44" Height="10" position="relative" data-vnode-hook="drag-surface">
-                <div @key='"drag-card"' position="absolute" left="@_x" top="@_y"
-                     data-vnode-hook="drag-card" data-focus-key="drag-card" data-focusable="true"
-                     @onmousedown="Down" @onmousemove="Move" @onmouseup="Up" @onkeydown="Key"
-                     @onfocusin="() => _focused = true" @onfocusout="() => _focused = false">
-                    <Panel Width="16" Height="3" BorderColor="@(_dragging || _focused ? Color.DeepSkyBlue1 : Color.Grey58)">
-                        <Markup Content="@(_dragging ? "Dragging…" : "Drag me")" Foreground="Color.DeepSkyBlue1" />
-                    </Panel>
-                </div>
-            </Flex>
+            <Box Width="44" Height="10" data-vnode-hook="drag-surface">
+                <Padder Padding="@(new Padding(_x, _y, 0, 0))">
+                    <div @key='"drag-card"'
+                         data-vnode-hook="drag-card" data-focus-key="drag-card" data-focusable="true"
+                         @onmousedown="Down" @onmousemove="Move" @onmouseup="Up" @onkeydown="Key"
+                         @onfocusin="() => _focused = true" @onfocusout="() => _focused = false">
+                        <Panel Width="16" Height="3" BorderColor="@(_dragging || _focused ? Color.DeepSkyBlue1 : Color.Grey58)">
+                            <Markup Content="@(_dragging ? "Dragging…" : "Drag me")" Foreground="Color.DeepSkyBlue1" />
+                        </Panel>
+                    </div>
+                </Padder>
+            </Box>
         </Border>
         <Markup Content="@($"Position: {_x}, {_y} · {(_dragging ? "Dragging" : "Ready")}")" />
         <Markup Content="Release outside the card: capture keeps the drag active." Foreground="Color.Grey58" />
@@ -53,12 +55,13 @@
         if (e.Key == "Escape") _dragging = false;
     }
     private void Reset() { _x = 2; _y = 1; _dragging = false; }
-    private const string SampleCode = @"<Flex Width=""44"" Height=""10"" position=""relative"">
-    <div position=""absolute"" left=""@_x"" top=""@_y""
-         @onmousedown=""Down"" @onmousemove=""Move"" @onmouseup=""Up"">
-        <Panel Width=""16"" Height=""3""><Markup Content=""Drag me"" /></Panel>
-    </div>
-</Flex>
+    private const string SampleCode = @"<Box Width=""44"" Height=""10"">
+    <Padder Padding=""new(@_x, @_y, 0, 0)"">
+        <div @onmousedown=""Down"" @onmousemove=""Move"" @onmouseup=""Up"">
+            <Panel Width=""16"" Height=""3""><Markup Content=""Drag me"" /></Panel>
+        </div>
+    </Padder>
+</Box>
 
 // Down: remember pointer ClientX/ClientY and initial card position.
 // Move: apply pointer delta, clamped to canvas minus card dimensions.
