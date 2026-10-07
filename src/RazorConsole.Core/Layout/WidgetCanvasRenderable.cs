@@ -24,7 +24,9 @@ internal sealed class WidgetCanvasRenderable(Widget root, LayoutSize size) : IRe
     internal TerminalCanvas PaintToCanvas()
     {
         var canvas = new TerminalCanvas(_size.Width, _size.Height);
-        _root.Paint(new PaintContext(canvas));
+        var context = new PaintContext(canvas) { DeferAbsolute = true };
+        _root.Paint(context);
+        context.PaintOverlays();
         return canvas;
     }
 }

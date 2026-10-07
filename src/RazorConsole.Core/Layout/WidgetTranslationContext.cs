@@ -61,6 +61,21 @@ public sealed class WidgetTranslationContext
             return CreateTableWidget(node, zIndex);
         }
 
+        if (string.Equals(node.TagName, "modal", StringComparison.OrdinalIgnoreCase))
+        {
+            // Modals are centered absolute overlays (see ModalTranslator in the legacy pipeline).
+            var modalAttributes = new Dictionary<string, string?>(node.Attributes, StringComparer.Ordinal)
+            {
+                ["position"] = "absolute",
+                ["data-centered"] = "true",
+            };
+            return new StackWidget(
+                node.ID,
+                TranslateChildren(node),
+                attributes: modalAttributes,
+                zIndex: TryGetIntAttribute(node, "zindex", 9999));
+        }
+
         if (IsTruthy(GetAttribute(node, "data-text")))
         {
             return new TextWidget(

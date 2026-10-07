@@ -78,7 +78,7 @@ public sealed class FlexWidget : Widget
             return constraints.Constrain(LayoutSize.Empty);
         }
 
-        var flowChildren = Children.Where(child => !IsAbsolutePositioned(child)).ToArray();
+        var flowChildren = Children.Where(child => !child.IsAbsolutePositioned).ToArray();
         var childConstraints = new BoxConstraints(0, constraints.MaxWidth, 0, constraints.MaxHeight);
         var width = 0;
         var height = 0;
@@ -86,7 +86,7 @@ public sealed class FlexWidget : Widget
         foreach (var child in Children)
         {
             var childSize = child.Measure(context, childConstraints);
-            if (IsAbsolutePositioned(child))
+            if (child.IsAbsolutePositioned)
             {
                 continue;
             }
@@ -141,7 +141,7 @@ public sealed class FlexWidget : Widget
 
     private void ArrangeRow(LayoutContext context, LayoutRect bounds)
     {
-        var flowChildren = Children.Where(child => !IsAbsolutePositioned(child)).ToArray();
+        var flowChildren = Children.Where(child => !child.IsAbsolutePositioned).ToArray();
         var mainSizes = ResolveMainSizes(flowChildren, bounds.Width, child => child.DesiredSize.Width, FillsMainAxis);
         var occupiedWidth = mainSizes.Sum() + Math.Max(0, flowChildren.Length - 1) * Gap;
         var x = bounds.X + ResolveJustifyOffset(bounds.Width, occupiedWidth);
@@ -151,9 +151,9 @@ public sealed class FlexWidget : Widget
         for (var i = 0; i < Children.Count; i++)
         {
             var child = Children[i];
-            if (IsAbsolutePositioned(child))
+            if (child.IsAbsolutePositioned)
             {
-                ArrangeAbsoluteChild(context, child, bounds);
+                child.Arrange(context, bounds);
                 continue;
             }
 
@@ -167,7 +167,7 @@ public sealed class FlexWidget : Widget
 
     private void ArrangeColumn(LayoutContext context, LayoutRect bounds)
     {
-        var flowChildren = Children.Where(child => !IsAbsolutePositioned(child)).ToArray();
+        var flowChildren = Children.Where(child => !child.IsAbsolutePositioned).ToArray();
         var mainSizes = ResolveMainSizes(flowChildren, bounds.Height, child => child.DesiredSize.Height, FillsMainAxis);
         var occupiedHeight = mainSizes.Sum() + Math.Max(0, flowChildren.Length - 1) * Gap;
         var y = bounds.Y + ResolveJustifyOffset(bounds.Height, occupiedHeight);
@@ -177,9 +177,9 @@ public sealed class FlexWidget : Widget
         for (var i = 0; i < Children.Count; i++)
         {
             var child = Children[i];
-            if (IsAbsolutePositioned(child))
+            if (child.IsAbsolutePositioned)
             {
-                ArrangeAbsoluteChild(context, child, bounds);
+                child.Arrange(context, bounds);
                 continue;
             }
 
@@ -258,41 +258,4 @@ public sealed class FlexWidget : Widget
     private static bool IsTruthy(Widget child, string name)
         => child.Attributes.TryGetValue(name, out var value)
             && string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsAbsolutePositioned(Widget child)
-        => child.Attributes.TryGetValue("position", out var value)
-            && string.Equals(value, "absolute", StringComparison.OrdinalIgnoreCase);
-
-    private static void ArrangeAbsoluteChild(LayoutContext context, Widget child, LayoutRect bounds)
-    {
-        var childWidth = Math.Min(child.DesiredSize.Width, bounds.Width);
-        var childHeight = Math.Min(child.DesiredSize.Height, bounds.Height);
-        var left = TryGetIntAttribute(child, "left");
-        var top = TryGetIntAttribute(child, "top");
-        var right = TryGetIntAttribute(child, "right");
-        var bottom = TryGetIntAttribute(child, "bottom");
-
-        var x = left.HasValue
-            ? bounds.X + left.Value
-            : right.HasValue
-                ? bounds.Right - right.Value - childWidth
-                : bounds.X;
-        var y = top.HasValue
-            ? bounds.Y + top.Value
-            : bottom.HasValue
-                ? bounds.Bottom - bottom.Value - childHeight
-                : bounds.Y;
-
-        child.Arrange(context, new LayoutRect(x, y, childWidth, childHeight));
-    }
-
-    private static int? TryGetIntAttribute(Widget child, string name)
-    {
-        if (!child.Attributes.TryGetValue(name, out var raw) || string.IsNullOrWhiteSpace(raw))
-        {
-            return null;
-        }
-
-        return int.TryParse(raw, out var value) ? value : null;
-    }
 }

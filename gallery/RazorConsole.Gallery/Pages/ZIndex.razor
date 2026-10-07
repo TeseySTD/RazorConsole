@@ -3,7 +3,7 @@
 
 <GalleryWorkbench Id="zindex" Title="Z-Index" Description="Move overlapping layers, swap their order and open a real modal." Code="@SampleCode" OnReset="Reset">
     <Preview>
-        <Flex Width="44" Height="14" position="relative">
+        <Flex Width="44" Height="14">
             <div position="absolute" top="@_top" left="@_left" z-index="@_firstZ">
                 <Panel Width="24" Height="5" Title="Layer A" BorderColor="Color.Red">
                     <Markup Content="@($"Movable · z={_firstZ}")" />
@@ -14,7 +14,7 @@
                     <Markup Content="@($"Overlap · z={_secondZ}")" />
                 </Panel>
             </div>
-            <div position="absolute" top="9" left="0" z-index="1">
+            <div position="absolute" top="9" left="0" z-index="1" data-vnode-hook="zindex-layer-c">
                 <Panel Width="40" Height="5" Title="Layer C" BorderColor="Color.DeepSkyBlue1">
                     <Markup Content="Nested positioning" />
                     <div position="absolute" top="1" left="19" z-index="2">
@@ -24,9 +24,18 @@
             </div>
         </Flex>
         <Markup Content="@($"Last action: {_lastAction}")" Foreground="Color.Grey58" />
-        @if (_notification)
+        @if (_toasts.Count > 0)
         {
-            <Markup Content="Notification received" Foreground="Color.Chartreuse1" />
+            <div position="absolute" top="1" right="2" z-index="2000">
+                <Rows>
+                    @foreach (var toast in _toasts)
+                    {
+                        <Panel @key="toast.Key" Border="BoxBorder.Rounded" BorderColor="Color.Chartreuse1">
+                            <Markup Content="@($"Notification #{toast.Id}")" Foreground="Color.Chartreuse1" />
+                        </Panel>
+                    }
+                </Rows>
+            </div>
         }
         <ModalWindow IsOpened="@_modal">
             <Panel Title="Centered modal" BorderColor="Color.DeepSkyBlue1">
@@ -55,57 +64,73 @@
     private int _firstZ = 10;
     private int _secondZ = 20;
     private bool _modal;
-    private bool _notification;
+    private readonly List<Toast> _toasts = new();
+    private int _toastId;
     private string _lastAction = "None";
     private readonly CancellationTokenSource _shutdown = new();
-    private int _notificationVersion;
+    private sealed record Toast(int Id)
+    {
+        public Guid Key { get; } = Guid.NewGuid();
+    }
     private void Move() { _left = (_left + 2) % 12; _top = (_top + 1) % 4; _lastAction = $"Moved to {_left}, {_top}"; }
     private void Swap() { (_firstZ, _secondZ) = (_secondZ, _firstZ); _lastAction = "Order swapped"; }
-    private void Reset() { _top = 1; _left = 1; _firstZ = 10; _secondZ = 20; _modal = false; _notification = false; _notificationVersion++; _lastAction = "None"; }
+    private void Reset() { _top = 1; _left = 1; _firstZ = 10; _secondZ = 20; _modal = false; _toasts.Clear(); _lastAction = "None"; }
     private void Notify()
     {
-        _notification = true;
+        var toast = new Toast(++_toastId);
+        _toasts.Add(toast);
         _lastAction = "Notification sent";
-        _ = DismissNotificationAsync(++_notificationVersion);
+        _ = DismissToastAsync(toast);
     }
-    private async Task DismissNotificationAsync(int version)
+    private async Task DismissToastAsync(Toast toast)
     {
         try
         {
             await Task.Delay(2000, _shutdown.Token);
-            await InvokeAsync(() => { if (version == _notificationVersion) _notification = false; StateHasChanged(); });
+            await InvokeAsync(() =>
+            {
+                _toastId -= 1;
+                _toasts.Remove(toast);
+                StateHasChanged();
+            });
         }
         catch (OperationCanceledException) { }
     }
     public void Dispose() { _shutdown.Cancel(); _shutdown.Dispose(); }
-    private string SampleCode => $@"
-        <Flex Width=""44"" Height=""14"" position=""relative"">
-            <div position=""absolute"" top=""{_top}"" left=""{_left}"" z-index=""{_firstZ}"">
-                <Panel Width=""24"" Height=""5"" Title=""Layer A"" BorderColor=""Color.Red"">
-                    <Markup Content=""Movable · z={_firstZ}"" />
-                </Panel>
+    private string SampleCode => $@"<Flex Width=""44"" Height=""14"">
+    <div position=""absolute"" top=""{_top}"" left=""{_left}"" z-index=""{_firstZ}"">
+        <Panel Width=""24"" Height=""5"" Title=""Layer A"" BorderColor=""Color.Red"">
+            <Markup Content=""Movable · z={_firstZ}"" />
+        </Panel>
+    </div>
+    <div position=""absolute"" top=""3"" left=""12"" z-index=""{_secondZ}"">
+        <Panel Width=""26"" Height=""5"" Title=""Layer B"" BorderColor=""Color.Green"">
+            <Markup Content=""Overlap · z={_secondZ}"" />
+        </Panel>
+    </div>
+    <div position=""absolute"" top=""9"" left=""0"" z-index=""1"">
+        <Panel Width=""40"" Height=""5"" Title=""Layer C"" BorderColor=""Color.DeepSkyBlue1"">
+            <Markup Content=""Nested positioning"" />
+            <div position=""absolute"" top=""1"" left=""19"" z-index=""2"">
+                <Panel Width=""18"" Title=""Layer E""><Markup Content=""Relative to C"" /></Panel>
             </div>
-            <div position=""absolute"" top=""3"" left=""12"" z-index=""{_secondZ}"">
-                <Panel Width=""26"" Height=""5"" Title=""Layer B"" BorderColor=""Color.Green"">
-                    <Markup Content=""Overlap · z={_secondZ}"" />
-                </Panel>
-            </div>
-            <div position=""absolute"" top=""9"" left=""0"" z-index=""1"">
-                <Panel Width=""40"" Height=""5"" Title=""Layer C"" BorderColor=""Color.DeepSkyBlue1"">
-                    <Markup Content=""Nested positioning"" />
-                    <div position=""absolute"" top=""1"" left=""19"" z-index=""2"">
-                        <Panel Width=""18"" Title=""Layer E""><Markup Content=""Relative to C"" /></Panel>
-                    </div>
-                </Panel>
-            </div>
-        </Flex>
-        <ModalWindow IsOpened=""@_modal"">
-            <Panel Title=""Centered modal"" BorderColor=""Color.DeepSkyBlue1"">
-                <Rows>
-                    <Markup Content=""Above the other layers"" />
-                    <GalleryButton Id=""zindex-close"" Text=""Close modal"" OnClick=""() => _modal = false"" />
-                </Rows>
-            </Panel>
-        </ModalWindow>
+        </Panel>
+    </div>
+</Flex>
+<div position=""absolute"" top=""1"" right=""2"" z-index=""2000"">
+    <Rows>
+        <Panel Border=""BoxBorder.Rounded"" BorderColor=""Color.Chartreuse1"">
+            <Markup Content=""Notification #{{toast.Id}}"" Foreground=""Color.Chartreuse1"" />
+        </Panel>
+    </Rows>
+</div>
+<ModalWindow IsOpened=""@_modal"">
+    <Panel Title=""Centered modal"" BorderColor=""Color.DeepSkyBlue1"">
+        <Rows>
+            <Markup Content=""Above the other layers"" />
+            <GalleryButton Id=""zindex-close"" Text=""Close modal"" OnClick=""() => _modal = false"" />
+        </Rows>
+    </Panel>
+</ModalWindow>
 ".Trim();
 }

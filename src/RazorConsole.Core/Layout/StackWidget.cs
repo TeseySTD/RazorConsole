@@ -42,7 +42,7 @@ public sealed class StackWidget : Widget
         for (var i = 0; i < Children.Count; i++)
         {
             var childSize = Children[i].Measure(context, childConstraints);
-            if (IsAbsolutePositioned(Children[i]))
+            if (Children[i].IsAbsolutePositioned)
             {
                 continue;
             }
@@ -63,7 +63,7 @@ public sealed class StackWidget : Widget
 
     protected override void ArrangeCore(LayoutContext context, LayoutRect bounds)
     {
-        var flowChildren = Children.Where(child => !IsAbsolutePositioned(child)).ToArray();
+        var flowChildren = Children.Where(child => !child.IsAbsolutePositioned).ToArray();
         var expandingChildren = flowChildren.Where(IsExpanding).ToArray();
         var totalGaps = Math.Max(0, flowChildren.Length - 1) * Gap;
         var fixedHeight = flowChildren
@@ -75,9 +75,9 @@ public sealed class StackWidget : Widget
         var y = bounds.Y;
         foreach (var child in Children)
         {
-            if (IsAbsolutePositioned(child))
+            if (child.IsAbsolutePositioned)
             {
-                ArrangeAbsoluteChild(context, child, bounds);
+                child.Arrange(context, bounds);
                 continue;
             }
 
@@ -100,44 +100,7 @@ public sealed class StackWidget : Widget
         }
     }
 
-    private static void ArrangeAbsoluteChild(LayoutContext context, Widget child, LayoutRect bounds)
-    {
-        var childWidth = Math.Min(child.DesiredSize.Width, bounds.Width);
-        var childHeight = Math.Min(child.DesiredSize.Height, bounds.Height);
-        var left = TryGetIntAttribute(child, "left");
-        var top = TryGetIntAttribute(child, "top");
-        var right = TryGetIntAttribute(child, "right");
-        var bottom = TryGetIntAttribute(child, "bottom");
-
-        var x = left.HasValue
-            ? bounds.X + left.Value
-            : right.HasValue
-                ? bounds.Right - right.Value - childWidth
-                : bounds.X;
-        var y = top.HasValue
-            ? bounds.Y + top.Value
-            : bottom.HasValue
-                ? bounds.Bottom - bottom.Value - childHeight
-                : bounds.Y;
-
-        child.Arrange(context, new LayoutRect(x, y, childWidth, childHeight));
-    }
-
-    private static bool IsAbsolutePositioned(Widget child)
-        => child.Attributes.TryGetValue("position", out var value)
-            && string.Equals(value, "absolute", StringComparison.OrdinalIgnoreCase);
-
     private static bool IsExpanding(Widget child)
         => child.Attributes.TryGetValue("data-expand", out var value)
             && string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
-
-    private static int? TryGetIntAttribute(Widget child, string name)
-    {
-        if (!child.Attributes.TryGetValue(name, out var raw) || string.IsNullOrWhiteSpace(raw))
-        {
-            return null;
-        }
-
-        return int.TryParse(raw, out var value) ? value : null;
-    }
 }
