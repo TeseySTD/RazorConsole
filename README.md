@@ -13,6 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0%20%7C%2010.0%20%7C%2011.0%20RC-512BD4?style=flat-square)](https://dotnet.microsoft.com/)
 [![codecov](https://img.shields.io/codecov/c/github/RazorConsole/RazorConsole?style=flat-square&logo=codecov&token=)](https://codecov.io/gh/RazorConsole/RazorConsole)
+[![Website](https://img.shields.io/badge/docs-razorconsole.com-blue?style=flat-square)](https://razorconsole.com/)
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/DphHAnJxCM)
 
@@ -274,7 +275,7 @@ curl -fsSL https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scri
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/RazorConsole/RazorConsole/main/scripts/install-razor-console-app.ps1))) -App Gallery -Channel Nightly
 ```
 
-After installation, run `razorconsole-gallery` to browse component examples rendered in the console. See the [Component Gallery installation guide](https://razorconsole.com/docs/component-gallery) for manual downloads, checksum verification, and supported platforms.
+After installation, run `razorconsole-gallery` to browse component examples rendered in the console. See the [Component Gallery installation guide](https://razorconsole.com/docs/component-gallery/) for manual downloads, checksum verification, and supported platforms.
 
 ![Component Gallery](./assets/gallery.png)
 

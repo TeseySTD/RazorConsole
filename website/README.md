@@ -2,7 +2,7 @@
 
 This is the official documentation and showcase website for **RazorConsole**, a framework for building rich Terminal User Interfaces (TUI) using C# and Razor syntax.
 
-The site is built as a **Static Site (SSG)** with readable initial HTML and page-specific metadata for hosting on GitHub Pages.
+The site is built as a **Static Site (SSG)** with readable initial HTML and page-specific metadata for hosting as Cloudflare Worker static assets.
 
 ## 🚀 Key Features
 
@@ -141,31 +141,52 @@ Code previews are rendered at build-time using `Shiki`. It sets two theme color 
 
 ## 📤 Deployment
 
-The website is automatically deployed to GitHub Pages via **GitHub Actions**.
+This repository is the authoritative source and deployment owner for
+`https://razorconsole.com`. Both production paths build the same root artifact with:
 
-  - The build process injects the repository name as a `basename` (e.g., `/RazorConsole/`).
+```text
+VITE_SITE_URL=https://razorconsole.com
+VITE_BASE=/
+VITE_ROUTER_BASENAME=/
+```
+
+The CI workflow builds, tests, uploads, and deploys `website/build/client` as static assets on the
+Cloudflare Worker `razorconsole` on pushes to `main`. A manual CI run performs the same production
+deployment and is the safe first-cutover path. Version tags matched by `release.yml` rebuild the same
+artifact and deploy it only after the website, package, and Native AOT jobs succeed. Both use
+`cloudflare/wrangler-action` with `wrangler deploy --config website/wrangler.jsonc`. The Worker is
+assets-only, uses the generated `404.html` for unmatched routes, preserves automatic trailing-slash
+handling, and attaches `razorconsole.com` as a Custom Domain. The reusable deployment workflow
+records the source commit and deployment URL, fails on deployment errors, and uses production
+concurrency to prevent an older run from overtaking a newer one.
+
+Pull requests remain build-only in CI and continue to use the existing Cloudflare preview workflow.
+No production Cloudflare credential is available to pull-request code.
 
 ### SEO regression checks
 
-After generating DocFX and WASM data, run a production-path build in PowerShell:
+After generating DocFX and WASM data, run a root-production build in PowerShell:
 
 ```powershell
-$env:VITE_SITE_URL = "https://razorconsole.github.io"
-$env:VITE_BASE = "/RazorConsole/"
-$env:VITE_ROUTER_BASENAME = "/RazorConsole/"
+$env:VITE_SITE_URL = "https://razorconsole.com"
+$env:VITE_BASE = "/"
+$env:VITE_ROUTER_BASENAME = "/"
 npm run test:seo
 npx tsc -b
 npx react-router build
 npm run gen:sitemap
 npm run test:seo:static
+python tests/tutorial_navigation.py
 ```
 
 `npm run build` also generates the social images and AI documentation. The focused sequence above
 checks SEO without regenerating those unrelated assets. The static tests inspect HTML before JavaScript
 runs: H1s, unique self-canonicals, Open Graph URLs, readable API descriptions, internal links, redirects,
-and sitemap coverage. CI runs these checks after its full website build, for both preview and production
-base paths. Keep `VITE_BASE` and `VITE_ROUTER_BASENAME` aligned. Preview deployments can set their own
-`VITE_SITE_URL`; local navigation and assets remain local rather than linking to production.
+and sitemap coverage. CI runs the complete checks for preview and root production artifacts. Source
+tests retain path-helper coverage for both `/` and the legacy `/RazorConsole/` base where relevant.
+Keep `VITE_BASE` and `VITE_ROUTER_BASENAME` aligned. Preview artifacts retain the production
+canonical URL because the temporary Worker Preview URL is assigned only after the build; local
+navigation and assets still remain local rather than linking to production.
 
 `SiteLink` and `site-paths.ts` normalize HTML routes to trailing slashes while preserving query strings,
 anchors, files, and the project base path. Existing redirect routes remain available. Markdown uses
@@ -175,20 +196,48 @@ GitHub Pages can still serve `/index.html` aliases; their generated HTML points 
 depending on host-level redirect rules. The client replaces only `index.html` aliases before
 hydration, retaining the query, fragment, and existing history state so the router matches the page.
 
-### Owner follow-up after deployment
+### Custom-domain migration and owner runbook
 
-This repository deploys the **project site** at `https://razorconsole.github.io/RazorConsole/`.
-It cannot publish `https://razorconsole.github.io/robots.txt`. An optional root robots file belongs to
-the RazorConsole organization's root Pages site, conventionally the `RazorConsole/razorconsole.github.io`
-repository (its existence/access has not been confirmed). An organization Pages administrator must
-manage that origin-root deployment; a project-subdirectory robots file would not control crawling.
-Missing robots.txt does not block crawling.
+Cloudflare owner setup:
 
-The existing Google verification meta token is preserved, but it does not prove Search Console access,
-sitemap submission, or index status. A property owner should submit
-`https://razorconsole.github.io/RazorConsole/sitemap.xml` after deployment and inspect the home,
-table component, tutorial, blog, API, and release pages, including their selected canonical URLs.
-No submission or indexing claim is made by the build.
+1. Keep `razorconsole.com` as an active Cloudflare zone in the same account as the `razorconsole`
+   Worker. Workers Custom Domains require Cloudflare-managed nameservers.
+2. Keep repository secrets `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. Initial setup needs
+   permission to create the Worker and **Zone → Workers Routes → Write** for `razorconsole.com`;
+   ordinary updates to the existing Worker need Editor access. Pull requests use isolated Worker
+   Previews and do not create persistent Workers or touch the production Custom Domain.
+3. The production Wrangler configuration declares `razorconsole.com` as a Custom Domain. Wrangler
+   creates the DNS record and certificate when it deploys; remove any conflicting CNAME before the
+   first Worker deployment. Check CAA records if certificate issuance fails.
+
+Safe cutover:
+
+1. Merge the workflow change with `[skip ci]`, so the old monolithic merge run cannot publish an
+   unrelated nightly/package before the new workflow exists on `main`.
+2. Run `gh workflow run ci.yml --repo RazorConsole/RazorConsole --ref main`. Manual CI runs the full
+   website and repository checks and deploys the verified artifact, while existing nightly/package
+   jobs remain push-only.
+3. Confirm the production deployment on the reported `workers.dev` URL and Custom Domain,
+   then verify `https://razorconsole.com`, representative routes, assets, the Google verification file,
+   sitemap, canonical/OG URLs, unknown-route 404, and real tutorial browser navigation.
+4. In **RazorConsole/RazorConsole → Settings → Pages → Custom domain**, set `razorconsole.com`.
+   GitHub Pages then redirects the repository's default
+   `https://razorconsole.github.io/RazorConsole/` URL to the custom domain instead of requiring a
+   generated redirect deployment. Verify representative old paths resolve to the matching custom-domain
+   paths before retiring any previous deployment.
+5. Add/verify the Search Console URL-prefix property `https://razorconsole.com/`, submit
+   `https://razorconsole.com/sitemap.xml`, and retain the old GitHub Pages properties to monitor
+   redirects. The verification asset does not prove submission, indexing, or Google's selected
+   canonical.
+
+Ordinary future pushes to `main` deploy production after successful CI. Tags matching `v*.*.*` or
+`*.*.*` deploy again after the complete release matrix; manual `release.yml` runs do not deploy a
+website because they are not releases.
+
+The old project URL is therefore an owner configuration step, not a source-generated redirect
+artifact. Keep GitHub Pages enabled for this repository and retain the custom-domain setting while
+the old URLs are needed. Do not add a second Pages deployment workflow or an ineffective
+`/RazorConsole/robots.txt`.
 
 For a read-only post-deployment check, run `npm run check:seo:deployed` (or append
 `-- https://your-preview.example` to inspect a preview). This checks representative HTTP responses,
@@ -196,24 +245,19 @@ initial HTML headings/canonicals, sitemap coverage, and the origin-root robots s
 authenticate to Search Console, interpret every robots directive, or claim Google has indexed a page.
 Before deployment it may correctly fail against the old live site.
 
-For the root-site administrator, the optional robots content is:
+For rollback, use **Workers & Pages → razorconsole → Deployments** to select and redeploy a prior
+Worker version. Revert the source commit
+and rerun CI afterward for a durable code rollback. Avoid flipping DNS away and back as a routine
+rollback because Cloudflare documents a reactivation window that can produce errors.
 
-```text
-User-agent: *
-Allow: /
+`RazorConsole/RazorConsole.github.io` must not continue serving a duplicate full site after cutover.
+Disable its Pages deployment after `razorconsole.com` and the source repository's automatic default-URL
+redirect are verified. The custom domain belongs on `RazorConsole/RazorConsole`, not on both
+repositories. This repository does not modify that other repository.
 
-Sitemap: https://razorconsole.github.io/RazorConsole/sitemap.xml
-```
-
-Review existing origin-wide rules before adopting this example. Publish it **only through the
-origin-root site's owner-controlled deployment**, not `website/public/robots.txt` in this repository.
-This PR cannot implement that cross-repository deployment or submit to a Google property without
-the owner's authorization and access.
-
-In Search Console, the minimum owner actions are: select a property covering the project URL,
-submit the final sitemap in **Sitemaps**, and use **URL Inspection** for the representative URLs
-listed by the check script. Record submission status, fetch/index eligibility, and user-declared
-versus Google-selected canonical separately. A successful live fetch is not proof of indexing.
+After the Worker and Custom Domain are verified, delete the superseded `razorconsole` Pages project
+from Cloudflare so it cannot become a duplicate deployment. This cleanup is intentionally manual and
+must happen only after production traffic has moved successfully.
 
 ### Search-led content and evidence
 
