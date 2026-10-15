@@ -7,7 +7,16 @@ namespace RazorConsole.Core;
 
 public enum RazorConsoleRenderingPipeline
 {
+    /// <summary>
+    /// The deprecated Spectre.Console-based layout pipeline, retained for compatibility until its complete removal in v1.1.0.
+    /// Use <see cref="WidgetLayout"/> for layout metadata and coordinate-aware mouse events.
+    /// </summary>
+    [Obsolete("The legacy Spectre layout pipeline is deprecated and will be completely removed in v1.1.0. Use WidgetLayout instead.")]
     LegacySpectre,
+
+    /// <summary>
+    /// The default widget-based layout pipeline.
+    /// </summary>
     WidgetLayout,
 }
 
@@ -34,6 +43,14 @@ public sealed class ConsoleAppOptions
 
     public ConsoleLiveDisplayOptions ConsoleLiveDisplayOptions { get; } = ConsoleLiveDisplayOptions.Default;
 
+    /// <summary>
+    /// Gets or sets the rendering pipeline. Defaults to <see cref="RazorConsoleRenderingPipeline.WidgetLayout"/>
+    /// unless overridden by the RAZORCONSOLE_RENDERING_PIPELINE environment variable.
+    /// </summary>
+    /// <remarks>
+    /// The legacy Spectre layout pipeline is deprecated and will be completely removed in v1.1.0.
+    /// Use WidgetLayout for new applications.
+    /// </remarks>
     public RazorConsoleRenderingPipeline RenderingPipeline { get; set; } = ResolveDefaultRenderingPipeline();
 
     /// <summary>
@@ -62,7 +79,9 @@ public sealed class ConsoleAppOptions
         if (string.Equals(value, "legacy", StringComparison.OrdinalIgnoreCase)
             || string.Equals(value, "spectre", StringComparison.OrdinalIgnoreCase))
         {
+#pragma warning disable CS0618 // Preserve deprecated environment variable aliases until removal in v1.1.0.
             return RazorConsoleRenderingPipeline.LegacySpectre;
+#pragma warning restore CS0618
         }
 
         return Enum.TryParse<RazorConsoleRenderingPipeline>(value, ignoreCase: true, out var pipeline)
