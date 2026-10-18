@@ -28,6 +28,11 @@ namespace RazorConsole.Testing.Pty;
 /// The parent's slave descriptor is opened with <c>O_CLOEXEC</c>, which <c>open</c> sets atomically on both systems.
 /// </para>
 /// <para>
+/// Window size: macOS rejects terminal ioctls such as <c>TIOCSWINSZ</c> on a new master with <c>ENOTTY</c> until the
+/// slave has been opened once (xnu <c>ptcopen</c> sets <c>TS_IOCTL_NOT_OK</c>, <c>ptsopen</c> clears it). The parent's
+/// slave descriptor is therefore opened before the initial size is set on the master.
+/// </para>
+/// <para>
 /// Exit: a dedicated thread runs <c>waitpid(pid)</c> for this child only.
 /// </para>
 /// </remarks>
@@ -145,10 +150,7 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
     public override void Resize(int width, int height)
     {
         // The kernel sends SIGWINCH to the foreground process group.
-        if (SetWindowSize(_master, width, height) != 0)
-        {
-            throw new IOException($"TIOCSWINSZ failed (errno {Marshal.GetLastPInvokeError()}).");
-        }
+        SetWindowSizeOrThrow(_master, "master", width, height);
     }
 
     public override void Kill()
@@ -200,11 +202,6 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
             }
 
             var slavePath = GetSlavePath(master);
-            if (SetWindowSize(master, startInfo.Width, startInfo.Height) != 0)
-            {
-                throw new IOException($"TIOCSWINSZ failed (errno {Marshal.GetLastPInvokeError()}).");
-            }
-
             int slave;
             fixed (byte* path = slavePath)
             {
@@ -218,6 +215,8 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
 
             try
             {
+                // After the slave open: until then macOS answers ENOTTY.
+                SetWindowSizeOrThrow(master, "master", startInfo.Width, startInfo.Height);
                 var processId = Spawn(startInfo, master, slavePath);
                 return new UnixPtyConnection(master, slave, processId);
             }
@@ -231,6 +230,15 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
         {
             close(master);
             throw;
+        }
+    }
+
+    private static void SetWindowSizeOrThrow(int fd, string role, int width, int height)
+    {
+        if (SetWindowSize(fd, width, height) != 0)
+        {
+            throw new IOException(
+                $"ioctl(TIOCSWINSZ 0x{TiocSWinSz:x}) on the {role} fd {fd} failed (errno {Marshal.GetLastPInvokeError()}).");
         }
     }
 
