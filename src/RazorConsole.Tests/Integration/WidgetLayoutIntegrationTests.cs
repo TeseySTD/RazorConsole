@@ -1,8 +1,8 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
 using RazorConsole.Core.Layout;
-using RazorConsole.Tests.Integration.Fixtures;
 using RazorConsole.Testing;
+using RazorConsole.Tests.Integration.Fixtures;
 
 namespace RazorConsole.Tests.Integration;
 

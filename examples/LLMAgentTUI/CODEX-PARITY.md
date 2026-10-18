@@ -58,8 +58,8 @@ selection. Pipe tables render aligned columns with gold headings and separated
 rows, reflow on resize, and retain selectable inline styles. List item indentation
 is consistent across siblings, nested items and wrapped continuation lines.
 
-`tests/e2e/terminal-input-pty.py` covers the real Unix byte-input path separately
-from TestTerminal. macOS PTY checks include sustained/fragmented SGR wheel reports
+`src/RazorConsole.Tests/E2E/TerminalInputPtyTests.cs` covers the real terminal byte-input
+path (a Unix PTY or Windows ConPTY) separately from TestTerminal. The PTY checks include sustained/fragmented SGR wheel reports
 without draft corruption and native arrow/Tab command selection. The decoder is
 used before Console.ReadKey can interpret mouse bytes; it is not a draft sanitizer.
 

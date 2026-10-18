@@ -2,17 +2,19 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RazorConsole.Core\RazorConsole.Core.csproj" />
+    <InternalsVisibleTo Include="RazorConsole.Tests" />
   </ItemGroup>
   <Import Project="$(RepoRoot)/nuget/nuget-package.props" />
 
   <PropertyGroup>
     <Title>RazorConsole Testing</Title>
-    <Description>Headless test host for RazorConsole: mount components at a fixed terminal size, send keyboard, mouse and raw terminal input, and inspect rendered frames. Works with any test framework.</Description>
+    <Description>Test hosts for RazorConsole: mount components headlessly at a fixed terminal size, or run a whole console app in a real pseudoterminal (ConPTY on Windows, a POSIX PTY on Linux and macOS); send keyboard, mouse and raw terminal input, and inspect rendered frames. Works with any test framework.</Description>
     <PackageTags>$(PackageTags);testing</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup>
     <IsAotCompatible>true</IsAotCompatible>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <!--

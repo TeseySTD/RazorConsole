@@ -175,18 +175,17 @@ key decoding; SGR mouse reports never pass through `Console.ReadKey`. Non-mouse
 applications retain the existing console input path. The decoder preserves partial
 packets across reads and separates keyboard and mouse events in arrival order.
 
-Optional native Unix input regression (no tmux, no model network access):
+Native terminal input regression (no tmux, no model network access), part of the
+regular test suite on Linux, macOS and Windows:
 
 ```bash
-dotnet build examples/LLMAgentTUI -c Release -f net10.0
-uv run --with pyte python tests/e2e/terminal-input-pty.py
+dotnet test src/RazorConsole.Tests -- --filter-class RazorConsole.Tests.E2E.TerminalInputPtyTests
 ```
 
-This launches the real application in a PTY with `--mock`, sends 201 wheel reports
+`TerminalInputPtyTests` launches the real application in a pseudoterminal with
+`--mock` through `RazorConsole.Testing.PtyTerminal`, sends 201 wheel reports
 (including delayed fragments), checks draft preservation, exercises arrow/Tab menu
-selection, and checks that Ctrl+C disables mouse reporting. Pass `--dotnet PATH`
-if the SDK is not on PATH. Linux still needs native validation; current native
-execution evidence is macOS, in addition to the cross-target .NET unit tests.
+selection, and checks that Ctrl+C disables mouse reporting.
 
 Use `--framework net11.0` with the PTY script to exercise the .NET 11 build
 (build the example with `-c Release -f net11.0` first).

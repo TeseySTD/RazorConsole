@@ -94,7 +94,7 @@ public sealed class HeadlessTerminalTests
     {
         await using var terminal = await StartKeySurfaceAsync([]);
 
-        var exception = await Should.ThrowAsync<HeadlessTerminalTimeoutException>(
+        var exception = await Should.ThrowAsync<TerminalTimeoutException>(
             () => terminal.WaitUntilAsync(_ => false, TimeSpan.FromMilliseconds(50), "an impossible state", TestContext.Current.CancellationToken));
 
         exception.ShouldBeAssignableTo<TimeoutException>();
@@ -113,7 +113,7 @@ public sealed class HeadlessTerminalTests
         var frame = await terminal.WaitForTextAsync("Last key: x", cancellationToken: TestContext.Current.CancellationToken);
         frame.ContainsText("Last key: x").ShouldBeTrue();
 
-        var exception = await Should.ThrowAsync<HeadlessTerminalTimeoutException>(
+        var exception = await Should.ThrowAsync<TerminalTimeoutException>(
             () => terminal.WaitForTextAsync("Last key: y", TimeSpan.FromMilliseconds(50), TestContext.Current.CancellationToken));
         exception.Message.ShouldContain("text 'Last key: y'");
         exception.Diagnostics.ShouldContain("Last key: x");

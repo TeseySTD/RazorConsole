@@ -42,7 +42,7 @@ public sealed class HeadlessTerminal : IAsyncDisposable
     private readonly MouseEventManager _mouseEventManager;
     private readonly TerminalInputDispatcher _terminalInputDispatcher;
     private readonly CancellationTokenSource _shutdown = new();
-    private readonly List<TerminalFrame> _frames = [];
+    private readonly List<HeadlessTerminalFrame> _frames = [];
     private readonly AnsiOutputWriter? _ansiOutput;
     private readonly IAnsiConsole? _ansiConsole;
     private IDisposable? _snapshotSubscription;
@@ -110,7 +110,7 @@ public sealed class HeadlessTerminal : IAsyncDisposable
     /// Gets the most recently captured frame.
     /// </summary>
     /// <exception cref="InvalidOperationException">No frame has been rendered yet.</exception>
-    public TerminalFrame CurrentFrame
+    public HeadlessTerminalFrame CurrentFrame
     {
         get
         {
@@ -127,7 +127,7 @@ public sealed class HeadlessTerminal : IAsyncDisposable
     /// Gets the recently captured frames, oldest first. At most 50 frames are kept,
     /// and a frame identical to the one before it is not recorded.
     /// </summary>
-    public IReadOnlyList<TerminalFrame> Frames
+    public IReadOnlyList<HeadlessTerminalFrame> Frames
     {
         get
         {
@@ -384,10 +384,10 @@ public sealed class HeadlessTerminal : IAsyncDisposable
     /// <param name="description">A description of the awaited state, used in the timeout message.</param>
     /// <param name="cancellationToken">A token that cancels the wait.</param>
     /// <returns>The first frame that satisfied <paramref name="predicate"/>.</returns>
-    /// <exception cref="HeadlessTerminalTimeoutException">The condition was not met within <paramref name="timeout"/>.</exception>
+    /// <exception cref="TerminalTimeoutException">The condition was not met within <paramref name="timeout"/>.</exception>
     /// <exception cref="InvalidOperationException">Rendering failed while waiting.</exception>
-    public async Task<TerminalFrame> WaitUntilAsync(
-        Func<TerminalFrame, bool> predicate,
+    public async Task<HeadlessTerminalFrame> WaitUntilAsync(
+        Func<HeadlessTerminalFrame, bool> predicate,
         TimeSpan? timeout = null,
         string? description = null,
         CancellationToken cancellationToken = default)
@@ -402,7 +402,7 @@ public sealed class HeadlessTerminal : IAsyncDisposable
             cancellationToken.ThrowIfCancellationRequested();
 
             Exception? observerError;
-            TerminalFrame? frame;
+            HeadlessTerminalFrame? frame;
             lock (_sync)
             {
                 observerError = _observerError;
@@ -425,7 +425,7 @@ public sealed class HeadlessTerminal : IAsyncDisposable
         }
 
         var diagnostics = DumpDiagnostics();
-        throw new HeadlessTerminalTimeoutException(
+        throw new TerminalTimeoutException(
             $"Timed out after {limit} waiting for {description ?? "the requested terminal state"}.{Environment.NewLine}{diagnostics}",
             diagnostics);
     }
@@ -437,8 +437,8 @@ public sealed class HeadlessTerminal : IAsyncDisposable
     /// <param name="timeout">The maximum time to wait. Defaults to 2 seconds.</param>
     /// <param name="cancellationToken">A token that cancels the wait.</param>
     /// <returns>The first frame that contained <paramref name="text"/>.</returns>
-    /// <exception cref="HeadlessTerminalTimeoutException">The text did not appear within <paramref name="timeout"/>.</exception>
-    public Task<TerminalFrame> WaitForTextAsync(string text, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+    /// <exception cref="TerminalTimeoutException">The text did not appear within <paramref name="timeout"/>.</exception>
+    public Task<HeadlessTerminalFrame> WaitForTextAsync(string text, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(text);
         return WaitUntilAsync(frame => frame.ContainsText(text), timeout, $"text '{text}'", cancellationToken);
@@ -451,7 +451,7 @@ public sealed class HeadlessTerminal : IAsyncDisposable
     /// <param name="frameCount">How many of the most recent frames to include.</param>
     public string DumpDiagnostics(int frameCount = 3)
     {
-        TerminalFrame[] frames;
+        HeadlessTerminalFrame[] frames;
         Exception? observerError;
         int totalFrameCount;
         lock (_sync)
@@ -575,7 +575,7 @@ public sealed class HeadlessTerminal : IAsyncDisposable
 
         var canvas = renderable.PaintToCanvas();
         var layouts = CollectHookLayouts(renderSnapshot.Root);
-        var frame = new TerminalFrame(
+        var frame = new HeadlessTerminalFrame(
             Interlocked.Increment(ref _frameNumber),
             DateTimeOffset.UtcNow,
             canvas,
@@ -622,7 +622,7 @@ public sealed class HeadlessTerminal : IAsyncDisposable
         return layouts;
     }
 
-    private static bool IsEquivalent(TerminalFrame left, TerminalFrame right)
+    private static bool IsEquivalent(HeadlessTerminalFrame left, HeadlessTerminalFrame right)
         => left.Width == right.Width
             && left.Height == right.Height
             && string.Equals(left.FocusKey, right.FocusKey, StringComparison.Ordinal)

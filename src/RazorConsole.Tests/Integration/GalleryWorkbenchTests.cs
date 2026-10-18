@@ -76,12 +76,12 @@ public sealed class GalleryWorkbenchTests
         await Click(terminal, "align-h-Right");
         await Click(terminal, "align-wider");
         await Click(terminal, "align-code");
-        terminal.CurrentFrame.ContainsText("HorizontalAlignment.Right").ShouldBeTrue(terminal.DumpDiagnostics());
-        terminal.CurrentFrame.ContainsText("32").ShouldBeTrue();
+        var code = await terminal.WaitUntilAsync(s => s.ContainsText("HorizontalAlignment.Right"), cancellationToken: TestContext.Current.CancellationToken);
+        code.ContainsText("32").ShouldBeTrue(terminal.DumpDiagnostics());
         await Click(terminal, "align-reset");
-        terminal.CurrentFrame.ContainsText("HorizontalAlignment.Center").ShouldBeTrue();
+        await terminal.WaitUntilAsync(s => s.ContainsText("HorizontalAlignment.Center"), cancellationToken: TestContext.Current.CancellationToken);
         await Click(terminal, "align-preview");
-        terminal.CurrentFrame.ContainsText("Hello, layout!").ShouldBeTrue();
+        await terminal.WaitUntilAsync(s => s.ContainsText("Hello, layout!"), cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]

@@ -53,6 +53,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="src/RazorConsole.Tests/RazorConsole.Tests.csproj" />
+    <Project Path="src/RazorConsole.Tests.PtyApp/RazorConsole.Tests.PtyApp.csproj" />
   </Folder>
   <Folder Name="/tutorial/">
     <Project Path="tutorial/Tutorial.Components/Tutorial.Components.csproj" />

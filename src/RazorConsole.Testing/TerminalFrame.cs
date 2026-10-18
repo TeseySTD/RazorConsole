@@ -1,47 +1,28 @@
 // Copyright (c) RazorConsole. All rights reserved.
 
-using System.Collections.ObjectModel;
 using System.Text;
 using RazorConsole.Core.Layout;
-using RazorConsole.Core.Vdom;
 
 namespace RazorConsole.Testing;
 
 /// <summary>
-/// An immutable capture of one rendered terminal frame: the cell grid, focus, and layouts.
+/// An immutable capture of one terminal screen: the cell grid and its size.
 /// </summary>
-public sealed class TerminalFrame
+/// <remarks>
+/// <see cref="HeadlessTerminalFrame"/> adds focus and layout information from a <see cref="HeadlessTerminal"/>;
+/// <see cref="PtyTerminalFrame"/> adds cursor and terminal mode state from a <see cref="PtyTerminal"/>.
+/// </remarks>
+public abstract class TerminalFrame
 {
     private readonly TerminalCell[,] _cells;
 
-    internal TerminalFrame(
-        long frameNumber,
-        DateTimeOffset observedAt,
-        TerminalCanvas canvas,
-        int terminalWidth,
-        int terminalHeight,
-        string? focusKey,
-        IReadOnlyDictionary<string, VNodeLayoutInfo> layouts)
+    private protected TerminalFrame(long frameNumber, DateTimeOffset observedAt, TerminalCell[,] cells)
     {
         FrameNumber = frameNumber;
         ObservedAt = observedAt;
-        Width = terminalWidth;
-        Height = terminalHeight;
-        FocusKey = focusKey;
-        _cells = new TerminalCell[Height, Width];
-
-        for (var y = 0; y < Height; y++)
-        {
-            for (var x = 0; x < Width; x++)
-            {
-                _cells[y, x] = x < canvas.Width && y < canvas.Height
-                    ? canvas[x, y]
-                    : TerminalCell.Empty;
-            }
-        }
-
-        Layouts = new ReadOnlyDictionary<string, VNodeLayoutInfo>(
-            new Dictionary<string, VNodeLayoutInfo>(layouts, StringComparer.Ordinal));
+        _cells = cells;
+        Height = cells.GetLength(0);
+        Width = cells.GetLength(1);
     }
 
     /// <summary>
@@ -63,16 +44,6 @@ public sealed class TerminalFrame
     /// Gets the terminal height in rows when the frame was captured.
     /// </summary>
     public int Height { get; }
-
-    /// <summary>
-    /// Gets the focus key of the focused element when the frame was captured, if any.
-    /// </summary>
-    public string? FocusKey { get; }
-
-    /// <summary>
-    /// Gets the layouts of the elements that have a <c>data-vnode-hook</c> attribute, keyed by hook.
-    /// </summary>
-    public IReadOnlyDictionary<string, VNodeLayoutInfo> Layouts { get; }
 
     /// <summary>
     /// Gets the cell at the zero-based column <paramref name="x"/> and row <paramref name="y"/>.
@@ -141,7 +112,7 @@ public sealed class TerminalFrame
         {
             for (var x = 0; x < Width; x++)
             {
-                if (this[x, y] != other[x, y])
+                if (_cells[y, x] != other._cells[y, x])
                 {
                     return false;
                 }
@@ -171,57 +142,36 @@ public sealed class TerminalFrame
     }
 
     /// <summary>
-    /// Gets the layout captured for the element with the given <c>data-vnode-hook</c>.
+    /// Formats the frame for failure messages: a header and the screen lines.
     /// </summary>
-    /// <param name="hookKey">The hook key.</param>
-    /// <exception cref="KeyNotFoundException">No layout was captured for <paramref name="hookKey"/>.</exception>
-    public VNodeLayoutInfo GetLayout(string hookKey)
-        => Layouts.TryGetValue(hookKey, out var layout)
-            ? layout
-            : throw new KeyNotFoundException($"No layout was captured for hook '{hookKey}'.");
-
-    /// <summary>
-    /// Tries to get the layout captured for the element with the given <c>data-vnode-hook</c>.
-    /// </summary>
-    /// <param name="hookKey">The hook key.</param>
-    /// <param name="layout">The layout, when found.</param>
-    public bool TryGetLayout(string hookKey, out VNodeLayoutInfo layout)
-        => Layouts.TryGetValue(hookKey, out layout);
-
-    /// <summary>
-    /// Formats the frame for failure messages: header, screen lines, and layouts.
-    /// </summary>
-    public string ToDiagnosticString()
+    public virtual string ToDiagnosticString()
     {
         var builder = new StringBuilder();
         builder.Append("Frame ").Append(FrameNumber)
-            .Append(" (").Append(Width).Append('x').Append(Height).Append(')')
-            .Append(", focus: ").AppendLine(FocusKey ?? "<none>");
-
-        for (var y = 0; y < Height; y++)
-        {
-            builder.Append(GetLine(y).TrimEnd()).AppendLine();
-        }
-
-        if (Layouts.Count > 0)
-        {
-            builder.AppendLine("Layouts:");
-            foreach (var pair in Layouts.OrderBy(pair => pair.Key, StringComparer.Ordinal))
-            {
-                var layout = pair.Value;
-                builder.Append("  ").Append(pair.Key).Append(": ")
-                    .Append("left=").Append(layout.Left)
-                    .Append(", top=").Append(layout.Top)
-                    .Append(", width=").Append(layout.Width)
-                    .Append(", height=").Append(layout.Height)
-                    .Append(", z=").Append(layout.ZIndex)
-                    .AppendLine();
-            }
-        }
-
+            .Append(" (").Append(Width).Append('x').Append(Height).Append(')');
+        AppendHeaderDetails(builder);
+        builder.AppendLine();
+        AppendScreen(builder);
+        AppendFooterDetails(builder);
         return builder.ToString().TrimEnd();
     }
 
     /// <inheritdoc />
     public override string ToString() => ToDiagnosticString();
+
+    private protected virtual void AppendHeaderDetails(StringBuilder builder)
+    {
+    }
+
+    private protected virtual void AppendFooterDetails(StringBuilder builder)
+    {
+    }
+
+    private void AppendScreen(StringBuilder builder)
+    {
+        for (var y = 0; y < Height; y++)
+        {
+            builder.Append(GetLine(y).TrimEnd()).AppendLine();
+        }
+    }
 }
