@@ -8,6 +8,8 @@ namespace RazorConsole.Tests.E2E;
 /// Wheel-storm regression for the Gallery in a real pseudoterminal. Port of the former
 /// <c>tests/e2e/gallery-scroll-pty.py</c>.
 /// </summary>
+[Trait("Category", "E2E")]
+[Collection(GalleryWheelStressCollection.Name)]
 public sealed class GalleryScrollPtyTests
 {
     private const string Esc = "\u001b";

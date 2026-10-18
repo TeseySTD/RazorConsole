@@ -1,4 +1,4 @@
-﻿// Copyright (c) RazorConsole. All rights reserved.
+// Copyright (c) RazorConsole. All rights reserved.
 
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;

@@ -8,6 +8,7 @@ namespace RazorConsole.Tests.E2E;
 /// Real terminal input against the offline (<c>--mock</c>) LLMAgentTUI session. Port of the former
 /// <c>tests/e2e/terminal-input-pty.py</c>. No provider requests, API keys or real tool execution are used.
 /// </summary>
+[Trait("Category", "E2E")]
 public sealed class TerminalInputPtyTests
 {
     private const string Esc = "\u001b";

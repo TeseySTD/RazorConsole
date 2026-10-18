@@ -9,6 +9,7 @@ using RazorConsole.Testing;
 
 namespace RazorConsole.Tests.Integration;
 
+[Collection(GalleryWheelStressCollection.Name)]
 public sealed class GallerySampleTests
 {
     [Fact]
