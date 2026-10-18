@@ -36,6 +36,7 @@ public sealed class PtyTerminal : IAsyncDisposable
     private const int ReadBufferSize = 16 * 1024;
     private static readonly TimeSpan ExitDrainQuietPeriod = TimeSpan.FromMilliseconds(150);
     private static readonly TimeSpan ExitDrainLimit = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan ExitStatusWaitLimit = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan DisposeLimit = TimeSpan.FromSeconds(5);
 
     // Ghostty (sync_reset_ms) and foot end a synchronized update the application left open after one second.
@@ -372,6 +373,8 @@ public sealed class PtyTerminal : IAsyncDisposable
 
             if (ended)
             {
+                // The output normally ends after the exit is known; if not, give the exit status a moment to show up in the diagnostics.
+                await WaitQuietlyAsync(_connection.Exited, ExitStatusWaitLimit).ConfigureAwait(false);
                 var diagnostics = DumpDiagnostics();
                 throw new InvalidOperationException(
                     $"The terminal output ended before {description ?? "the requested terminal state"} was reached.{Environment.NewLine}{diagnostics}");
@@ -806,10 +809,12 @@ public sealed class PtyTerminal : IAsyncDisposable
     // a grandchild can keep a POSIX PTY open the same way. Drain what is left, then end the output.
     private async Task EndOutputAfterExitAsync()
     {
+        // Quiet is counted from the exit at the earliest: output that has not been read yet is not silence.
+        var exitTimestamp = Stopwatch.GetTimestamp();
         var stopwatch = Stopwatch.StartNew();
         while (!_readerCompleted.Task.IsCompleted
             && stopwatch.Elapsed < ExitDrainLimit
-            && Stopwatch.GetElapsedTime(Interlocked.Read(ref _lastOutputTimestamp)) < ExitDrainQuietPeriod)
+            && Stopwatch.GetElapsedTime(Math.Max(exitTimestamp, Interlocked.Read(ref _lastOutputTimestamp))) < ExitDrainQuietPeriod)
         {
             await Task.Delay(25).ConfigureAwait(false);
         }

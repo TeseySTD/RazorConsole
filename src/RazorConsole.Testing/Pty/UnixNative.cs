@@ -1,4 +1,4 @@
-// Copyright (c) RazorConsole. All rights reserved.
+﻿// Copyright (c) RazorConsole. All rights reserved.
 
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -25,6 +25,11 @@ internal static unsafe partial class UnixNative
     /// Gets <c>O_CLOEXEC</c> for <c>posix_openpt</c>, or 0 where <c>posix_openpt</c> does not accept it (macOS).
     /// </summary>
     public static int OCloExecForOpenPt => OperatingSystem.IsMacOS() ? 0 : 0x80000;
+
+    /// <summary>
+    /// Gets <c>O_CLOEXEC</c> for <c>open</c>, which sets it atomically on both Linux and macOS.
+    /// </summary>
+    public static int OCloExec => OperatingSystem.IsMacOS() ? 0x1000000 : 0x80000;
 
     public static short PosixSpawnSetSid => OperatingSystem.IsMacOS() ? (short)0x400 : (short)0x80;
 
@@ -117,6 +122,10 @@ internal static unsafe partial class UnixNative
 
     [LibraryImport(LibC, SetLastError = true)]
     public static partial int poll(PollFd* fds, nuint count, int timeout);
+
+    // open is variadic; without O_CREAT no mode is passed, so the fixed two-argument signature is correct on every ABI.
+    [LibraryImport(LibC, SetLastError = true)]
+    public static partial int open(byte* path, int flags);
 
     [LibraryImport(LibC, SetLastError = true)]
     public static partial int close(int fd);

@@ -13,12 +13,19 @@ namespace RazorConsole.Testing.Pty;
 /// <remarks>
 /// <para>
 /// The child runs in a new session (<c>POSIX_SPAWN_SETSID</c>) and opens the PTY slave by path as fd 0, which makes it
-/// the controlling terminal, so Ctrl+C reaches it as SIGINT through the line discipline. The parent never opens the slave.
+/// the controlling terminal, so Ctrl+C reaches it as SIGINT through the line discipline.
+/// </para>
+/// <para>
+/// End of output: reading the master fails with <c>EIO</c> once no slave descriptor is open, and on Linux that can be
+/// seen before <c>waitpid</c> reports the exit. The parent therefore keeps its own slave descriptor (<c>O_NOCTTY</c>,
+/// so the test process never acquires the terminal) until the child is reaped, then closes it: the output ends only
+/// after everything the child wrote has been read and the exit status is known.
 /// </para>
 /// <para>
 /// fd inheritance: on Linux the master is opened with <c>O_CLOEXEC</c> atomically, so no other child can inherit it.
 /// macOS <c>posix_openpt</c> does not accept <c>O_CLOEXEC</c>; there <c>FD_CLOEXEC</c> is set right after opening, and
 /// opening plus spawning run under a process-wide lock so another terminal's spawn cannot happen in between.
+/// The parent's slave descriptor is opened with <c>O_CLOEXEC</c>, which <c>open</c> sets atomically on both systems.
 /// </para>
 /// <para>
 /// Exit: a dedicated thread runs <c>waitpid(pid)</c> for this child only.
@@ -29,17 +36,21 @@ namespace RazorConsole.Testing.Pty;
 internal sealed unsafe class UnixPtyConnection : PtyConnection
 {
     private const int PollTimeoutMilliseconds = 50;
+    private const int StopDrainMilliseconds = 500;
 
     private static readonly object s_spawnLock = new();
     private static readonly nint s_addChdir = ResolveAddChdir();
 
     private readonly int _master;
+    private int _slave;
     private volatile bool _stopReading;
+    private long _stopDrainDeadline;
     private int _disposed;
 
-    private UnixPtyConnection(int master, int processId)
+    private UnixPtyConnection(int master, int slave, int processId)
     {
         _master = master;
+        _slave = slave;
         ProcessId = processId;
         var waiter = new Thread(WaitForExit) { IsBackground = true, Name = $"PtyTerminal waitpid {processId}" };
         waiter.Start();
@@ -65,9 +76,21 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
         var poll = new PollFd { Fd = _master, Events = PollIn };
         fixed (byte* pointer = buffer)
         {
-            while (!_stopReading)
+            while (true)
             {
-                var ready = UnixNative.poll(&poll, 1, PollTimeoutMilliseconds);
+                // After StopReading, return what is already buffered (bounded, in case a grandchild keeps writing).
+                var stopping = _stopReading;
+                if (stopping && Environment.TickCount64 >= Interlocked.Read(ref _stopDrainDeadline))
+                {
+                    return 0;
+                }
+
+                var ready = UnixNative.poll(&poll, 1, stopping ? 0 : PollTimeoutMilliseconds);
+                if (ready == 0 && stopping)
+                {
+                    return 0;
+                }
+
                 if (ready == 0 || (ready < 0 && Marshal.GetLastPInvokeError() == EIntr))
                 {
                     continue;
@@ -93,8 +116,6 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
                 return 0;
             }
         }
-
-        return 0;
     }
 
     public override void Write(ReadOnlySpan<byte> data)
@@ -139,11 +160,19 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
         }
     }
 
-    public override void StopReading() => _stopReading = true;
+    public override void StopReading()
+    {
+        if (!_stopReading)
+        {
+            Interlocked.CompareExchange(ref _stopDrainDeadline, Environment.TickCount64 + StopDrainMilliseconds, 0);
+            _stopReading = true;
+        }
+    }
 
     public override void Dispose(bool readerStopped)
     {
         StopReading();
+        CloseSlave();
         if (readerStopped && Interlocked.Exchange(ref _disposed, 1) == 0)
         {
             close(_master);
@@ -176,8 +205,27 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
                 throw new IOException($"TIOCSWINSZ failed (errno {Marshal.GetLastPInvokeError()}).");
             }
 
-            var processId = Spawn(startInfo, master, slavePath);
-            return new UnixPtyConnection(master, processId);
+            int slave;
+            fixed (byte* path = slavePath)
+            {
+                slave = open(path, ORdWr | ONoCtty | OCloExec);
+            }
+
+            if (slave < 0)
+            {
+                throw new IOException($"Opening the pseudoterminal slave failed (errno {Marshal.GetLastPInvokeError()}).");
+            }
+
+            try
+            {
+                var processId = Spawn(startInfo, master, slavePath);
+                return new UnixPtyConnection(master, slave, processId);
+            }
+            catch
+            {
+                close(slave);
+                throw;
+            }
         }
         catch
         {
@@ -340,6 +388,7 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
             {
                 SetExitUnknown(new InvalidOperationException(
                     $"waitpid({ProcessId}) failed with errno {error}; the exit status was collected elsewhere."));
+                CloseSlave();
                 return;
             }
         }
@@ -347,5 +396,17 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
         // WIFEXITED: exit code; WIFSIGNALED: 128 + signal, as shells report it.
         var signal = status & 0x7f;
         SetExited(signal == 0 ? (status >> 8) & 0xff : 128 + signal);
+
+        // Only now may the master report EIO: the reader drains the rest of the output, then sees the end.
+        CloseSlave();
+    }
+
+    private void CloseSlave()
+    {
+        var slave = Interlocked.Exchange(ref _slave, -1);
+        if (slave >= 0)
+        {
+            close(slave);
+        }
     }
 }

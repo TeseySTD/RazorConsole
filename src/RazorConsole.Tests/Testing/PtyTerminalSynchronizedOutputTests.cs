@@ -140,6 +140,34 @@ public sealed class PtyTerminalSynchronizedOutputTests
         terminal.CurrentFrame.GetLine(0).TrimEnd().ShouldBe("abcd");
     }
 
+    [Fact]
+    public async Task OutputEndedBeforeTheExitIsKnown_ReportsTheExitStatus()
+    {
+        await using var connection = new FakePtyConnection();
+        await using var terminal = Start(connection, new ManualTimeProvider());
+        await OutputAsync(terminal, connection, "done");
+        connection.CloseOutput();
+        _ = Task.Delay(300, TestContext.Current.CancellationToken).ContinueWith(_ => connection.Exit(0), TaskScheduler.Default);
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            terminal.WaitUntilAsync(f => f.ContainsText("never shown"), WaitLimit, "never shown", TestContext.Current.CancellationToken));
+        exception.Message.ShouldContain("exited with code 0");
+    }
+
+    [Fact]
+    public async Task OutputEndedWhileTheProcessRuns_FailsWithinTheExitStatusWait()
+    {
+        await using var connection = new FakePtyConnection();
+        await using var terminal = Start(connection, new ManualTimeProvider());
+        connection.CloseOutput();
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            terminal.WaitUntilAsync(f => f.ContainsText("never shown"), WaitLimit, "never shown", TestContext.Current.CancellationToken));
+        exception.Message.ShouldContain("Process 1: running");
+        stopwatch.Elapsed.ShouldBeLessThan(WaitLimit);
+    }
+
     private static PtyTerminal Start(FakePtyConnection connection, TimeProvider clock)
         => PtyTerminal.Start(connection, new PtyTerminalOptions { FileName = "fake", Width = 20, Height = 3 }, clock);
 
