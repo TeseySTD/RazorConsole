@@ -5,13 +5,16 @@ using System.Text;
 using RazorConsole.Core.Layout;
 using RazorConsole.Core.Vdom;
 
-namespace RazorConsole.Tests.Integration.Infrastructure;
+namespace RazorConsole.Testing;
 
-internal sealed class TestTerminalSnapshot
+/// <summary>
+/// An immutable capture of one rendered terminal frame: the cell grid, focus, and layouts.
+/// </summary>
+public sealed class TerminalFrame
 {
     private readonly TerminalCell[,] _cells;
 
-    public TestTerminalSnapshot(
+    internal TerminalFrame(
         long frameNumber,
         DateTimeOffset observedAt,
         TerminalCanvas canvas,
@@ -41,18 +44,41 @@ internal sealed class TestTerminalSnapshot
             new Dictionary<string, VNodeLayoutInfo>(layouts, StringComparer.Ordinal));
     }
 
+    /// <summary>
+    /// Gets the sequence number of the frame within its terminal.
+    /// </summary>
     public long FrameNumber { get; }
 
+    /// <summary>
+    /// Gets the time at which the frame was captured.
+    /// </summary>
     public DateTimeOffset ObservedAt { get; }
 
+    /// <summary>
+    /// Gets the terminal width in columns when the frame was captured.
+    /// </summary>
     public int Width { get; }
 
+    /// <summary>
+    /// Gets the terminal height in rows when the frame was captured.
+    /// </summary>
     public int Height { get; }
 
+    /// <summary>
+    /// Gets the focus key of the focused element when the frame was captured, if any.
+    /// </summary>
     public string? FocusKey { get; }
 
+    /// <summary>
+    /// Gets the layouts of the elements that have a <c>data-vnode-hook</c> attribute, keyed by hook.
+    /// </summary>
     public IReadOnlyDictionary<string, VNodeLayoutInfo> Layouts { get; }
 
+    /// <summary>
+    /// Gets the cell at the zero-based column <paramref name="x"/> and row <paramref name="y"/>.
+    /// </summary>
+    /// <param name="x">The zero-based column.</param>
+    /// <param name="y">The zero-based row.</param>
     public TerminalCell this[int x, int y]
     {
         get
@@ -71,28 +97,9 @@ internal sealed class TestTerminalSnapshot
         }
     }
 
-    public bool ContainsText(string text)
-        => ScreenText.Contains(text, StringComparison.Ordinal);
-
-    public bool HasSameCells(TestTerminalSnapshot other)
-    {
-        if (Width != other.Width || Height != other.Height)
-        {
-            return false;
-        }
-        for (var y = 0; y < Height; y++)
-        {
-            for (var x = 0; x < Width; x++)
-            {
-                if (this[x, y] != other[x, y])
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
+    /// <summary>
+    /// Gets the plain text of the screen, one line per row separated by <c>\n</c>.
+    /// </summary>
     public string ScreenText
     {
         get
@@ -112,6 +119,41 @@ internal sealed class TestTerminalSnapshot
         }
     }
 
+    /// <summary>
+    /// Returns whether the screen text contains <paramref name="text"/> (ordinal comparison).
+    /// </summary>
+    /// <param name="text">The text to look for.</param>
+    public bool ContainsText(string text)
+        => ScreenText.Contains(text, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Returns whether this frame has the same size and cells as <paramref name="other"/>.
+    /// </summary>
+    /// <param name="other">The frame to compare with.</param>
+    public bool HasSameCells(TerminalFrame other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        if (Width != other.Width || Height != other.Height)
+        {
+            return false;
+        }
+        for (var y = 0; y < Height; y++)
+        {
+            for (var x = 0; x < Width; x++)
+            {
+                if (this[x, y] != other[x, y])
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Gets the plain text of one row.
+    /// </summary>
+    /// <param name="row">The zero-based row.</param>
     public string GetLine(int row)
     {
         if (row < 0 || row >= Height)
@@ -128,16 +170,32 @@ internal sealed class TestTerminalSnapshot
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Gets the layout captured for the element with the given <c>data-vnode-hook</c>.
+    /// </summary>
+    /// <param name="hookKey">The hook key.</param>
+    /// <exception cref="KeyNotFoundException">No layout was captured for <paramref name="hookKey"/>.</exception>
     public VNodeLayoutInfo GetLayout(string hookKey)
         => Layouts.TryGetValue(hookKey, out var layout)
             ? layout
             : throw new KeyNotFoundException($"No layout was captured for hook '{hookKey}'.");
 
+    /// <summary>
+    /// Tries to get the layout captured for the element with the given <c>data-vnode-hook</c>.
+    /// </summary>
+    /// <param name="hookKey">The hook key.</param>
+    /// <param name="layout">The layout, when found.</param>
+    public bool TryGetLayout(string hookKey, out VNodeLayoutInfo layout)
+        => Layouts.TryGetValue(hookKey, out layout);
+
+    /// <summary>
+    /// Formats the frame for failure messages: header, screen lines, and layouts.
+    /// </summary>
     public string ToDiagnosticString()
     {
         var builder = new StringBuilder();
         builder.Append("Frame ").Append(FrameNumber)
-            .Append(" (").Append(Width).Append('x').Append(Height).Append(")")
+            .Append(" (").Append(Width).Append('x').Append(Height).Append(')')
             .Append(", focus: ").AppendLine(FocusKey ?? "<none>");
 
         for (var y = 0; y < Height; y++)
@@ -164,5 +222,6 @@ internal sealed class TestTerminalSnapshot
         return builder.ToString().TrimEnd();
     }
 
+    /// <inheritdoc />
     public override string ToString() => ToDiagnosticString();
 }
