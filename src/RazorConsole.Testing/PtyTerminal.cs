@@ -100,6 +100,8 @@ public sealed class PtyTerminal : IAsyncDisposable
     /// </summary>
     public int ProcessId => _connection.ProcessId;
 
+    internal PtyConnection Connection => _connection;
+
     /// <summary>
     /// Gets the terminal width in columns.
     /// </summary>

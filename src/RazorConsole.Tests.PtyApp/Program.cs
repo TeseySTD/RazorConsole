@@ -12,7 +12,8 @@ using RazorConsole.Tests.PtyApp;
 //   echo <id>           echoes lines as "[id] got <line>"; "exit <code>" exits with that code; Ctrl+C exits with 42
 //   serial              validates "L<n>:<60 letters>" lines; "end" prints a summary
 //   size                prints the console size whenever it changes
-//   env <name>          prints an environment variable and the working directory, then exits
+//   env <names...>      prints environment variables and the working directory, then exits
+//   envdump <file>      writes every environment variable as "name=value\0" to the file, prints "dumped", then exits
 //   args <args...>      prints each argument in brackets, then exits
 // Like RazorConsole itself, use UTF-8 regardless of the console code page.
 Console.OutputEncoding = Encoding.UTF8;
@@ -24,7 +25,8 @@ return args.FirstOrDefault() switch
     "echo" => Echo(args[1]),
     "serial" => Serial(),
     "size" => Size(),
-    "env" => PrintEnvironment(args[1]),
+    "env" => PrintEnvironment(args[1..]),
+    "envdump" => DumpEnvironment(args[1]),
     "args" => PrintArguments(args[1..]),
     _ => 2,
 };
@@ -117,10 +119,24 @@ static int Size()
     }
 }
 
-static int PrintEnvironment(string name)
+static int PrintEnvironment(string[] names)
 {
-    Console.WriteLine($"env {name}={Environment.GetEnvironmentVariable(name) ?? "<unset>"}");
+    foreach (var name in names)
+    {
+        Console.WriteLine($"env {name}={Environment.GetEnvironmentVariable(name) ?? "<unset>"}");
+    }
+
     Console.WriteLine($"cwd {Directory.GetCurrentDirectory()}");
+    return 0;
+}
+
+static int DumpEnvironment(string path)
+{
+    var entries = Environment.GetEnvironmentVariables()
+        .Cast<System.Collections.DictionaryEntry>()
+        .Select(entry => $"{entry.Key}={entry.Value}\0");
+    File.WriteAllText(path, string.Concat(entries), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+    Console.WriteLine("dumped");
     return 0;
 }
 

@@ -111,6 +111,144 @@ public sealed class PtyTerminalTests
     }
 
     [Fact]
+    public async Task Unix_TheAppIsTheForegroundProcessGroupOfItsTerminal()
+    {
+        // SIGINT from Ctrl+C and SIGWINCH from a resize go to this group: without a controlling terminal it is 0.
+        if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+        {
+            await using var terminal = await StartEchoAsync("pgrp");
+            ForegroundProcessGroup(terminal).ShouldBe(terminal.ProcessId, terminal.DumpDiagnostics());
+        }
+        else
+        {
+            Assert.Skip("Linux and macOS only.");
+        }
+    }
+
+    [Fact]
+    public async Task Unix_TheStartRunsNoShellStartupCode_AndPassesTheEnvironmentThrough()
+    {
+        // On macOS bash attaches the terminal before the app starts; BASH_ENV and SHELLOPTS must not reach it.
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+        {
+            Assert.Skip("Linux and macOS only.");
+        }
+
+        var directory = Directory.CreateTempSubdirectory("pty-bash-env-");
+        try
+        {
+            var marker = Path.Combine(directory.FullName, "sourced");
+            var script = Path.Combine(directory.FullName, "bash_env.sh");
+            File.WriteAllText(script, $"echo sourced > '{marker}'\n");
+            var options = PtyTerminal.CreateDotnetOptions(AppPath, 200, 10, ["env", "BASH_ENV", "SHELLOPTS"]);
+            options.Environment["BASH_ENV"] = script;
+            options.Environment["SHELLOPTS"] = "xtrace";
+
+            await using (var terminal = await PtyTerminal.StartAsync(options, TestContext.Current.CancellationToken))
+            {
+                await terminal.WaitForTextAsync("cwd ", StartTimeout, TestContext.Current.CancellationToken);
+                (await terminal.WaitForExitAsync(StartTimeout, TestContext.Current.CancellationToken)).ShouldBe(0);
+
+                var screen = terminal.CurrentFrame.ScreenText;
+                screen.ShouldContain("env BASH_ENV=" + script);
+                screen.ShouldContain("env SHELLOPTS=xtrace");
+                screen.Split('\n').Select(line => line.Trim()).Where(line => line.Length > 0)
+                    .ShouldAllBe(line => line.StartsWith("env ", StringComparison.Ordinal) || line.StartsWith("cwd ", StringComparison.Ordinal), terminal.DumpDiagnostics());
+                terminal.RawOutput.ShouldNotContain("+ exec");
+            }
+
+            File.Exists(marker).ShouldBeFalse();
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Unix_TheAppGetsExactlyTheCallersEnvironment()
+    {
+        // On macOS the environment passes through bash and env(1): what bash acts on, rewrites or adds must not show.
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+        {
+            Assert.Skip("Linux and macOS only.");
+        }
+
+        var directory = Directory.CreateTempSubdirectory("pty-env-dump-");
+        try
+        {
+            var dump = Path.Combine(directory.FullName, "environment");
+            var options = PtyTerminal.CreateDotnetOptions(AppPath, 100, 10, ["envdump", dump]);
+            options.Environment["BASH_ENV"] = Path.Combine(directory.FullName, "bash_env.sh");
+            options.Environment["ENV"] = Path.Combine(directory.FullName, "env.sh");
+            options.Environment["SHELLOPTS"] = "allexport:xtrace";
+            options.Environment["POSIXLY_CORRECT"] = "1";
+            options.Environment["BASH_FUNC_pty_probe%%"] = "() {  echo probe\n}";
+            options.Environment["PTY_SECRET"] = "pty-secret-" + Guid.NewGuid().ToString("N");
+            options.Environment["PTY.NOT-AN-IDENTIFIER"] = "kept";
+            options.Environment["PTY_SPACES"] = "  a b\tc =  ";
+            options.Environment["PWD"] = "/pty/caller/pwd";
+            options.Environment["OLDPWD"] = "/pty/caller/oldpwd";
+            options.Environment["_"] = "/pty/caller/underscore";
+            options.Environment["IFS"] = ":";
+            options.Environment["PPID"] = "1";
+            options.Environment["OPTIND"] = "7";
+            options.Environment["RANDOM"] = "4";
+            options.Environment["BASH_VERSION"] = "caller";
+            options.Environment["SHLVL"] = null;
+            var expected = PtyTerminal.BuildEnvironment(options).Select(pair => pair.Key + "=" + pair.Value);
+
+            await using (var terminal = await PtyTerminal.StartAsync(options, TestContext.Current.CancellationToken))
+            {
+                await terminal.WaitForTextAsync("dumped", StartTimeout, TestContext.Current.CancellationToken);
+                (await terminal.WaitForExitAsync(StartTimeout, TestContext.Current.CancellationToken)).ShouldBe(0, terminal.DumpDiagnostics());
+            }
+
+            var actual = File.ReadAllText(dump).Split('\0', StringSplitOptions.RemoveEmptyEntries);
+            actual.Order(StringComparer.Ordinal).ShouldBe(expected.Order(StringComparer.Ordinal));
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
+    public void BashLaunch_PutsOnlyBashsOwnVariablesInArgv()
+    {
+        // bash and env(1) exec in the same process, so their argv and the app's are all taken from these arguments.
+        // Each lives only until the next exec, so a test sampling another process's argv (ps) would prove nothing.
+        var secret = "pty-secret-" + Guid.NewGuid().ToString("N");
+        var environment = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["GITHUB_TOKEN"] = secret,
+            ["PTY_SECRET"] = "prefix " + secret,
+            ["PATH"] = "/usr/bin:/bin",
+            ["BASH_ENV"] = "/pty/bash_env.sh",
+            ["SHELLOPTS"] = "xtrace",
+            ["BASH_FUNC_pty_probe%%"] = "() {  echo probe\n}",
+            ["SHLVL"] = "3",
+        };
+
+        var (arguments, bashEnvironment) = BashLaunch.Build("/usr/local/share/dotnet/dotnet", "/dev/ttys001", "/pty/work", environment);
+
+        arguments.ShouldAllBe(argument => !argument.Contains(secret, StringComparison.Ordinal));
+        arguments.SkipWhile(argument => argument != "--").Skip(1).ShouldBe(
+            ["BASH_ENV=/pty/bash_env.sh", "SHELLOPTS=xtrace", "BASH_FUNC_pty_probe%%=() {  echo probe\n}", "SHLVL=3", "/usr/local/share/dotnet/dotnet"],
+            ignoreOrder: true);
+        arguments[^1].ShouldBe("/usr/local/share/dotnet/dotnet");
+        bashEnvironment.ShouldBe(["GITHUB_TOKEN=" + secret, "PTY_SECRET=prefix " + secret, "PATH=/usr/bin:/bin", "SHLVL=3"], ignoreOrder: true);
+        var unset = arguments.Select((argument, index) => (argument, index))
+            .Where(pair => pair.argument == "-u")
+            .Select(pair => arguments[pair.index + 1]);
+        unset.ShouldBe(BashLaunch.Rewritten.Where(name => name != "SHLVL"), ignoreOrder: true);
+    }
+
+    [SupportedOSPlatform("linux")]
+    [SupportedOSPlatform("macos")]
+    private static int ForegroundProcessGroup(PtyTerminal terminal) => ((UnixPtyConnection)terminal.Connection).ForegroundProcessGroup;
+
+    [Fact]
     public void Windows_ConsoleCtrlC_ClearsAndRestoresTheIgnoreBit()
     {
         if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 17763))

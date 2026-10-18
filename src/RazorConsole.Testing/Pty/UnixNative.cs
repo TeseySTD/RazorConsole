@@ -16,6 +16,8 @@ internal static unsafe partial class UnixNative
     public const short PollIn = 0x1;
     public const int FSetFd = 2;
     public const int FdCloExec = 1;
+    public const int XOk = 1;
+    public const int ENoEnt = 2;
 
     private const string LibC = "libc";
 
@@ -135,6 +137,12 @@ internal static unsafe partial class UnixNative
 
     [LibraryImport(LibC, SetLastError = true)]
     public static partial int kill(int pid, int signal);
+
+    [LibraryImport(LibC, SetLastError = true)]
+    public static partial int tcgetpgrp(int fd);
+
+    [LibraryImport(LibC, SetLastError = true)]
+    public static partial int access(byte* path, int mode);
 
     public static int SetWindowSize(int fd, int width, int height)
     {

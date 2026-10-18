@@ -12,8 +12,20 @@ namespace RazorConsole.Testing.Pty;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The child runs in a new session (<c>POSIX_SPAWN_SETSID</c>) and opens the PTY slave by path as fd 0, which makes it
-/// the controlling terminal, so Ctrl+C reaches it as SIGINT through the line discipline.
+/// The child runs in a new session (<c>POSIX_SPAWN_SETSID</c>) with the PTY slave as its controlling terminal, so the
+/// kernel delivers Ctrl+C as SIGINT and a resize as SIGWINCH to it. A session leader acquires the controlling terminal
+/// by opening a terminal without <c>O_NOCTTY</c>. glibc and musl call <c>setsid</c> before the file actions, so on Linux
+/// opening the slave as fd 0 does it. xnu runs the file actions before <c>setsid</c> (<c>posix_spawn</c> in
+/// <c>kern_exec.c</c>), so that open happens in the test process's session and no controlling terminal is acquired.
+/// On macOS the child is therefore started as <c>/bin/bash</c>, which, already the session leader, reopens the slave
+/// (xnu <c>open1</c> then issues <c>TIOCSCTTY</c>) and execs the program in the same process. bash opens a
+/// <c>&lt;&gt;</c> redirection without <c>O_NOCTTY</c>; zsh, which <c>/bin/sh</c> may be, adds it, so bash is named
+/// explicitly.
+/// </para>
+/// <para>
+/// bash never sees the variables it would act on (<c>BASH_ENV</c>, <c>SHELLOPTS</c>, imported functions, ...), and
+/// the program still gets exactly the caller's environment, without putting it in argv; see <see cref="BashLaunch"/>.
+/// bash's <c>-p</c> is not enough: it still exports its own <c>SHELLOPTS</c> and <c>SHLVL</c> to the program.
 /// </para>
 /// <para>
 /// End of output: reading the master fails with <c>EIO</c> once no slave descriptor is open, and on Linux that can be
@@ -62,6 +74,18 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
     }
 
     public override int ProcessId { get; }
+
+    /// <summary>
+    /// Gets the terminal's foreground process group, which receives the signals the line discipline generates.
+    /// </summary>
+    public int ForegroundProcessGroup
+    {
+        get
+        {
+            var group = tcgetpgrp(_master);
+            return group < 0 ? throw new IOException($"tcgetpgrp failed (errno {Marshal.GetLastPInvokeError()}).") : group;
+        }
+    }
 
     public static UnixPtyConnection StartProcess(PtyStartInfo startInfo)
     {
@@ -270,10 +294,29 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
     {
         var fileName = startInfo.FileName;
         var arguments = new List<string>(startInfo.Arguments.Count + 6);
-        if (startInfo.WorkingDirectory is not null && s_addChdir == 0)
+        var environment = startInfo.Environment.Select(pair => pair.Key + "=" + pair.Value).ToArray();
+        var changeDirectory = startInfo.WorkingDirectory is not null && s_addChdir == 0;
+        if (OperatingSystem.IsMacOS())
+        {
+            // bash attaches the terminal, then execs the program through env (see the remarks). The program is
+            // resolved here, as posix_spawnp would, so a missing program still fails the start instead of exiting
+            // with 127.
+            var program = ResolveProgram(startInfo);
+            if (program.Contains('='))
+            {
+                throw new IOException($"Failed to start '{startInfo.FileName}': on macOS the program path cannot contain '='.");
+            }
+
+            var slave = Encoding.UTF8.GetString(slavePath, 0, slavePath.Length - 1);
+            var launch = BashLaunch.Build(program, slave, changeDirectory ? startInfo.WorkingDirectory : null, startInfo.Environment);
+            arguments.AddRange(launch.Arguments);
+            fileName = BashLaunch.Bash;
+            environment = launch.Environment;
+        }
+        else if (changeDirectory)
         {
             // No posix_spawn_file_actions_addchdir_np: change directory in a shell. Never chdir the test process.
-            arguments.AddRange(["/bin/sh", "-c", "cd -- \"$0\" && exec \"$@\"", startInfo.WorkingDirectory, fileName]);
+            arguments.AddRange(["/bin/sh", "-c", "cd -- \"$0\" && exec \"$@\"", startInfo.WorkingDirectory!, fileName]);
             fileName = "/bin/sh";
         }
         else
@@ -282,7 +325,6 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
         }
 
         arguments.AddRange(startInfo.Arguments);
-        var environment = startInfo.Environment.Select(pair => pair.Key + "=" + pair.Value).ToArray();
 
         // posix_spawn_file_actions_t / posix_spawnattr_t / sigset_t are at most a few hundred bytes on Linux and pointers on macOS.
         var actions = stackalloc byte[1024];
@@ -296,7 +338,8 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
         {
             fixed (byte* slave = slavePath)
             {
-                // setsid runs before the file actions, so opening the slave as fd 0 makes it the controlling terminal.
+                // On Linux setsid runs before the file actions, so opening the slave as fd 0 makes it the controlling
+                // terminal. On macOS it runs after them; bash reopens the slave (see the remarks).
                 Check(posix_spawn_file_actions_addclose(actions, master), "posix_spawn_file_actions_addclose");
                 Check(posix_spawn_file_actions_addopen(actions, 0, slave, ORdWr, 0), "posix_spawn_file_actions_addopen");
                 Check(posix_spawn_file_actions_adddup2(actions, 0, 1), "posix_spawn_file_actions_adddup2");
@@ -342,6 +385,37 @@ internal sealed unsafe class UnixPtyConnection : PtyConnection
                 NativeMemory.Free((void*)allocation);
             }
         }
+    }
+
+    // Like posix_spawnp: a name with a slash is used as is, otherwise the test process's PATH is searched.
+    private static string ResolveProgram(PtyStartInfo startInfo)
+    {
+        var fileName = startInfo.FileName;
+        IEnumerable<string> candidates = fileName.Contains('/')
+            ? [fileName]
+            : (Environment.GetEnvironmentVariable("PATH") ?? "/usr/bin:/bin")
+                .Split(':')
+                .Select(directory => Path.Combine(directory.Length == 0 ? "." : directory, fileName));
+        var allocations = new List<nint>();
+        try
+        {
+            foreach (var candidate in candidates)
+            {
+                if (access(Utf8(candidate, allocations), XOk) == 0 && !Directory.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+        }
+        finally
+        {
+            foreach (var allocation in allocations)
+            {
+                NativeMemory.Free((void*)allocation);
+            }
+        }
+
+        throw new IOException($"Failed to start '{fileName}': no executable file found (errno {ENoEnt}).");
     }
 
     private static void Check(int result, string function)
