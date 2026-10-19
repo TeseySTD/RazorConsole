@@ -6,6 +6,12 @@
   </ItemGroup>
   <Import Project="$(RepoRoot)/nuget/nuget-package.props" />
 
+  <!-- Pack this package's own README instead of the repository README. -->
+  <ItemGroup>
+    <None Remove="$(RepoRoot)/README.md" />
+    <None Include="README.md" Pack="true" PackagePath="." />
+  </ItemGroup>
+
   <PropertyGroup>
     <Title>RazorConsole Testing</Title>
     <Description>Test hosts for RazorConsole: mount components headlessly at a fixed terminal size, or run a whole console app in a real pseudoterminal (ConPTY on Windows, a POSIX PTY on Linux and macOS); send keyboard, mouse and raw terminal input, and inspect rendered frames. Works with any test framework.</Description>

@@ -140,7 +140,7 @@ they do not overwrite the developer's clipboard or launch a browser.
 - Core `TextArea`, `TextSelectionState`, mouse routing and terminal actions:
   production interaction behavior shared with other apps.
 
-Framework behavior is not mocked. The TestTerminal mounts this application's
+Framework behavior is not mocked. The HeadlessTerminal mounts this application's
 real root component and sends input through the production event managers.
 Live execution no longer uses IChatService. The framework manages conversation
 history and tool invocation. See [AGENT-TOOLS.md](AGENT-TOOLS.md) for the pinned
@@ -166,7 +166,7 @@ the exact terminal, font, font size, display scale, palette and cursor rendering
 must also be matched before comparing screenshots. Other conversation states
 still require their own reference captures.
 
-TestTerminal exposes immutable cell/style snapshots, frame history, focus and
+HeadlessTerminal exposes immutable cell/style snapshots, frame history, focus and
 named widget bounds. `DumpDiagnostics()` also includes the last mouse dispatch.
 The scripted session exposes an event log; tests control advancement explicitly.
 

@@ -59,11 +59,11 @@ rows, reflow on resize, and retain selectable inline styles. List item indentati
 is consistent across siblings, nested items and wrapped continuation lines.
 
 `src/RazorConsole.Tests/E2E/TerminalInputPtyTests.cs` covers the real terminal byte-input
-path (a Unix PTY or Windows ConPTY) separately from TestTerminal. The PTY checks include sustained/fragmented SGR wheel reports
+path (a Unix PTY or Windows ConPTY) separately from HeadlessTerminal. The PTY checks include sustained/fragmented SGR wheel reports
 without draft corruption and native arrow/Tab command selection. The decoder is
 used before Console.ReadKey can interpret mouse bytes; it is not a draft sanitizer.
 
-TestTerminal paints the widget canvas in process. It verifies layout, event
+HeadlessTerminal paints the widget canvas in process. It verifies layout, event
 dispatch and component state; it does not verify Console.ReadKey decoding,
 Windows console modes, ANSI mouse reporting or a terminal emulator's rendering.
 Passing in-process tests alone is insufficient to claim runtime mouse parity.
