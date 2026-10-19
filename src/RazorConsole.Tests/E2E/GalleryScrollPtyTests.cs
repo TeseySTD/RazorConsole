@@ -5,8 +5,7 @@ using System.Text;
 namespace RazorConsole.Tests.E2E;
 
 /// <summary>
-/// Wheel-storm regression for the Gallery in a real pseudoterminal. Port of the former
-/// <c>tests/e2e/gallery-scroll-pty.py</c>.
+/// Wheel-storm regression for the Gallery in a real pseudoterminal.
 /// </summary>
 [Trait("Category", "E2E")]
 [Collection(GalleryWheelStressCollection.Name)]
@@ -17,7 +16,7 @@ public sealed class GalleryScrollPtyTests
     [Fact]
     public async Task WheelStorm_WithResizeAndStaleReplies_KeepsTheGalleryResponsive()
     {
-        // Never answer cursor-position queries: the old renderer stalls here.
+        // Never answer cursor-position queries: rendering must not wait for a reply.
         await using var terminal = await PtyE2E.StartAsync("RazorConsole.Gallery.dll", 100, 35, respondToTerminalQueries: false);
         var ct = TestContext.Current.CancellationToken;
 
@@ -62,7 +61,7 @@ public sealed class GalleryScrollPtyTests
         Assert.Equal(0, exitCode);
 
         // RawOutput is cumulative, so a sequence split across reads is still found. On Windows this checks what
-        // ConPTY forwards (what Windows Terminal receives); on Linux and macOS it is the application's own output.
+        // ConPTY forwards to the hosting terminal; on Linux and macOS it is the application's own output.
         Assert.DoesNotContain($"{Esc}[6n", terminal.RawOutput, StringComparison.Ordinal);
         Assert.DoesNotContain($"{Esc}[3J", terminal.RawOutput, StringComparison.Ordinal);
     }

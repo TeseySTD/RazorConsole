@@ -5,8 +5,8 @@ using RazorConsole.Testing;
 namespace RazorConsole.Tests.E2E;
 
 /// <summary>
-/// Real terminal input against the offline (<c>--mock</c>) LLMAgentTUI session. Port of the former
-/// <c>tests/e2e/terminal-input-pty.py</c>. No provider requests, API keys or real tool execution are used.
+/// Real terminal input against the offline (<c>--mock</c>) LLMAgentTUI session. No provider requests, API keys or
+/// real tool execution are used.
 /// </summary>
 [Trait("Category", "E2E")]
 public sealed class TerminalInputPtyTests
@@ -23,8 +23,8 @@ public sealed class TerminalInputPtyTests
         await PtyE2E.SendAsync(terminal, "hello");
         await terminal.WaitForTextAsync("› hello", cancellationToken: ct);
 
-        // 201 wheel packets, including one fragmented with a pause longer than the old parser deadline,
-        // must preserve the draft.
+        // 201 wheel packets, including one split by a pause longer than the input parser waits for the rest of an
+        // escape sequence, must preserve the draft.
         for (var i = 0; i < 100; i++)
         {
             await PtyE2E.SendAsync(terminal, $"{Esc}[<64;10;10M{Esc}[<65;10;10M");

@@ -15,10 +15,10 @@ namespace RazorConsole.Testing.Pty;
 /// The child runs in a new session (<c>POSIX_SPAWN_SETSID</c>) with the PTY slave as its controlling terminal, so the
 /// kernel delivers Ctrl+C as SIGINT and a resize as SIGWINCH to it. A session leader acquires the controlling terminal
 /// by opening a terminal without <c>O_NOCTTY</c>. glibc and musl call <c>setsid</c> before the file actions, so on Linux
-/// opening the slave as fd 0 does it. xnu runs the file actions before <c>setsid</c> (<c>posix_spawn</c> in
-/// <c>kern_exec.c</c>), so that open happens in the test process's session and no controlling terminal is acquired.
-/// On macOS the child is therefore started as <c>/bin/bash</c>, which, already the session leader, reopens the slave
-/// (xnu <c>open1</c> then issues <c>TIOCSCTTY</c>) and execs the program in the same process. bash opens a
+/// opening the slave as fd 0 does it. macOS runs the file actions before <c>setsid</c>, so that open happens in the
+/// test process's session and no controlling terminal is acquired. On macOS the child is therefore started as
+/// <c>/bin/bash</c>, which, already the session leader, reopens the slave (acquiring it as the controlling
+/// terminal) and execs the program in the same process. bash opens a
 /// <c>&lt;&gt;</c> redirection without <c>O_NOCTTY</c>; zsh, which <c>/bin/sh</c> may be, adds it, so bash is named
 /// explicitly.
 /// </para>
@@ -41,8 +41,8 @@ namespace RazorConsole.Testing.Pty;
 /// </para>
 /// <para>
 /// Window size: macOS rejects terminal ioctls such as <c>TIOCSWINSZ</c> on a new master with <c>ENOTTY</c> until the
-/// slave has been opened once (xnu <c>ptcopen</c> sets <c>TS_IOCTL_NOT_OK</c>, <c>ptsopen</c> clears it). The parent's
-/// slave descriptor is therefore opened before the initial size is set on the master.
+/// slave has been opened once. The parent's slave descriptor is therefore opened before the initial size is set on
+/// the master.
 /// </para>
 /// <para>
 /// Exit: a dedicated thread runs <c>waitpid(pid)</c> for this child only.

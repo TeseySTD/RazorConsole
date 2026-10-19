@@ -11,15 +11,13 @@ namespace RazorConsole.Testing.Pty;
 /// readable by every user (<c>ps</c>) while the environment is readable only by its owner, so no other entry may
 /// appear in argv. bash then execs <c>/usr/bin/env</c>, which puts the removed entries back, undoes bash's own changes
 /// to the exported environment (<see cref="Rewritten"/>: the caller's value, or <c>-u</c> where the caller had none)
-/// and execs the program. Only the values of those names reach argv. Apple env(1) (shell_cmds <c>env/env.c</c>) unsets
-/// every <c>-u</c> name, stops at <c>--</c>, assigns each following argument containing <c>=</c>, then execs the rest.
+/// and execs the program. Only the values of those names reach argv. env(1) unsets every <c>-u</c> name, stops at
+/// <c>--</c>, assigns each following argument containing <c>=</c>, then execs the rest.
 /// </para>
 /// <para>
-/// bash re-exports every other imported variable unchanged: <c>initialize_shell_variables</c> (variables.c) binds
-/// each entry under its name, whatever the name, caches the original <c>name=value</c> string
-/// (<c>CACHE_IMPORTSTR</c>), and <c>make_env_array_from_var_list</c> exports that string. Locale variables are read
-/// (<c>sv_locale</c>) but neither change the script nor the exported values. <c>CDPATH</c> is not consulted because
-/// the directory is absolute.
+/// bash re-exports every other imported variable unchanged: it keeps the original <c>name=value</c> string of each
+/// entry, whatever the name, and exports that string. Locale variables are read but change neither the script nor
+/// the exported values. <c>CDPATH</c> is not consulted because the directory is absolute.
 /// </para>
 /// </remarks>
 internal static class BashLaunch
@@ -32,8 +30,8 @@ internal static class BashLaunch
     private const string AttachAndChdirScript =
         "exec 0<>\"$0\" || exit 126; cd -P -- \"$1\" || exit 126; shift; exec /usr/bin/env \"$@\"";
 
-    // Imported functions: bash 3.2 (Apple's patched variables.c) parses and runs a definition for an entry named
-    // BASH_FUNC_<name>%% whose value starts with "() {", and exports it reformatted. Every such value is withheld.
+    // Imported functions: bash 3.2 on macOS parses and runs a definition for an entry named BASH_FUNC_<name>%%
+    // whose value starts with "() {", and exports it reformatted. Every such value is withheld, whatever the name.
     private const string FunctionPrefix = "() {";
 
     /// <summary>
@@ -41,11 +39,10 @@ internal static class BashLaunch
     /// through env(1)'s argv.
     /// </summary>
     /// <remarks>
-    /// <c>BASH_ENV</c>: sourced by a non-interactive shell (shell.c <c>run_startup_files</c>). <c>ENV</c>: sourced by an
-    /// interactive shell or one running as sh (shell.c), withheld for safety. <c>SHELLOPTS</c>: parsed into
-    /// <c>set -o</c> options (<c>initialize_shell_options</c>, builtins/set.def), e.g. <c>xtrace</c> or
-    /// <c>allexport</c>. <c>POSIXLY_CORRECT</c> / <c>POSIX_PEDANTIC</c>: turn on posix mode (variables.c,
-    /// <c>sv_strict_posix</c>). <c>BASHOPTS</c> does not exist in bash 3.2 (added in 4.1).
+    /// <c>BASH_ENV</c>: sourced by a non-interactive shell. <c>ENV</c>: sourced by an interactive shell or one running
+    /// as sh; neither applies here, but it is withheld all the same. <c>SHELLOPTS</c>: turned into <c>set -o</c>
+    /// options such as <c>xtrace</c> or <c>allexport</c>. <c>POSIXLY_CORRECT</c> / <c>POSIX_PEDANTIC</c>: turn on
+    /// posix mode. bash 3.2 has no <c>BASHOPTS</c>.
     /// </remarks>
     internal static readonly string[] ActedOn = ["BASH_ENV", "ENV", "SHELLOPTS", "POSIXLY_CORRECT", "POSIX_PEDANTIC"];
 
@@ -54,18 +51,16 @@ internal static class BashLaunch
     /// restores the caller's value or unsets them.
     /// </summary>
     /// <remarks>
-    /// variables.c <c>initialize_shell_variables</c>: <c>set_pwd</c> rebinds and exports <c>PWD</c> unless the imported
-    /// value names the current directory, and rebinds <c>OLDPWD</c> to an invisible, valueless variable;
-    /// <c>IFS</c>, <c>OPTIND</c>, <c>OPTERR</c>, <c>BASH</c>, <c>BASH_VERSION</c> and <c>BASH_EXECUTION_STRING</c> are
-    /// rebound (an imported one stays exported with the new value); <c>adjust_shell_level</c> exports <c>SHLVL</c>
-    /// + 1 (builtins/exec.def subtracts 1 again before the exec, or exports 0 when the caller had none);
-    /// <c>set_ppid</c> unexports <c>PPID</c>; <c>make_vers_array</c> replaces <c>BASH_VERSINFO</c> with an array,
-    /// which is never exported. <c>initialize_dynamic_variables</c> rebinds <c>BASH_COMMAND</c>,
-    /// <c>BASH_SUBSHELL</c>, <c>RANDOM</c>, <c>LINENO</c>, <c>HISTCMD</c> and <c>COMP_WORDBREAKS</c> without a value.
-    /// execute_cmd.c <c>bind_lastarg</c> unexports <c>_</c>. builtins/cd.def binds and exports <c>PWD</c> and
-    /// <c>OLDPWD</c>. Variables bash only creates when missing (<c>set_if_not</c>: <c>PATH</c>, <c>TERM</c>, <c>PS4</c>,
-    /// <c>HOSTTYPE</c>, ...; <c>SHELL</c>, <c>UID</c>, <c>EUID</c>, <c>SECONDS</c>, <c>GROUPS</c>, ...) are not exported
-    /// unless imported, and then keep the imported value.
+    /// At startup bash rebinds and exports <c>PWD</c> unless the imported value names the current directory, and turns
+    /// <c>OLDPWD</c> into an invisible, valueless variable. It rebinds <c>IFS</c>, <c>OPTIND</c>, <c>OPTERR</c>,
+    /// <c>BASH</c>, <c>BASH_VERSION</c> and <c>BASH_EXECUTION_STRING</c> (an imported one stays exported with the new
+    /// value), exports <c>SHLVL</c> + 1 (<c>exec</c> subtracts 1 again, or exports 0 when the caller had none),
+    /// unexports <c>PPID</c>, and replaces <c>BASH_VERSINFO</c> with an array, which is never exported.
+    /// <c>BASH_COMMAND</c>, <c>BASH_SUBSHELL</c>, <c>RANDOM</c>, <c>LINENO</c>, <c>HISTCMD</c> and
+    /// <c>COMP_WORDBREAKS</c> are rebound without a value. Running a command unexports <c>_</c>, and <c>cd</c> binds
+    /// and exports <c>PWD</c> and <c>OLDPWD</c>. Variables bash only creates when missing (<c>PATH</c>, <c>TERM</c>,
+    /// <c>PS4</c>, <c>SHELL</c>, <c>UID</c>, <c>SECONDS</c>, ...) are not exported unless imported, and then keep the
+    /// imported value.
     /// </remarks>
     internal static readonly string[] Rewritten =
     [

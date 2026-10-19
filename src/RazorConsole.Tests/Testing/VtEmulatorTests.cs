@@ -356,8 +356,8 @@ public sealed class VtEmulatorTests
         Line(emulator, 0).ShouldBe("┌──┐x");
     }
 
-    // ConPTY-specific behaviour seen in the PTY spike. Each input is a short handwritten sequence of the kind ConPTY
-    // emits; real ConPTY output is covered live by the E2E and PTY-vs-headless golden tests.
+    // ConPTY-specific output. Each input is a short handwritten sequence of the kind ConPTY emits; real ConPTY
+    // output is covered live by the E2E and PTY-vs-headless golden tests.
     [Fact]
     public void ConPty_MergedMouseModeReset_TurnsMouseTrackingOff()
     {
@@ -491,7 +491,7 @@ public sealed class VtEmulatorTests
     [Fact]
     public void ConPtyTeardown_LeavesTheAlternateScreenAndDisablesMouseReporting()
     {
-        // From the spike's LLMAgentTUI Ctrl+C run.
+        // What ConPTY forwards when LLMAgentTUI exits on Ctrl+C.
         var emulator = Feed(80, 24, $"{Esc}[?1003;1006h{Esc}[?1049halt{Esc}[m{Esc}[?1049l{Esc}[H{Esc}[K\r\n{Esc}[K{Esc}[80C{Esc}[?1003;1006l");
 
         emulator.ActiveBuffer.ShouldBe(TerminalScreenBuffer.Normal);

@@ -39,7 +39,7 @@ public sealed class PtyTerminal : IAsyncDisposable
     private static readonly TimeSpan ExitStatusWaitLimit = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan DisposeLimit = TimeSpan.FromSeconds(5);
 
-    // Ghostty (sync_reset_ms) and foot end a synchronized update the application left open after one second.
+    // End a synchronized update the app left open, so a crashed or stalled app cannot freeze frame capture.
     internal static readonly TimeSpan SynchronizedUpdateTimeout = TimeSpan.FromSeconds(1);
 
     private readonly object _sync = new();
@@ -797,8 +797,8 @@ public sealed class PtyTerminal : IAsyncDisposable
         }
     }
 
-    // Like Ghostty and foot, end the update instead of only capturing once: later output is captured as usual
-    // until the application starts a new synchronized update.
+    // End the update instead of only capturing once: later output is captured as usual until the application
+    // starts a new synchronized update.
     private void EndSynchronizedUpdateLocked()
     {
         _emulator.EndSynchronizedOutput();
